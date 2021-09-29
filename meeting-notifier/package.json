@@ -1,0 +1,29 @@
+{
+  "name": "meeting-notifier",
+  "version": "1.0.0",
+  "main": "main.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "yarn webpack",
+    "buildpush": "webpack & clasp push --force"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/preset-env": "^7.14.5",
+    "@babel/preset-typescript": "^7.14.5",
+    "@slack/web-api": "^6.2.4",
+    "@types/google-apps-script": "^1.0.34",
+    "babel-loader": "^8.2.2",
+    "core-js": "^3.15.0",
+    "gas-webpack-plugin": "^2.0.0",
+    "ts-loader": "^8.0.17",
+    "typescript": "^4.2.2",
+    "webpack": "^5.24.3",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2"
+  },
+  "dependencies": {
+    "@google/clasp": "^2.3.2",
+    "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3"
+  }
+}
