@@ -5,6 +5,7 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "meeting-notifier"
+    "meeting-notifier",
+    "birthday-notifier"
   ]
 }
