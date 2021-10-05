@@ -3,6 +3,7 @@ import { ViewSubmitAction } from "@slack/bolt";
 
 export const homeModal = (): View => {
   const view: View = {
+    "callback_id": "register_anniversary",
     "type": "modal",
     "title": {
       "type": "plain_text",
@@ -48,6 +49,7 @@ export const homeModal = (): View => {
 
 export const registerModal = (): View => {
   const view: View = {
+    "callback_id": "register_anniversary",
     "type": "modal",
     "title": {
       "type": "plain_text",
@@ -156,6 +158,7 @@ export const registerModal = (): View => {
         "type": "input",
         "block_id": "message",
         "element": {
+          "initial_value": "今日はNAMEさんのお誕生日です、おめでとうございます！",
           "type": "plain_text_input",
           "action_id": "content"
         },
@@ -272,6 +275,7 @@ export const registerFailedModal = (): View => {
 
 export const deleteModal = (): View => {
   const view: View = {
+    "callback_id": "register_anniversary",
     "type": "modal",
     "title": {
       "type": "plain_text",
@@ -361,6 +365,7 @@ export const deleteModal = (): View => {
 
 export const deleteConfirmModal = (payload: ViewSubmitAction): View => {
   var view: View = {
+    "callback_id": "register_anniversary",
     "title": {
       "type": "plain_text",
       "text": "削除確認",

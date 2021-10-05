@@ -1,4 +1,4 @@
-import { SlackAction, BlockAction, ViewUpdateResponseAction, ViewPushResponseAction, WorkflowStepEdit, WorkflowStepConfig, ViewWorkflowStepSubmitAction } from '@slack/bolt';
+import { SlackAction, BlockAction, ViewUpdateResponseAction, ViewPushResponseAction, WorkflowStepEdit, ViewWorkflowStepSubmitAction } from '@slack/bolt';
 import { SlackEvent, WorkflowStepExecuteEvent } from '@slack/bolt';
 import { SlackShortcut, GlobalShortcut } from '@slack/bolt';
 import { SlackViewAction, ViewSubmitAction } from '@slack/bolt';
@@ -128,11 +128,13 @@ const handleSlackEvent = (client: SlackClient, payload: SlackEvent): string => {
 }
 
 const handleBlockAction = (client: SlackClient, payload: BlockAction): string => {
-  switch (payload.actions[0].action_id) {
-    case 'click_register':
-      return pushRegisterModal(client, payload);
-    case 'click_delete':
-      return pushDeleteModal(client, payload)
+  if (payload.view.callback_id == 'register_anniversary') {
+    switch (payload.actions[0].action_id) {
+      case 'click_register':
+        return pushRegisterModal(client, payload);
+      case 'click_delete':
+        return pushDeleteModal(client, payload)
+    }
   }
 }
 
@@ -188,23 +190,25 @@ const pushDeleteModal = (client: SlackClient, payload: BlockAction): string => {
 }
 
 const handleViewSubmitAction = (client: SlackClient, payload: ViewSubmitAction): string => {
-  switch (payload.view.title.text) {
-    case '登録':
-      if (registerAnniversaryDate(payload)) {
-        return updateRegisterResultModal(client, payload);
-      } else {
-        return pushRegisterFailedModal(client, payload);
-      }
-    case '削除':
-      if (findAnniversaryDate(payload)) {
-        return pushDeleteConfirmModal(client, payload);
-      } else {
-        return pushNotFoundModal(client, payload);
-      }
-    case '削除確認':
-      if (deleteAnniversaryDate(payload)) {
-        return updateDeleteResultModal(client, payload);
-      }
+  if (payload.view.callback_id == 'register_anniversary') {
+    switch (payload.view.title.text) {
+      case '登録':
+        if (registerAnniversaryDate(payload)) {
+          return updateRegisterResultModal(client, payload);
+        } else {
+          return pushRegisterFailedModal(client, payload);
+        }
+      case '削除':
+        if (findAnniversaryDate(payload)) {
+          return pushDeleteConfirmModal(client, payload);
+        } else {
+          return pushNotFoundModal(client, payload);
+        }
+      case '削除確認':
+        if (deleteAnniversaryDate(payload)) {
+          return updateDeleteResultModal(client, payload);
+        }
+    }
   }
 }
 

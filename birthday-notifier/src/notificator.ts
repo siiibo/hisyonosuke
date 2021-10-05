@@ -58,20 +58,21 @@ const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => 
   for (let row of configSheet.getDataRange().getValues().slice(1)) {
     defaultMessage[row[0]] = row[1];
   }
-
   if (isPayday()) {
     postSlackChannel(defaultMessage['給料日']);
   }
 }
 
 const isPayday = () => {
-  let d = new Date();
-  if (d.getDate() == PAYDAY) {
-    return true;
-  } else {
-    for (d.setDate(d.getDate()+1); isHoliday(d); d.setDate(d.getDate()+1)) {
-      if (d.getDate() == PAYDAY) {
-        return true;
+  let date = new Date();
+  if (!isHoliday(date)) {
+    if (date.getDate() == PAYDAY) {
+      return true;
+    } else {
+      for (date.setDate(date.getDate()+1); isHoliday(date); date.setDate(date.getDate()+1)) {
+        if (date.getDate() == PAYDAY) {
+          return true;
+        }
       }
     }
   }

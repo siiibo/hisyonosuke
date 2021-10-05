@@ -1,8 +1,7 @@
 const path = require("path");
 const GasPlugin = require("gas-webpack-plugin");
 
-const mode =
-  process.env.NODE_ENV === "development" ? "development" : "production";
+const mode = "development";
 const devtool = "inline-source-map";
 const entry = {
   init: path.resolve("src", "init.ts"),
