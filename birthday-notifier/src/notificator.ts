@@ -63,7 +63,7 @@ const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => 
   }
 }
 
-const isPayday = () => {
+const isPayday = ():boolean => {
   let date = new Date();
   if (!isHoliday(date)) {
     if (date.getDate() == PAYDAY) {
