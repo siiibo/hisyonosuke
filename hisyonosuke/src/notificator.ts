@@ -6,7 +6,7 @@ const PAYDAY = 25;
 const notificator = () => {
   const prop = PropertiesService.getScriptProperties().getProperties();
   const spreadsheet = SpreadsheetApp.openById(prop.BIRTHDAY_SPREADSHEET_ID);
-  
+
   notifyAnniversary(spreadsheet);
   notifyPayday(spreadsheet);
 }
@@ -23,7 +23,7 @@ const notifyAnniversary = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
 
   const textFinder = dataSheet.createTextFinder(Utilities.formatDate(todayDate, 'Asia/Tokyo', 'MM/dd'))
     .matchEntireCell(false);
-  
+
   const ranges = textFinder.findAll();
 
   for (let range of ranges) {
@@ -63,13 +63,13 @@ const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => 
   }
 }
 
-const isPayday = ():boolean => {
+const isPayday = (): boolean => {
   let date = new Date();
   if (!isHoliday(date)) {
     if (date.getDate() == PAYDAY) {
       return true;
     } else {
-      for (date.setDate(date.getDate()+1); isHoliday(date); date.setDate(date.getDate()+1)) {
+      for (date.setDate(date.getDate() + 1); isHoliday(date); date.setDate(date.getDate() + 1)) {
         if (date.getDate() == PAYDAY) {
           return true;
         }
@@ -81,14 +81,14 @@ const isPayday = ():boolean => {
 
 const isHoliday = (date: Date): boolean => {
   const dayOfWeek = date.getDay();
-  if(dayOfWeek <= 0 || 6 <= dayOfWeek){
+  if (dayOfWeek <= 0 || 6 <= dayOfWeek) {
     return true;
   }
 
   const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
   const calendar = CalendarApp.getCalendarById(calendarId);
   const todayEvents = calendar.getEventsForDay(date);
-  if(todayEvents.length > 0){
+  if (todayEvents.length > 0) {
     return true;
   }
   return false;

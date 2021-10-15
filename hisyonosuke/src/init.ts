@@ -9,7 +9,7 @@ const initProperties = () => {
     for (let row of rows.slice(1)) properties[row[0]] = row[1];
 
     const scriptProperties = PropertiesService.getScriptProperties();
-    scriptProperties.deleteAllProperties(); 
+    scriptProperties.deleteAllProperties();
     scriptProperties.setProperties(properties);
 }
 
