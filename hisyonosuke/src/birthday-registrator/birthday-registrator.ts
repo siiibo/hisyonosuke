@@ -3,25 +3,27 @@ import { GlobalShortcut } from '@slack/bolt';
 import { ViewSubmitAction } from '@slack/bolt';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { ViewsOpenArguments, ViewsPushArguments } from '@hi-se/web-api/src/methods';
+import { getTypeAndCallbackId } from '../handler';
 import * as modals from './modals';
 
 const TYPE_COL = 2;
 const NAME_COL = 4;
 
-export const birthdayRegistrator = (e: GoogleAppsScript.Events.DoPost, type: string): string => {
+export const birthdayRegistrator = (e: GoogleAppsScript.Events.DoPost): string => {
+  const { type, callback_id } = getTypeAndCallbackId(e);
   const client = getSlackClient();
 
   if (type == 'shortcut') {
     return openHomeModal(client, JSON.parse(e.parameter['payload']));
-  } 
+  }
   else if (type == 'block_actions') {
-      const payload = JSON.parse(e.parameter['payload']);
-      switch (payload.actions[0].action_id) {
-        case 'click_register':
-          return pushRegisterModal(client, payload);
-        case 'click_delete':
-          return pushDeleteModal(client, payload);
-      }
+    const payload = JSON.parse(e.parameter['payload']);
+    switch (payload.actions[0].action_id) {
+      case 'click_register':
+        return pushRegisterModal(client, payload);
+      case 'click_delete':
+        return pushDeleteModal(client, payload);
+    }
   }
   else if (type == 'view_submission') {
     const payload = JSON.parse(e.parameter['payload']);
@@ -143,7 +145,7 @@ const registerAnniversaryDate = (payload: ViewSubmitAction): boolean => {
     .matchCase(true)
     .matchEntireCell(true)
     .matchFormulaText(true);
-  
+
   const ranges = textFinder.findAll();
 
   for (let range of ranges) {
@@ -155,11 +157,11 @@ const registerAnniversaryDate = (payload: ViewSubmitAction): boolean => {
       }
     }
   }
-  
+
   const lastRow = sheet.getLastRow() + 1;
 
   const createdAt = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy-MM-dd HH:mm:ss');
-  const values = [[createdAt, typeRequested, dateRequested, nameRequested, messageRequested]]; 
+  const values = [[createdAt, typeRequested, dateRequested, nameRequested, messageRequested]];
   sheet.getRange(lastRow, 1, 1, 5).setValues(values);
 
   return true;
@@ -178,7 +180,7 @@ const findAnniversaryDate = (payload: ViewSubmitAction): boolean => {
     .matchCase(true)
     .matchEntireCell(true)
     .matchFormulaText(true);
-  
+
   const ranges = textFinder.findAll();
 
   for (let range of ranges) {
@@ -190,7 +192,7 @@ const findAnniversaryDate = (payload: ViewSubmitAction): boolean => {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -207,7 +209,7 @@ const deleteAnniversaryDate = (payload: ViewSubmitAction): boolean => {
     .matchCase(true)
     .matchEntireCell(true)
     .matchFormulaText(true);
-  
+
   const ranges = textFinder.findAll();
 
   for (let range of ranges) {
@@ -220,6 +222,6 @@ const deleteAnniversaryDate = (payload: ViewSubmitAction): boolean => {
       }
     }
   }
-  
+
   return false;
 }

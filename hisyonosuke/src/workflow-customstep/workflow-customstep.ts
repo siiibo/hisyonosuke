@@ -1,13 +1,15 @@
 import { WorkflowStepEdit } from '@slack/bolt';
 import { WorkflowStepExecuteEvent } from '@slack/bolt';
-import { ViewWorkflowStepSubmitAction} from '@slack/bolt';
+import { ViewWorkflowStepSubmitAction } from '@slack/bolt';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { ViewsOpenArguments, WorkflowsUpdateStepArguments } from '@hi-se/web-api/src/methods';
+import { getTypeAndCallbackId } from '../handler';
 import * as modals from './modals';
 
 
-export const workflowCustomStep = (e: GoogleAppsScript.Events.DoPost, type: string) => {
+export const workflowCustomStep = (e: GoogleAppsScript.Events.DoPost) => {
   const client = getSlackClient();
+  const { type, callback_id } = getTypeAndCallbackId(e);
 
   if (type == 'workflow_step_edit') {
     const payload = JSON.parse(e.parameter['payload']);
@@ -45,8 +47,8 @@ const saveWorkflowStep = (client: SlackClient, payload: ViewWorkflowStepSubmitAc
     'workflow_step_edit_id': payload.workflow_step.workflow_step_edit_id,
     'token': PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN'),
     'inputs': {
-      'company_name' : {'value': payload.view.state.values.company_name.value.value},
-      'market_division' : {'value': payload.view.state.values.market_division.value.value},
+      'company_name': { 'value': payload.view.state.values.company_name.value.value },
+      'market_division': { 'value': payload.view.state.values.market_division.value.value },
     },
     'outputs': [],
   }
@@ -69,10 +71,10 @@ const registerCompany = (client: SlackClient, payload: WorkflowStepExecuteEvent)
     .ignoreDiacritics(true)
     .matchCase(true)
     .matchEntireCell(true)
-    .matchFormulaText(true);  
+    .matchFormulaText(true);
 
   if (textFinder.findAll().length == 0) {
-    const values = [[companyName, marketDivision]]; 
+    const values = [[companyName, marketDivision]];
     sheet.getRange(lastRow, 1, 1, 2).setValues(values);
   }
 

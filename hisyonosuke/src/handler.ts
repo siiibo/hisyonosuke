@@ -7,15 +7,8 @@ const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)['challenge']);
   }
 
-  let response = '';
-  const { type, callback_id } = getTypeAndCallbackId(e);
-
-  if (callback_id == 'register_anniversary') {
-    response = birthdayRegistrator(e, type);
-  }
-  else if (callback_id == 'register_company_to_spreadsheet') {
-    workflowCustomStep(e, type);
-  }
+  const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
+  workflowCustomStep(e);
 
   return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 }
@@ -63,7 +56,9 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   return false;
 }
 
-const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string, callback_id: string } => {
+export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string, callback_id: string } => {
+  // FIXME: この関数は使わない方向に修正していく
+  // 詳細は https://github.com/siiibo/hisyonosuke/pull/1 参照
   if (isAction(e)) {
     const payload = JSON.parse(e.parameter['payload']) as SlackAction;
     switch (payload.type) {
