@@ -1,7 +1,4 @@
-import { SlackAction } from '@slack/bolt';
-import { SlackEvent } from '@slack/bolt';
-import { SlackShortcut } from '@slack/bolt';
-import { SlackViewAction } from '@slack/bolt';
+import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
 
@@ -68,50 +65,35 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
 
 const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string, callback_id: string } => {
   if (isAction(e)) {
-    return handleSlackAction(JSON.parse(e.parameter['payload']));
-  }
-  else if (isViewAction(e)) {
-    return handleSlackViewAction(JSON.parse(e.parameter['payload']));
-  }
-  else if (isShortcut(e)) {
-    return handleSlackShortcut(JSON.parse(e.parameter['payload']));
-  }
-  else if (isEvent(e)) {
-    return handleSlackEvent(JSON.parse(e.postData.contents).event);
-  }
-}
-
-const handleSlackAction = (payload: SlackAction): { type: string, callback_id: string } => {
-  switch (payload.type) {
-    case 'block_actions':
-      return { type: payload.type, callback_id: payload.view.callback_id }
-    case 'workflow_step_edit':
-      return { type: payload.type, callback_id: payload.callback_id };
-  }
-}
-
-const handleSlackShortcut = (payload: SlackShortcut): { type: string, callback_id: string } => {
-  switch (payload.type) {
-    case 'shortcut':
-      return { type: payload.type, callback_id: payload.callback_id }
-    case 'message_action':
-      return { type: payload.type, callback_id: payload.callback_id }
-  }
-}
-
-const handleSlackViewAction = (payload: SlackViewAction): { type: string, callback_id: string } => {
-  switch (payload.type) {
-    case 'view_submission':
-      return { type: payload.type, callback_id: payload.view.callback_id };
-    case 'view_closed':
-      return { type: payload.type, callback_id: payload.view.callback_id };
-  }
-}
-
-const handleSlackEvent = (payload: SlackEvent): { type: string, callback_id: string } => {
-  switch (payload.type) {
-    case 'workflow_step_execute':
-      return { type: payload.type, callback_id: payload.callback_id };
+    const payload = JSON.parse(e.parameter['payload']) as SlackAction;
+    switch (payload.type) {
+      case 'block_actions':
+        return { type: payload.type, callback_id: payload.view.callback_id }
+      case 'workflow_step_edit':
+        return { type: payload.type, callback_id: payload.callback_id };
+    }
+  } else if (isViewAction(e)) {
+    const payload = JSON.parse(e.parameter['payload']) as SlackViewAction;
+    switch (payload.type) {
+      case 'view_submission':
+        return { type: payload.type, callback_id: payload.view.callback_id };
+      case 'view_closed':
+        return { type: payload.type, callback_id: payload.view.callback_id };
+    }
+  } else if (isShortcut(e)) {
+    const payload = JSON.parse(e.parameter['payload']) as SlackShortcut;
+    switch (payload.type) {
+      case 'shortcut':
+        return { type: payload.type, callback_id: payload.callback_id }
+      case 'message_action':
+        return { type: payload.type, callback_id: payload.callback_id }
+    }
+  } else if (isEvent(e)) {
+    const payload = JSON.parse(e.postData.contents).event as SlackEvent;
+    switch (payload.type) {
+      case 'workflow_step_execute':
+        return { type: payload.type, callback_id: payload.callback_id };
+    }
   }
 }
 
