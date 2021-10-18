@@ -3,7 +3,7 @@ import { GlobalShortcut } from '@slack/bolt';
 import { ViewSubmitAction } from '@slack/bolt';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { ViewsOpenArguments, ViewsPushArguments } from '@hi-se/web-api/src/methods';
-import { getTypeAndCallbackId } from '../handler';
+import { getTypeAndCallbackId } from '../app';
 import * as modals from './modals';
 
 const TYPE_COL = 2;

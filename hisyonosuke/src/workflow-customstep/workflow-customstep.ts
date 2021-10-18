@@ -3,7 +3,7 @@ import { WorkflowStepExecuteEvent } from '@slack/bolt';
 import { ViewWorkflowStepSubmitAction } from '@slack/bolt';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { ViewsOpenArguments, WorkflowsUpdateStepArguments } from '@hi-se/web-api/src/methods';
-import { getTypeAndCallbackId } from '../handler';
+import { getTypeAndCallbackId } from '../app';
 import * as modals from './modals';
 
 
