@@ -1,6 +1,7 @@
 import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
+import { notificator } from './notificator'
 
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   if (isUrlVerification(e)) {
@@ -110,3 +111,4 @@ const initProperties = () => {
 declare const global: any;
 global.doPost = doPost;
 global.init = init;
+global.notificator = notificator;

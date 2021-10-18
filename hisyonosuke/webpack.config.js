@@ -4,9 +4,7 @@ const GasPlugin = require("gas-webpack-plugin");
 const mode = "development";
 const devtool = "inline-source-map";
 const entry = {
-  init: path.resolve("src", "init.ts"),
-  handler: path.resolve("src", "handler.ts"),
-  notificator: path.resolve("src", "notificator.ts"),
+  app: path.resolve("src", "app.ts"),
 };
 const outPath = path.resolve("build");
 const outFileName = "[name].js";

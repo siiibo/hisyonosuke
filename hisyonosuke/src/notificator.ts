@@ -3,7 +3,7 @@ import { GasWebClient as SlackClient } from '@hi-se/web-api';
 const DATE_COL = 3;
 const PAYDAY = 25;
 
-const notificator = () => {
+export const notificator = () => {
   const prop = PropertiesService.getScriptProperties().getProperties();
   const spreadsheet = SpreadsheetApp.openById(prop.BIRTHDAY_SPREADSHEET_ID);
 
@@ -109,6 +109,3 @@ const postSlackChannel = (message: string) => {
     }
   );
 }
-
-declare const global: any;
-global.notificator = notificator;
