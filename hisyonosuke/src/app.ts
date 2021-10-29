@@ -67,6 +67,8 @@ export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type:
         return { type: payload.type, callback_id: payload.view.callback_id }
       case 'workflow_step_edit':
         return { type: payload.type, callback_id: payload.callback_id };
+      default:
+        return { type: payload.type, callback_id: undefined };
     }
   } else if (isViewAction(e)) {
     const payload = JSON.parse(e.parameter['payload']) as SlackViewAction;
@@ -89,6 +91,8 @@ export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type:
     switch (payload.type) {
       case 'workflow_step_execute':
         return { type: payload.type, callback_id: payload.callback_id };
+      default:
+        return { type: payload.type, callback_id: undefined };
     }
   }
 }
