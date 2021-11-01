@@ -40,7 +40,7 @@ const handleSlackEvent = (event: SlackEvent) => {
   switch (event.type) {
     case 'message':
       const message = getMessageListener(client, event);
-      message('test', (client, event) => {
+      message('test', ({ client, event }) => {
         console.log(event.text);
         // setTimeClocks(0, {
         //   company_id: 0,
@@ -51,21 +51,21 @@ const handleSlackEvent = (event: SlackEvent) => {
         // })
       });
 
-      message(/:shukkin:|:shussha:|:sagyoukaishi:/, (client, event) => {
+      message(/:shukkin:|:shussha:|:sagyoukaishi:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '出勤テスト（ephemeralに変更予定）',
           channel: event.channel,
         });
       })
 
-      message(/:taikin:|:saghoushuuryou:|:saishutaikin:/, (client, event) => {
+      message(/:taikin:|:saghoushuuryou:|:saishutaikin:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '退勤テスト（ephemeralに変更予定）',
           channel: event.channel,
         });
       })
 
-      message(/:remote:|:remoteshukkin:/, (client, event) => {
+      message(/:remote:|:remoteshukkin:/, ({ client, event }) => {
         console.log(event);
       })
       break;
@@ -89,9 +89,9 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
   if (event.type === 'message') {
     if (!event.subtype) {
       // とりあえずsubtypeを持たない pure message だけ対応
-      return (command: string | RegExp, callback: (client: SlackClient, event: GenericMessageEvent) => void) => {
+      return (command: string | RegExp, callback: ({ client, event }: { client: SlackClient, event: GenericMessageEvent }) => void) => {
         if (isOriginalCommand((event as GenericMessageEvent).text, command)) {
-          callback(client, event as GenericMessageEvent);
+          callback({ client, event: event as GenericMessageEvent });
         }
       }
     }
