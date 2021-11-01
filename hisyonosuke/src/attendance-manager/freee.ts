@@ -1,6 +1,16 @@
 import { getService } from './auth'
 import { buildUrl } from './utilities'
 
+
+interface CompaniesEmployeeSerializer {
+  id: number,
+  num: string,
+  display_name: string,
+  entry_date: string, // DateString
+  retire_date: string, // DateString
+  user_id: number,
+  email: string
+}
 interface EmployeeSerializer {
   id: number,
   num: string,
@@ -166,7 +176,7 @@ export function getWorkRecord(employId: number, date: Date): WorkRecordSerialize
   return JSON.parse(response);
 }
 
-export function getEmployees(): EmployeeSerializer[] {
+export function getCompanyEmployees(): CompaniesEmployeeSerializer[] {
   const accessToken = getService().getAccessToken();
   const requestUrl = 'https://api.freee.co.jp/hr/api/v1/companies/2607751/employees';
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
