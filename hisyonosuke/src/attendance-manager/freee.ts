@@ -29,6 +29,25 @@ interface TimeClocksControllerCreateBody {
   datetime: Date, // YYYY-MM-DD HH:MM:SS
 }
 
+interface WorkRecordControllerRequestBody {
+  company_id: number,
+  break_records?: any, //TODO
+  clock_in_at?: string, //DATETIME
+  clock_out_at?: string, //DATETIME
+  day_pattern?: string,
+  early_leaving_mins?: number,
+  is_absence?: boolean,
+  lateness_mins?: number,
+  normal_work_clock_in_at?: string, //DATETIME
+  normal_work_clock_out_at?: string, //DATETIME
+  normal_work_mins?: number,
+  normal_work_mins_by_paid_holiday?: number,
+  note?: string,
+  paid_holiday?: number,
+  use_attendance_deduction?: boolean,
+  use_default_work_pattern?: boolean,
+}
+
 interface WorkRecordSummarySerializer {
   year: number,
   month: number,
@@ -87,7 +106,7 @@ export function setTimeClocks(employId: number, body: TimeClocksControllerCreate
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
   const payload = {
     ...body,
-    datetime: body.datetime.toISOString()
+    datetime: body.datetime.toISOString() // TODO: 多分これ修正必要
   }
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'post',
@@ -158,3 +177,15 @@ export function getEmployees(): EmployeeSerializer[] {
   return JSON.parse(response);
 }
 
+export function updateWorkRecord(employId: number, date: Date, body: WorkRecordControllerRequestBody) {
+  const accessToken = getService().getAccessToken();
+  const requestUrl = `https://api.freee.co.jp/api/v1/employees/${employId}/work_records/${date}`;
+  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'put',
+    headers: { 'Authorization': 'Bearer ' + accessToken },
+    contentType: 'application/json',
+    payload: JSON.stringify(body)
+  };
+  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
+  return JSON.parse(response);
+}
