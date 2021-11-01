@@ -1,4 +1,4 @@
-import { GenericMessageEvent, MessageEvent, SlackEvent, SlashCommand } from '@slack/bolt';
+import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { setTimeClocks } from './freee';
@@ -71,8 +71,10 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
     if (typeof command === 'string') {
       const commandRegExp = new RegExp(command);
       return target.match(commandRegExp);
-    } else {
+    } else if (command instanceof RegExp) {
       return target.match(command)
+    } else {
+      throw new Error('TypeError');
     }
   };
 
