@@ -189,7 +189,7 @@ export function getCompanyEmployees(): CompaniesEmployeeSerializer[] {
 
 export function updateWorkRecord(employId: number, date: Date, body: WorkRecordControllerRequestBody) {
   const accessToken = getService().getAccessToken();
-  const requestUrl = `https://api.freee.co.jp/api/v1/employees/${employId}/work_records/${date}`;
+  const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'put',
     headers: { 'Authorization': 'Bearer ' + accessToken },
