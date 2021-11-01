@@ -934,24 +934,25 @@
     typescript "^4.3.2"
     wtfnode "^0.8.4"
 
-"@hi-se/web-api@https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3":
-  version "6.1.0"
-  resolved "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3#a429705c8fe26bda3bbd0b42116f25af7dedb9a7"
+"@hi-se/web-api@https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893":
+  version "6.2.4"
+  resolved "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893#64f8dcb353029496c66a33fe060fdfc0e3f94cb8"
   dependencies:
-    "@slack/logger" ">=1.0.0 <3.0.0"
-    "@slack/types" "^1.7.0"
+    "@slack/logger" "^3.0.0"
+    "@slack/types" "^2.0.0"
     "@types/is-stream" "^1.1.0"
     "@types/node" ">=12.0.0"
     axios "^0.21.1"
     eventemitter3 "^3.1.0"
     form-data "^2.5.0"
+    is-electron "^2.2.0"
     is-stream "^1.1.0"
     p-queue "^6.6.1"
     p-retry "^4.0.0"
 
-"@hi-se/web-api@https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d6102cf8c48b6494d4afc4c01977e5235292c0eb":
+"@hi-se/web-api@https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3":
   version "6.1.0"
-  resolved "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d6102cf8c48b6494d4afc4c01977e5235292c0eb#0b3d9e69e55e80c1b8f835b98e0402c95c6b2ef3"
+  resolved "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3#a429705c8fe26bda3bbd0b42116f25af7dedb9a7"
   dependencies:
     "@slack/logger" ">=1.0.0 <3.0.0"
     "@slack/types" "^1.7.0"
