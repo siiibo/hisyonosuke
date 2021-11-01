@@ -1,7 +1,7 @@
 import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
-import { setTimeClocks } from './freee';
+import { getCompanyEmployees, setTimeClocks } from './freee';
 
 enum IncomingEventType {
   Event,
@@ -89,6 +89,20 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
       }
     }
   }
+}
+
+const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string): number => {
+  const email = client.users.info({
+    user: slackUserId
+  }).user.profile.email;
+  const employees = getCompanyEmployees();
+  const target = employees.filter((employee) => {
+    return employee.email === email;
+  });
+  if (target.length !== 1) {
+    throw new Error('duplicate employee email')
+  }
+  return target[0].id;
 }
 
 const getSlackClient = () => {
