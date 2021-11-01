@@ -43,9 +43,10 @@ const attendanceManager = (payload: StringIndexed, incomingEventType: IncomingEv
 
 const handleSlackEvent = (event: SlackEvent) => {
   console.log(event);
+  const client = getSlackClient();
   switch (event.type) {
     case 'message':
-      const message = getMessageListener(null, event);
+      const message = getMessageListener(client, event);
       message('test', (client, event) => {
         console.log(event.text);
         // setTimeClocks(0, {
@@ -88,6 +89,11 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
       }
     }
   }
+}
+
+const getSlackClient = () => {
+  const token = PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN');
+  return new SlackClient(token);
 }
 
 const getPayload = (e: GoogleAppsScript.Events.DoPost): StringIndexed => {
