@@ -80,6 +80,8 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
       const commandRegExp = new RegExp(command);
       return target.match(commandRegExp);
     } else if (command instanceof RegExp) {
+      // 週次之介のように前後の文字列でさらに制限をかける場合は一旦stringにする必要がある
+      // その場合、RegExp.prototype.toString()はスラッシュとflagを含めて返すため、取り除く処理が必要
       return target.match(command)
     } else {
       throw new Error('TypeError');
