@@ -12,13 +12,6 @@ enum IncomingEventType {
   Shortcut,
 }
 
-const STAMP_NAMES = {
-  START: [':shukkin:', ':shussha:', ':sagyoukaishi:'],
-  END: [':taikin:', ':saghoushuuryou:', ':saishutaikin:'],
-  REMOTE: ['remote', ':remoteshukkin:']
-}
-
-
 /**
  * doPost移行用
  * DoPost Eventのparse処理をdoPost内で行うように変更し、attendanceManagementに置き換える予定
@@ -58,7 +51,21 @@ const handleSlackEvent = (event: SlackEvent) => {
         // })
       });
 
-      message(':remote:', (client, event) => {
+      message(/:shukkin:|:shussha:|:sagyoukaishi:/, (client, event) => {
+        client.chat.postMessage({
+          text: '出勤テスト（ephemeralに変更予定）',
+          channel: event.channel,
+        });
+      })
+
+      message(/:taikin:|:saghoushuuryou:|:saishutaikin:/, (client, event) => {
+        client.chat.postMessage({
+          text: '退勤テスト（ephemeralに変更予定）',
+          channel: event.channel,
+        });
+      })
+
+      message(/:remote:|:remoteshukkin:/, (client, event) => {
         console.log(event);
       })
       break;
