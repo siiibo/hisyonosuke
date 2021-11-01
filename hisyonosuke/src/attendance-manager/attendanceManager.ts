@@ -82,8 +82,8 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
   if (event.type === 'message') {
     if (!event.subtype) {
       // とりあえずsubtypeを持たない pure message だけ対応
-      return (commandRegExpString: string, callback: (client: SlackClient, event: GenericMessageEvent) => void) => {
-        if (isOriginalCommand((event as GenericMessageEvent).text, commandRegExpString)) {
+      return (command: string | RegExp, callback: (client: SlackClient, event: GenericMessageEvent) => void) => {
+        if (isOriginalCommand((event as GenericMessageEvent).text, command)) {
           callback(client, event as GenericMessageEvent);
         }
       }
