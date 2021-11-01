@@ -1,7 +1,8 @@
 import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
-import { notificator } from './notificator'
+import { notificator } from './notificator';
+import { attendanceManagerProxy } from './attendance-manager/attendanceManager'
 
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   if (isUrlVerification(e)) {
@@ -10,6 +11,7 @@ const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
 
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
+  attendanceManagerProxy(e);
 
   return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 }
