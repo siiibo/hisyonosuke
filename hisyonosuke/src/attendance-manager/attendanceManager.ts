@@ -1,7 +1,7 @@
 import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
-import { getCompanyEmployees, setTimeClocks } from './freee';
+import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
 import { getConfig } from './config';
 
@@ -43,11 +43,6 @@ export const hourlyCheckForAttendanceManager = () => {
   }
 
   const client = getSlackClient();
-
-  if (now.getHours() === 6) { // TODO: 時間の定数化
-    checkWorkPlace(client);
-  }
-
   checkAttendance(client);
 }
 
@@ -86,25 +81,19 @@ const checkAttendance = (client: SlackClient) => {
         datetime: date
       })
     }
-  });
-}
-
-const checkWorkPlace = (client: SlackClient) => {
-  const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
-
-  const now = new Date();
-  let oldest = new Date();
-  oldest.setDate(now.getDate() - 1);
-
-  const messages = client.conversations.history({
-    channel: TEST_CHANNEL_ID, //FIXME
-    oldest: getUnixTimeStampString(oldest),
-    inclusive: true
-  }).messages;
-
-  messages.forEach(message => {
     if (message.text.match(/:remote:|:remoteshukkin:/)) {
-      //
+      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+      const date = new Date(parseInt(message.ts) * 1000);
+
+      const workRecord = getWorkRecord(employeeId, date);
+      if (workRecord.clock_in_at && workRecord.clock_out_at) {
+        updateWorkRecord(employeeId, date, {
+          company_id: FREEE_COMPANY_ID,
+          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
+          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
+          note: 'リモート'
+        });
+      }
     }
   });
 }
