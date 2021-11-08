@@ -10,6 +10,7 @@ export function printAuthUrl() {
 
 export function getService() {
   const { FREEE_CLIENT_ID: CLIENT_ID, FREEE_CLIENT_SECRET: CLIENT_SECRET } = getConfig();
+  //TODO: OAuth用の値もConfigに追加する
   return OAuth2.createService('freee')
     .setAuthorizationBaseUrl('https://accounts.secure.freee.co.jp/public_api/authorize')
     .setTokenUrl('https://accounts.secure.freee.co.jp/public_api/token')
