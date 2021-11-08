@@ -1,4 +1,4 @@
-const CONFIG_SPREADSHEET_ID = '1urycTYGkcfVfKOndBEHJm8kTqfeQmhF10cUWyrppBZ4';
+const CONFIG_SPREADSHEET_ID = '1fAxgi14OJx6f8RrnUMMoELF--mSZPMWgl3Zz_CUGYL8';
 
 interface Config {
   FREEE_CLIENT_ID: string,
