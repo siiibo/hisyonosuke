@@ -2,7 +2,7 @@ import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
 import { notificator } from './notificator';
-import { attendanceManagerProxy } from './attendance-manager/attendanceManager'
+import { attendanceManagerProxy, hourlyCheckForAttendanceManager } from './attendance-manager/attendanceManager'
 
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   if (isUrlVerification(e)) {
@@ -14,6 +14,13 @@ const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
   attendanceManagerProxy(e);
 
   return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * 1時間毎にセットしたTimeTriggerから呼び出す
+ */
+const hourlyTimer = () => {
+  hourlyCheckForAttendanceManager();
 }
 
 const isJson = (e: GoogleAppsScript.Events.DoPost): boolean => {
@@ -115,6 +122,7 @@ const initProperties = () => {
 }
 
 declare const global: any;
+global.hourlyTimer = hourlyTimer;
 global.doPost = doPost;
 global.init = init;
 global.notificator = notificator;

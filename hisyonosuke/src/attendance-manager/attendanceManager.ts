@@ -2,6 +2,8 @@ import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { getCompanyEmployees, setTimeClocks } from './freee';
+import { getUnixTimeStampString, isWorkDay } from './utilities';
+import { getConfig } from './config';
 
 enum IncomingEventType {
   Event,
@@ -34,23 +36,85 @@ const attendanceManager = (payload: StringIndexed, incomingEventType: IncomingEv
   }
 }
 
+export const hourlyCheckForAttendanceManager = () => {
+  const now = new Date();
+  if (!isWorkDay(now)) {
+    return;
+  }
+
+  const client = getSlackClient();
+
+  if (now.getHours() === 6) { // TODO: 時間の定数化
+    checkWorkPlace(client);
+  }
+
+  checkAttendance(client);
+}
+
+const checkAttendance = (client: SlackClient) => {
+  const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
+
+  const now = new Date();
+  let oldest = new Date();
+  oldest.setHours(now.getHours() - 1);
+  oldest.setMinutes(now.getMinutes() - 1);
+
+  const messages = client.conversations.history({
+    channel: TEST_CHANNEL_ID, //FIXME
+    oldest: getUnixTimeStampString(oldest),
+    inclusive: true
+  }).messages;
+
+  messages.forEach(message => {
+    if (message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/)) {
+      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+      const date = new Date(parseInt(message.ts) * 1000);
+      setTimeClocks(employeeId, {
+        company_id: FREEE_COMPANY_ID,
+        type: 'clock_in',
+        base_date: date,
+        datetime: date
+      })
+    }
+    if (message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/)) {
+      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+      const date = new Date(parseInt(message.ts) * 1000);
+      setTimeClocks(employeeId, {
+        company_id: FREEE_COMPANY_ID,
+        type: 'clock_out',
+        base_date: date,
+        datetime: date
+      })
+    }
+  });
+}
+
+const checkWorkPlace = (client: SlackClient) => {
+  const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
+
+  const now = new Date();
+  let oldest = new Date();
+  oldest.setDate(now.getDate() - 1);
+
+  const messages = client.conversations.history({
+    channel: TEST_CHANNEL_ID, //FIXME
+    oldest: getUnixTimeStampString(oldest),
+    inclusive: true
+  }).messages;
+
+  messages.forEach(message => {
+    if (message.text.match(/:remote:|:remoteshukkin:/)) {
+      //
+    }
+  });
+}
+
 const handleSlackEvent = (event: SlackEvent) => {
   console.log(event);
   const client = getSlackClient();
   switch (event.type) {
     case 'message':
       const message = getMessageListener(client, event);
-      message('test', ({ client, event }) => {
-        console.log(event.text);
-        // setTimeClocks(0, {
-        //   company_id: 0,
-        //   type: 'clock_in',
-        //   base_date: new Date().toISOString(),
-        //   datetime: new Date()
-
-        // })
-      });
-
       message(/:shukkin:|:shussha:|:sagyoukaishi:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '出勤テスト（ephemeralに変更予定）',
@@ -101,6 +165,7 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
 }
 
 const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string): number => {
+  // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId
   }).user.profile.email;
