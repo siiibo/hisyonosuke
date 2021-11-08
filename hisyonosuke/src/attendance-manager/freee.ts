@@ -35,7 +35,7 @@ interface HolidaysAndHoursSerializer {
 interface TimeClocksControllerCreateBody {
   company_id: number,
   type: 'clock_in' | 'break_begin' | 'break_end' | 'clock_out',
-  base_date: string, // YYYY-MM-DD
+  base_date: Date, // YYYY-MM-DD
   datetime: Date, // YYYY-MM-DD HH:MM:SS
 }
 
@@ -116,6 +116,7 @@ export function setTimeClocks(employId: number, body: TimeClocksControllerCreate
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
   const payload = {
     ...body,
+    base_date: body.base_date.toISOString(),
     datetime: body.datetime.toISOString() // TODO: 多分これ修正必要
   }
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
