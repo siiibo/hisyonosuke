@@ -51,8 +51,8 @@ const checkAttendance = (client: SlackClient) => {
 
   const now = new Date();
   let oldest = new Date();
-  oldest.setHours(now.getHours() - 1);
-  oldest.setMinutes(now.getMinutes() - 1);
+  oldest.setHours(now.getHours() - 1); //TODO: 定数化
+  oldest.setMinutes(now.getMinutes() - 1); // GASのタイムトリガーの誤差を反映（あまり意味はないかもしれないので要検証）
 
   const messages = client.conversations.history({
     channel: TEST_CHANNEL_ID, //FIXME
