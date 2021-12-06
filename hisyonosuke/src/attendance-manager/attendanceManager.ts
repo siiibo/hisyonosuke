@@ -55,7 +55,7 @@ const checkAttendance = (client: SlackClient) => {
   oldest.setMinutes(now.getMinutes() - 1); // GASのタイムトリガーの誤差を反映（あまり意味はないかもしれないので要検証）
 
   const messages = client.conversations.history({
-    channel: TEST_CHANNEL_ID, //FIXME
+    channel: 'D01BASMU8JV', //FIXME
     oldest: getUnixTimeStampString(oldest),
     inclusive: true
   }).messages;
@@ -77,7 +77,7 @@ const checkAttendance = (client: SlackClient) => {
       setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_out',
-        base_date: date,
+        base_date: date, //TODO: 深夜帯の取り扱い
         datetime: date
       })
     }
@@ -104,6 +104,7 @@ const handleSlackEvent = (event: SlackEvent) => {
   switch (event.type) {
     case 'message':
       const message = getMessageListener(client, event);
+      // TODO: ここではスタンプ押した際に投稿者へのフィードバックを行う。
       message(/:shukkin:|:shussha:|:sagyoukaishi:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '出勤テスト（ephemeralに変更予定）',
