@@ -17,7 +17,7 @@ export function getService() {
     .setClientId(CLIENT_ID)
     .setClientSecret(CLIENT_SECRET)
     .setCallbackFunction(authCallback.name)
-    .setPropertyStore(PropertiesService.getScriptProperties())
+    .setPropertyStore(PropertiesService.getUserProperties()) // とりあえず@hi-seのUserPropに保持している
 }
 
 export function authCallback(request: any) {
