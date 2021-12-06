@@ -14,6 +14,22 @@ enum IncomingEventType {
   Shortcut,
 }
 
+export const initAttendanceManager = () => {
+  const targetFunction = checkAttendance;
+
+  ScriptApp.getProjectTriggers().forEach(trigger => {
+    if (trigger.getHandlerFunction() === targetFunction.name) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+
+  ScriptApp
+    .newTrigger(targetFunction.name)
+    .timeBased()
+    .everyMinutes(15) //TODO: 定数化
+    .create();
+}
+
 /**
  * doPost移行用
  * DoPost Eventのparse処理をdoPost内で行うように変更し、attendanceManagementに置き換える予定
