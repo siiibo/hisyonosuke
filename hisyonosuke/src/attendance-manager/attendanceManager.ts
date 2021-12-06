@@ -15,7 +15,7 @@ enum IncomingEventType {
 }
 
 export const initAttendanceManager = () => {
-  const targetFunction = checkAttendance;
+  const targetFunction = periodicallyCheckForAttendanceManager;
 
   ScriptApp.getProjectTriggers().forEach(trigger => {
     if (trigger.getHandlerFunction() === targetFunction.name) {
@@ -52,7 +52,7 @@ const attendanceManager = (payload: StringIndexed, incomingEventType: IncomingEv
   }
 }
 
-export const hourlyCheckForAttendanceManager = () => {
+export const periodicallyCheckForAttendanceManager = () => {
   const now = new Date();
   if (!isWorkDay(now)) {
     return;
