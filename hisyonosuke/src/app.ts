@@ -113,7 +113,7 @@ const initProperties = () => {
   const scriptProperties = PropertiesService.getScriptProperties();
 
   // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
-  scriptProperties.deleteAllProperties();
+  // scriptProperties.deleteAllProperties();
 
   scriptProperties.setProperties(properties);
 }
