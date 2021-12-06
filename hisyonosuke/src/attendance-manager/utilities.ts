@@ -21,9 +21,5 @@ function isHoliday(targetDate: Date): boolean {
   const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
   const calendar = CalendarApp.getCalendarById(calendarId);
   const todayEvents = calendar.getEventsForDay(targetDate);
-  if (todayEvents.length > 0) {
-    return true;
-  } else {
-    return false;
-  }
+  return todayEvents.length > 0
 }
