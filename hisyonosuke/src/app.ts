@@ -5,6 +5,11 @@ import { notificator } from './notificator';
 import { attendanceManagerProxy, periodicallyCheckForAttendanceManager, initAttendanceManager } from './attendance-manager/attendanceManager'
 
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
+  console.info({
+    appName: 'hisyonoske',
+    ...e
+  });
+
   if (isUrlVerification(e)) {
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)['challenge']);
   }
