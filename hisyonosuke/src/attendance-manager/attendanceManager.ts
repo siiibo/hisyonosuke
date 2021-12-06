@@ -104,13 +104,13 @@ const checkAttendance = (client: SlackClient) => {
     return message.reactions?.filter(reaction => {
       return (
         reaction.name === doneReaction &&
-        hisyonosukeId in reaction.users
+        reaction.users.includes(hisyonosukeId)
       );
     }).length;
   }).map(m => m.user);
 
   clockIn.forEach(message => {
-    if (message.user in processedClockInUsers) {
+    if (processedClockInUsers.includes(message.user)) {
       return;
     }
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
@@ -132,20 +132,20 @@ const checkAttendance = (client: SlackClient) => {
   const clockOut = messages.filter(message => {
     return (
       message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
-      message.user in clockIn.map(message => { return message.user })
+      clockIn.map(message => { return message.user }).includes(message.user)
     );
   });
   const processedClockOutUsers = clockOut.filter(message => {
     return message.reactions?.filter(reaction => {
       return (
         reaction.name === doneReaction &&
-        hisyonosukeId in reaction.users
+        reaction.users.includes(hisyonosukeId)
       );
     }).length;
   }).map(m => m.user);
 
   clockOut.filter(message => !message.reactions).forEach(message => {
-    if (message.user in processedClockOutUsers) {
+    if (processedClockOutUsers.includes(message.user)) {
       return;
     }
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
@@ -170,8 +170,8 @@ const checkAttendance = (client: SlackClient) => {
   const remote = messages.filter(message => {
     return (
       message.text.match(/:remote:|:remoteshukkin:/) &&
-      message.user in clockIn.map(message => { return message.user }) &&
-      message.user in clockOut.map(message => { return message.user })
+      clockIn.map(message => { return message.user }).includes(message.user) &&
+      clockOut.map(message => { return message.user }).includes(message.user)
     );
   });
 
@@ -179,13 +179,13 @@ const checkAttendance = (client: SlackClient) => {
     return message.reactions?.filter(reaction => {
       return (
         reaction.name === doneReaction &&
-        hisyonosukeId in reaction.users
+        reaction.users.includes(hisyonosukeId)
       );
     }).length;
   }).map(m => m.user);
 
   remote.filter(message => !message.reactions).forEach(message => {
-    if (message.user in processedRemoteUsers) {
+    if (processedRemoteUsers.includes(message.user)) {
       return;
     }
 
