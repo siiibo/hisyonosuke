@@ -64,6 +64,12 @@ export const periodicallyCheckForAttendanceManager = () => {
   checkAttendance(client);
 }
 
+/*
+  NOTE:
+  dateStartHour ~ 現在時刻までのメッセージから勤怠情報を取得→freeeへの登録を行う。
+  triggerの呼び出し毎に、処理済みのメッセージも含めてチェックするという冗長な処理になってしまっている。
+  いずれPropServiceなどを使って状態管理するほうが良いかもしれない。
+ */
 const checkAttendance = (client: SlackClient) => {
   const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
   const channelId = TEST_CHANNEL_ID; //FIXME
