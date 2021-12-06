@@ -3,7 +3,7 @@ import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
-import { getConfig } from './config';
+import { getConfig, initConfig } from './config';
 
 enum IncomingEventType {
   Event,
@@ -15,6 +15,8 @@ enum IncomingEventType {
 }
 
 export const initAttendanceManager = () => {
+  initConfig();
+
   const targetFunction = periodicallyCheckForAttendanceManager;
 
   ScriptApp.getProjectTriggers().forEach(trigger => {
@@ -64,53 +66,141 @@ export const periodicallyCheckForAttendanceManager = () => {
 
 const checkAttendance = (client: SlackClient) => {
   const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
+  const channelId = TEST_CHANNEL_ID; //FIXME
+  const hisyonosukeId = 'B01ARBNUP8E';
+  const doneReaction = 'eyes';
+
+  const dateStartHour = 4;
 
   const now = new Date();
   let oldest = new Date();
-  oldest.setHours(now.getHours() - 1); //TODO: 定数化
-  oldest.setMinutes(now.getMinutes() - 1); // GASのタイムトリガーの誤差を反映（あまり意味はないかもしれないので要検証）
+  oldest.setHours(dateStartHour);
+  oldest.setMinutes(0);
+  if (now.getTime() <= dateStartHour) {
+    oldest.setDate(now.getDate() - 1);
+  }
 
   const messages = client.conversations.history({
-    channel: 'D01BASMU8JV', //FIXME
+    channel: channelId, //FIXME
     oldest: getUnixTimeStampString(oldest),
     inclusive: true
   }).messages;
 
-  messages.forEach(message => {
-    if (message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/)) {
-      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-      const date = new Date(parseInt(message.ts) * 1000);
-      setTimeClocks(employeeId, {
-        company_id: FREEE_COMPANY_ID,
-        type: 'clock_in',
-        base_date: date,
-        datetime: date
-      })
-    }
-    if (message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/)) {
-      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-      const date = new Date(parseInt(message.ts) * 1000);
-      setTimeClocks(employeeId, {
-        company_id: FREEE_COMPANY_ID,
-        type: 'clock_out',
-        base_date: date, //TODO: 深夜帯の取り扱い
-        datetime: date
-      })
-    }
-    if (message.text.match(/:remote:|:remoteshukkin:/)) {
-      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-      const date = new Date(parseInt(message.ts) * 1000);
+  if (!messages?.length) {
+    return;
+  }
 
-      const workRecord = getWorkRecord(employeeId, date);
-      if (workRecord.clock_in_at && workRecord.clock_out_at) {
-        updateWorkRecord(employeeId, date, {
-          company_id: FREEE_COMPANY_ID,
-          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
-          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
-          note: 'リモート'
-        });
-      }
+  const clockIn = messages.filter(message => {
+    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/);
+  });
+
+  const processedClockInUsers = clockIn.filter(message => {
+    return message.reactions?.filter(reaction => {
+      return (
+        reaction.name === doneReaction &&
+        hisyonosukeId in reaction.users
+      );
+    }).length;
+  }).map(m => m.user);
+
+  clockIn.forEach(message => {
+    if (message.user in processedClockInUsers) {
+      return;
     }
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+    const date = new Date(parseInt(message.ts) * 1000);
+    setTimeClocks(employeeId, {
+      company_id: FREEE_COMPANY_ID,
+      type: 'clock_in',
+      base_date: date,
+      datetime: date
+    });
+
+    client.reactions.add({
+      channel: channelId,
+      name: doneReaction,
+      timestamp: message.ts
+    });
+  });
+
+  const clockOut = messages.filter(message => {
+    return (
+      message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
+      message.user in clockIn.map(message => { return message.user })
+    );
+  });
+  const processedClockOutUsers = clockOut.filter(message => {
+    return message.reactions?.filter(reaction => {
+      return (
+        reaction.name === doneReaction &&
+        hisyonosukeId in reaction.users
+      );
+    }).length;
+  }).map(m => m.user);
+
+  clockOut.filter(message => !message.reactions).forEach(message => {
+    if (message.user in processedClockOutUsers) {
+      return;
+    }
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+    const date = new Date(parseInt(message.ts) * 1000);
+    let baseDate = new Date(date.getTime());
+    if (date.getTime() < dateStartHour) {
+      baseDate.setDate(date.getDate() - 1);
+    }
+    setTimeClocks(employeeId, {
+      company_id: FREEE_COMPANY_ID,
+      type: 'clock_out',
+      base_date: baseDate,
+      datetime: date
+    });
+    client.reactions.add({
+      channel: channelId,
+      name: doneReaction,
+      timestamp: message.ts
+    });
+  });
+
+  const remote = messages.filter(message => {
+    return (
+      message.text.match(/:remote:|:remoteshukkin:/) &&
+      message.user in clockIn.map(message => { return message.user }) &&
+      message.user in clockOut.map(message => { return message.user })
+    );
+  });
+
+  const processedRemoteUsers = clockOut.filter(message => {
+    return message.reactions?.filter(reaction => {
+      return (
+        reaction.name === doneReaction &&
+        hisyonosukeId in reaction.users
+      );
+    }).length;
+  }).map(m => m.user);
+
+  remote.filter(message => !message.reactions).forEach(message => {
+    if (message.user in processedRemoteUsers) {
+      return;
+    }
+
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
+    const date = new Date(parseInt(message.ts) * 1000);
+
+    const workRecord = getWorkRecord(employeeId, date);
+    if (workRecord.clock_in_at && workRecord.clock_out_at) {
+      updateWorkRecord(employeeId, date, {
+        company_id: FREEE_COMPANY_ID,
+        clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
+        clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
+        note: 'リモート'
+      });
+    };
+
+    client.reactions.add({
+      channel: channelId,
+      name: doneReaction,
+      timestamp: message.ts
+    });
   });
 }
 
