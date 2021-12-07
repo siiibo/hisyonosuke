@@ -10,6 +10,9 @@ import * as modals from './modals';
 export const workflowCustomStep = (e: GoogleAppsScript.Events.DoPost) => {
   const client = getSlackClient();
   const { type, callback_id } = getTypeAndCallbackId(e);
+  if (callback_id != 'register_company_to_spreadsheet') {
+    return "";
+  }
 
   if (type == 'workflow_step_edit') {
     const payload = JSON.parse(e.parameter['payload']);

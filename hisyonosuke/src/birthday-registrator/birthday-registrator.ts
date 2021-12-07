@@ -11,6 +11,10 @@ const NAME_COL = 4;
 
 export const birthdayRegistrator = (e: GoogleAppsScript.Events.DoPost): string => {
   const { type, callback_id } = getTypeAndCallbackId(e);
+  if (callback_id != 'register_anniversary') {
+    return "";
+  }
+
   const client = getSlackClient();
 
   if (type == 'shortcut') {
@@ -47,7 +51,7 @@ export const birthdayRegistrator = (e: GoogleAppsScript.Events.DoPost): string =
     }
   }
 
-  return ""
+  return "";
 }
 
 const getSlackClient = (): SlackClient => {
