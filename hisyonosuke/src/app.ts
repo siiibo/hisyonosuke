@@ -3,6 +3,8 @@ import { birthdayRegistrator } from './birthday-registrator/birthday-registrator
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
 import { notificator } from './notificator'
 
+const PROPS_SPREADSHEET_ID = '1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU';
+
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   if (isUrlVerification(e)) {
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)['challenge']);
@@ -102,7 +104,7 @@ const init = () => {
 }
 
 const initProperties = () => {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CONFIG');
+  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName('CONFIG');
   const rows = sheet.getDataRange().getValues();
   let properties = {};
   for (let row of rows.slice(1)) properties[row[0]] = row[1];
