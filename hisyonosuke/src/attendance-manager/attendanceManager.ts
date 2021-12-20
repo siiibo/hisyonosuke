@@ -115,24 +115,37 @@ const checkAttendance = (client: SlackClient) => {
     }
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
     const date = new Date(parseInt(message.ts) * 1000);
-    setTimeClocks(employeeId, {
-      company_id: FREEE_COMPANY_ID,
-      type: 'clock_in',
-      base_date: date,
-      datetime: date
-    });
 
-    client.reactions.add({
-      channel: channelId,
-      name: doneReaction,
-      timestamp: message.ts
-    });
+    try {
+      const res= setTimeClocks(employeeId, {
+        company_id: FREEE_COMPANY_ID,
+        type: 'clock_in',
+        base_date: date,
+        datetime: date
+      });
+      client.reactions.add({
+        channel: channelId,
+        name: doneReaction,
+        timestamp: message.ts
+      });
+      console.log(res);
+    } catch (e) {
+      if (e.message.includes("打刻の種類が正しくありません。")) {
+        console.log('既に打刻済みです'); //TODO: slack
+
+      } else {
+        throw new Error(e);
+      }
+    }
+
+
+
   });
 
   const clockOut = messages.filter(message => {
     return (
       message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
-      clockIn.map(message => { return message.user }).includes(message.user)
+      clockIn.map(message => { return message.user }).includes(message.user) // TODO: 打刻済みかどうかは例外処理でチェックしたほうが良さそう
     );
   });
   const processedClockOutUsers = clockOut.filter(message => {
