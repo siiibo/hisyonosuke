@@ -192,7 +192,7 @@ const checkAttendance = (client: SlackClient) => {
           company_id: FREEE_COMPANY_ID,
           clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
           clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
-          note: 'リモート',
+          note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
         });
       };
       client.reactions.add({
