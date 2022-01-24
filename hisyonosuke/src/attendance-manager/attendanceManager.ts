@@ -147,7 +147,11 @@ const checkAttendance = (client: SlackClient) => {
       console.log(res);
     } catch (e) {
       if (e.message.includes("打刻の種類が正しくありません。")) {
-        console.log('既に打刻済みです'); //TODO: slack
+        client.chat.postEphemeral({
+          channel: channelId,
+          user: message.user,
+          text: '既に打刻済みです'
+        });
 
       } else {
         // FIXME: 例外発生時の処理をちゃんと考える
@@ -181,6 +185,7 @@ const checkAttendance = (client: SlackClient) => {
       });
     } catch (e) {
       // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
+      // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
       console.error(e);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
