@@ -72,9 +72,10 @@ export const periodicallyCheckForAttendanceManager = () => {
  */
 const checkAttendance = (client: SlackClient) => {
   const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
-  const channelId = TEST_CHANNEL_ID; //FIXME
+  const channelId = TEST_CHANNEL_ID; // FIXME: ATTENDANCE_CHANNEL_IDに戻す
   const hisyonosukeId = 'B01ARBNUP8E';
   const doneReaction = 'eyes';
+  const doneReactionForRemote = 'remote'; // FIXME:「リモート出勤」だと出勤の時点でdoneReactionとの区別がつかず後続の条件判定に影響があるため、一旦テキトーに配置
 
   const dateStartHour = 4;
 
@@ -96,28 +97,43 @@ const checkAttendance = (client: SlackClient) => {
     return;
   }
 
-  const clockIn = messages.filter(message => {
-    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/);
+
+  const unprocessedClockIn = messages.filter(message => {
+    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/) &&
+      !message.reactions?.filter(reaction => {
+        return (
+          reaction.name === doneReaction &&
+          reaction.users.includes(hisyonosukeId)
+        );
+      }).length
   });
 
-  const processedClockInUsers = clockIn.filter(message => {
-    return message.reactions?.filter(reaction => {
-      return (
-        reaction.name === doneReaction &&
-        reaction.users.includes(hisyonosukeId)
-      );
-    }).length;
-  }).map(m => m.user);
+  const unprocessedClockOut = messages.filter(message => {
+    return message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
+      !message.reactions?.filter(reaction => {
+        return (
+          reaction.name === doneReaction &&
+          reaction.users.includes(hisyonosukeId)
+        );
+      }).length
+  });
 
-  clockIn.forEach(message => {
-    if (processedClockInUsers.includes(message.user)) {
-      return;
-    }
+  const unprocessedRemote = messages.filter(message => {
+    return message.text.match(/:remote:|:remoteshukkin:/) &&
+      !message.reactions?.filter(reaction => {
+        return (
+          reaction.name === doneReactionForRemote &&
+          reaction.users.includes(hisyonosukeId)
+        );
+      }).length
+  });
+
+  unprocessedClockIn.forEach(message => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
     const date = new Date(parseInt(message.ts) * 1000);
 
     try {
-      const res= setTimeClocks(employeeId, {
+      const res = setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_in',
         base_date: date,
@@ -137,89 +153,57 @@ const checkAttendance = (client: SlackClient) => {
         throw new Error(e);
       }
     }
-
-
-
   });
 
-  const clockOut = messages.filter(message => {
-    return (
-      message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
-      clockIn.map(message => { return message.user }).includes(message.user) // TODO: 打刻済みかどうかは例外処理でチェックしたほうが良さそう
-    );
-  });
-  const processedClockOutUsers = clockOut.filter(message => {
-    return message.reactions?.filter(reaction => {
-      return (
-        reaction.name === doneReaction &&
-        reaction.users.includes(hisyonosukeId)
-      );
-    }).length;
-  }).map(m => m.user);
-
-  clockOut.filter(message => !message.reactions).forEach(message => {
-    if (processedClockOutUsers.includes(message.user)) {
-      return;
-    }
+  unprocessedClockOut.forEach(message => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
     const date = new Date(parseInt(message.ts) * 1000);
     let baseDate = new Date(date.getTime());
     if (date.getTime() < dateStartHour) {
       baseDate.setDate(date.getDate() - 1);
     }
-    setTimeClocks(employeeId, {
-      company_id: FREEE_COMPANY_ID,
-      type: 'clock_out',
-      base_date: baseDate,
-      datetime: date
-    });
-    client.reactions.add({
-      channel: channelId,
-      name: doneReaction,
-      timestamp: message.ts
-    });
-  });
-
-  const remote = messages.filter(message => {
-    return (
-      message.text.match(/:remote:|:remoteshukkin:/) &&
-      clockIn.map(message => { return message.user }).includes(message.user) &&
-      clockOut.map(message => { return message.user }).includes(message.user)
-    );
-  });
-
-  const processedRemoteUsers = clockOut.filter(message => {
-    return message.reactions?.filter(reaction => {
-      return (
-        reaction.name === doneReaction &&
-        reaction.users.includes(hisyonosukeId)
-      );
-    }).length;
-  }).map(m => m.user);
-
-  remote.filter(message => !message.reactions).forEach(message => {
-    if (processedRemoteUsers.includes(message.user)) {
-      return;
+    try {
+      setTimeClocks(employeeId, {
+        company_id: FREEE_COMPANY_ID,
+        type: 'clock_out',
+        base_date: baseDate,
+        datetime: date
+      });
+      client.reactions.add({
+        channel: channelId,
+        name: doneReaction,
+        timestamp: message.ts
+      });
+    } catch (e) {
+      // TODO: 打刻エラーへの対応(出勤されていない場合など)
+      console.error(e);
     }
+  });
 
+  unprocessedRemote.forEach(message => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
     const date = new Date(parseInt(message.ts) * 1000);
 
     const workRecord = getWorkRecord(employeeId, date);
-    if (workRecord.clock_in_at && workRecord.clock_out_at) {
-      updateWorkRecord(employeeId, date, {
-        company_id: FREEE_COMPANY_ID,
-        clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
-        clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
-        note: 'リモート'
-      });
-    };
 
-    client.reactions.add({
-      channel: channelId,
-      name: doneReaction,
-      timestamp: message.ts
-    });
+    try {
+      if (workRecord.clock_in_at && workRecord.clock_out_at) {
+        updateWorkRecord(employeeId, date, {
+          company_id: FREEE_COMPANY_ID,
+          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
+          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
+          note: 'リモート',
+        });
+      };
+      client.reactions.add({
+        channel: channelId,
+        name: doneReactionForRemote,
+        timestamp: message.ts
+      });
+    } catch (e) {
+      // TODO: エラー対応
+      console.error(e);
+    }
   });
 }
 
