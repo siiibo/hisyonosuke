@@ -150,7 +150,12 @@ const checkAttendance = (client: SlackClient) => {
         console.log('既に打刻済みです'); //TODO: slack
 
       } else {
-        throw new Error(e);
+        // FIXME: 例外発生時の処理をちゃんと考える
+        console.error(e);
+        client.chat.postMessage({
+          channel: TEST_CHANNEL_ID,
+          text: JSON.parse(e)
+        });
       }
     }
   });
@@ -175,8 +180,12 @@ const checkAttendance = (client: SlackClient) => {
         timestamp: message.ts
       });
     } catch (e) {
-      // TODO: 打刻エラーへの対応(出勤されていない場合など)
+      // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
       console.error(e);
+      client.chat.postMessage({
+        channel: TEST_CHANNEL_ID,
+        text: JSON.parse(e)
+      });
     }
   });
 
@@ -201,8 +210,12 @@ const checkAttendance = (client: SlackClient) => {
         timestamp: message.ts
       });
     } catch (e) {
-      // TODO: エラー対応
+      // FIXME: 例外発生時の処理をちゃんと考える
       console.error(e);
+      client.chat.postMessage({
+        channel: TEST_CHANNEL_ID,
+        text: JSON.parse(e)
+      });
     }
   });
 }
