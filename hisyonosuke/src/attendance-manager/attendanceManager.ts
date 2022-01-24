@@ -110,7 +110,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   const unprocessedClockOut = messages.filter(message => {
-    return message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
+    return message.text.match(/:taikin:|:saghoushuuryou:|:saishuutaikin:/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
