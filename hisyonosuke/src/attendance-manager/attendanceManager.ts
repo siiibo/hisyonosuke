@@ -76,6 +76,7 @@ const checkAttendance = (client: SlackClient) => {
   const hisyonosukeId = 'B01ARBNUP8E';
   const doneReaction = 'eyes';
   const doneReactionForRemote = 'remote'; // FIXME:「リモート出勤」だと出勤の時点でdoneReactionとの区別がつかず後続の条件判定に影響があるため、一旦テキトーに配置
+  const errorReaction = 'warning';
 
   const dateStartHour = 4;
 
@@ -102,7 +103,7 @@ const checkAttendance = (client: SlackClient) => {
     return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/) &&
       !message.reactions?.filter(reaction => {
         return (
-          reaction.name === doneReaction &&
+          reaction.name === (doneReaction || errorReaction) &&
           reaction.users.includes(hisyonosukeId)
         );
       }).length
@@ -112,7 +113,7 @@ const checkAttendance = (client: SlackClient) => {
     return message.text.match(/:taikin:|:saghoushuuryou:|:saishutaikin:/) &&
       !message.reactions?.filter(reaction => {
         return (
-          reaction.name === doneReaction &&
+          reaction.name === (doneReaction || errorReaction) &&
           reaction.users.includes(hisyonosukeId)
         );
       }).length
@@ -122,7 +123,7 @@ const checkAttendance = (client: SlackClient) => {
     return message.text.match(/:remote:|:remoteshukkin:/) &&
       !message.reactions?.filter(reaction => {
         return (
-          reaction.name === doneReactionForRemote &&
+          reaction.name === (doneReactionForRemote || errorReaction) &&
           reaction.users.includes(hisyonosukeId)
         );
       }).length
@@ -152,7 +153,6 @@ const checkAttendance = (client: SlackClient) => {
           user: message.user,
           text: '既に打刻済みです'
         });
-
       } else {
         // FIXME: 例外発生時の処理をちゃんと考える
         console.error(e);
@@ -161,6 +161,11 @@ const checkAttendance = (client: SlackClient) => {
           text: JSON.parse(e)
         });
       }
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: message.ts
+      });
     }
   });
 
@@ -191,6 +196,11 @@ const checkAttendance = (client: SlackClient) => {
         channel: TEST_CHANNEL_ID,
         text: JSON.parse(e)
       });
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: message.ts
+      });
     }
   });
 
@@ -220,6 +230,11 @@ const checkAttendance = (client: SlackClient) => {
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
         text: JSON.parse(e)
+      });
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: message.ts
       });
     }
   });
