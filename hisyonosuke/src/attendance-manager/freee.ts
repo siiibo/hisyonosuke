@@ -35,7 +35,7 @@ interface HolidaysAndHoursSerializer {
 interface TimeClocksControllerCreateBody {
   company_id: number,
   type: 'clock_in' | 'break_begin' | 'break_end' | 'clock_out',
-  base_date: Date, // YYYY-MM-DD
+  base_date?: Date, // YYYY-MM-DD
   datetime: Date, // YYYY-MM-DD HH:MM:SS
 }
 
@@ -114,11 +114,17 @@ interface WorkRecordSerializer {
 export function setTimeClocks(employId: number, body: TimeClocksControllerCreateBody) {
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
-  const payload = {
-    ...body,
-    base_date: body.base_date.toISOString(),
-    datetime: body.datetime.toISOString() // TODO: 多分これ修正必要
-  }
+  const payload = body.base_date ?
+    {
+      ...body,
+      base_date: body.base_date.toISOString(),
+      datetime: body.datetime.toISOString()
+    } :
+    {
+      ...body,
+      datetime: body.datetime.toISOString() // TODO: 多分これ修正必要
+    }
+
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'post',
     headers: { 'Authorization': 'Bearer ' + accessToken },

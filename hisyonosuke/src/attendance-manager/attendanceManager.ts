@@ -137,7 +137,6 @@ const checkAttendance = (client: SlackClient) => {
       const res = setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_in',
-        base_date: date,
         datetime: date
       });
       client.reactions.add({
