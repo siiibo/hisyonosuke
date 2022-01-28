@@ -100,7 +100,7 @@ const checkAttendance = (client: SlackClient) => {
 
 
   const unprocessedClockIn = messages.filter(message => {
-    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:|:remoteshukkin:/) &&
+    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
@@ -192,7 +192,7 @@ const checkAttendance = (client: SlackClient) => {
         return remoteMessage.user === clockOutMessage.user;
       });
 
-      if(matchedUnprocessedRemote.length === 1){
+      if (matchedUnprocessedRemote.length === 1) {
         const workRecord = getWorkRecord(employeeId, date);
         updateWorkRecord(employeeId, date, {
           company_id: FREEE_COMPANY_ID,
