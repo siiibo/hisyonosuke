@@ -28,7 +28,7 @@ export const initAttendanceManager = () => {
   ScriptApp
     .newTrigger(targetFunction.name)
     .timeBased()
-    .everyMinutes(15) //TODO: 定数化
+    .everyMinutes(5) //TODO: 定数化
     .create();
 }
 
