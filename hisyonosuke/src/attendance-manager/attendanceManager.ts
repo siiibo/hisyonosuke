@@ -74,8 +74,8 @@ const checkAttendance = (client: SlackClient) => {
   const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
   const channelId = TEST_CHANNEL_ID; // FIXME: ATTENDANCE_CHANNEL_IDに戻す
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
-  const doneReaction = 'eyes';
-  const doneReactionForRemote = 'remote'; // FIXME:「リモート出勤」だと出勤の時点でdoneReactionとの区別がつかず後続の条件判定に影響があるため、一旦テキトーに配置
+  const doneReaction = 'white_check_mark';
+  const doneReactionForRemote = 'pencil';
   const errorReaction = 'warning';
 
   const dateStartHour = 4;
