@@ -129,9 +129,9 @@ const checkAttendance = (client: SlackClient) => {
       }).length
   });
 
-  unprocessedClockIn.forEach(message => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-    const date = new Date(parseInt(message.ts) * 1000);
+  unprocessedClockIn.forEach(clockInMessage => {
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user);
+    const date = new Date(parseInt(clockInMessage.ts) * 1000);
 
     try {
       const res = setTimeClocks(employeeId, {
@@ -142,14 +142,14 @@ const checkAttendance = (client: SlackClient) => {
       client.reactions.add({
         channel: channelId,
         name: doneReaction,
-        timestamp: message.ts
+        timestamp: clockInMessage.ts
       });
       console.log(res);
     } catch (e) {
       if (e.message.includes("打刻の種類が正しくありません。")) {
         client.chat.postEphemeral({
           channel: channelId,
-          user: message.user,
+          user: clockInMessage.user,
           text: '既に打刻済みです'
         });
       } else {
@@ -163,14 +163,14 @@ const checkAttendance = (client: SlackClient) => {
       client.reactions.add({
         channel: channelId,
         name: errorReaction,
-        timestamp: message.ts
+        timestamp: clockInMessage.ts
       });
     }
   });
 
-  unprocessedClockOut.forEach(message => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-    const date = new Date(parseInt(message.ts) * 1000);
+  unprocessedClockOut.forEach(clockOutMessage => {
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user);
+    const date = new Date(parseInt(clockOutMessage.ts) * 1000);
     let baseDate = new Date(date.getTime());
     if (date.getTime() < dateStartHour) {
       baseDate.setDate(date.getDate() - 1);
@@ -185,8 +185,28 @@ const checkAttendance = (client: SlackClient) => {
       client.reactions.add({
         channel: channelId,
         name: doneReaction,
-        timestamp: message.ts
+        timestamp: clockOutMessage.ts
       });
+
+      const matchedUnprocessedRemote = unprocessedRemote.filter(remoteMessage => {
+        return remoteMessage.user === clockOutMessage.user;
+      });
+
+      if(matchedUnprocessedRemote.length === 1){
+        const workRecord = getWorkRecord(employeeId, date);
+        updateWorkRecord(employeeId, date, {
+          company_id: FREEE_COMPANY_ID,
+          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
+          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
+          note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
+        });
+        client.reactions.add({
+          channel: channelId,
+          name: doneReactionForRemote,
+          timestamp: matchedUnprocessedRemote[0].ts
+        });
+      }
+
     } catch (e) {
       // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
       // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
@@ -198,42 +218,7 @@ const checkAttendance = (client: SlackClient) => {
       client.reactions.add({
         channel: channelId,
         name: errorReaction,
-        timestamp: message.ts
-      });
-    }
-  });
-
-  unprocessedRemote.forEach(message => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user);
-    const date = new Date(parseInt(message.ts) * 1000);
-
-    const workRecord = getWorkRecord(employeeId, date);
-
-    try {
-      if (workRecord.clock_in_at && workRecord.clock_out_at) {
-        updateWorkRecord(employeeId, date, {
-          company_id: FREEE_COMPANY_ID,
-          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
-          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
-          note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
-        });
-      };
-      client.reactions.add({
-        channel: channelId,
-        name: doneReactionForRemote,
-        timestamp: message.ts
-      });
-    } catch (e) {
-      // FIXME: 例外発生時の処理をちゃんと考える
-      console.error(e);
-      client.chat.postMessage({
-        channel: TEST_CHANNEL_ID,
-        text: JSON.stringify(e.message)
-      });
-      client.reactions.add({
-        channel: channelId,
-        name: errorReaction,
-        timestamp: message.ts
+        timestamp: clockOutMessage.ts
       });
     }
   });
