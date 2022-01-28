@@ -158,7 +158,7 @@ const checkAttendance = (client: SlackClient) => {
         console.error(e);
         client.chat.postMessage({
           channel: TEST_CHANNEL_ID,
-          text: JSON.parse(e)
+          text: JSON.stringify(e.message)
         });
       }
       client.reactions.add({
@@ -194,7 +194,7 @@ const checkAttendance = (client: SlackClient) => {
       console.error(e);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
-        text: JSON.parse(e)
+        text: JSON.stringify(e.message)
       });
       client.reactions.add({
         channel: channelId,
@@ -229,7 +229,7 @@ const checkAttendance = (client: SlackClient) => {
       console.error(e);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
-        text: JSON.parse(e)
+        text: JSON.stringify(e.message)
       });
       client.reactions.add({
         channel: channelId,
