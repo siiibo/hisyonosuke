@@ -100,7 +100,7 @@ const checkAttendance = (client: SlackClient) => {
 
 
   const unprocessedClockIn = messages.filter(message => {
-    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:/) &&
+    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:|:remoteshukkin:/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
