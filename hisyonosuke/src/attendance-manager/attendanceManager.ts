@@ -89,7 +89,7 @@ const checkAttendance = (client: SlackClient) => {
   }
 
   const messages = client.conversations.history({
-    channel: channelId, //FIXME
+    channel: channelId,
     oldest: getUnixTimeStampString(oldest),
     inclusive: true
   }).messages;
