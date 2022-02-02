@@ -110,7 +110,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   const unprocessedClockOut = messages.filter(message => {
-    return message.text.match(/:taikin:|:saghoushuuryou:|:saishuutaikin:|:kinmushuuryou:/) &&
+    return message.text.match(/:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
@@ -224,6 +224,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 }
 
+// タイムトリガー形式にしたので削除予定
 const handleSlackEvent = (event: SlackEvent) => {
   console.log(event);
   const client = getSlackClient();
@@ -231,14 +232,14 @@ const handleSlackEvent = (event: SlackEvent) => {
     case 'message':
       const message = getMessageListener(client, event);
       // TODO: ここではスタンプ押した際に投稿者へのフィードバックを行う。
-      message(/:shukkin:|:shussha:|:sagyoukaishi:/, ({ client, event }) => {
+      message(/:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '出勤テスト（ephemeralに変更予定）',
           channel: event.channel,
         });
       })
 
-      message(/:taikin:|:saghoushuuryou:|:saishutaikin:/, ({ client, event }) => {
+      message(/:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:/, ({ client, event }) => {
         client.chat.postMessage({
           text: '退勤テスト（ephemeralに変更予定）',
           channel: event.channel,
