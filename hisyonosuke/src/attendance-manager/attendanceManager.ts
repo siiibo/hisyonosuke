@@ -134,7 +134,7 @@ const checkAttendance = (client: SlackClient) => {
     const date = new Date(parseInt(clockInMessage.ts) * 1000);
 
     try {
-      const res = setTimeClocks(employeeId, {
+      setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_in',
         datetime: date
@@ -144,7 +144,6 @@ const checkAttendance = (client: SlackClient) => {
         name: doneReaction,
         timestamp: clockInMessage.ts
       });
-      console.log(res);
     } catch (e) {
       if (e.message.includes("打刻の種類が正しくありません。")) {
         client.chat.postEphemeral({
