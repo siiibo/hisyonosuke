@@ -17,8 +17,8 @@ interface EmployeeSerializer {
   id: number,
   num: string,
   display_name: string,
-  entry_date: Date,
-  retire_date: Date,
+  entry_date: string, // DateString,
+  retire_date: string, // DateString,
   user_id: number,
   email: string
 }
@@ -37,8 +37,8 @@ interface HolidaysAndHoursSerializer {
 interface TimeClocksControllerCreateBody {
   company_id: number,
   type: 'clock_in' | 'break_begin' | 'break_end' | 'clock_out',
-  base_date: Date, // YYYY-MM-DD
-  datetime: Date, // YYYY-MM-DD HH:MM:SS
+  base_date: string,  // YYYY-MM-DD
+  datetime: string,  // YYYY-MM-DD HH:MM:SS
 }
 
 interface WorkRecordControllerRequestBody {
@@ -63,8 +63,8 @@ interface WorkRecordControllerRequestBody {
 interface WorkRecordSummarySerializer {
   year: number,
   month: number,
-  start_date: Date,
-  end_date: Date,
+  start_date: string, // DateString,
+  end_date: string, // DateString,
   work_days: number,
   total_work_mins: number,
   total_normal_work_mins: number,
@@ -91,7 +91,7 @@ interface WorkRecordSerializer {
   break_records: any,
   clock_in_at: number,
   clock_out_at: number,
-  date: Date,
+  date: string, // DateString,
   day_pattern: 'normal_day' | 'prescribed_holiday' | 'legal_holiday',
   schedule_pattern: 'substitute_holiday_work' | 'substitute_holiday' | 'compensatory_holiday_work' | 'compensatory_holiday' | 'special_holiday',
   early_leaving_mins: number,
@@ -99,8 +99,8 @@ interface WorkRecordSerializer {
   is_absence: boolean,
   is_editable: boolean,
   lateness_mins: number,
-  normal_work_clock_in_at: Date,
-  normal_work_clock_out_at: Date,
+  normal_work_clock_in_at: string, // DateString,
+  normal_work_clock_out_at: string, // DateString,
   normal_work_mins: number,
   normal_work_mins_by_paid_holiday: number,
   note: string,
@@ -117,9 +117,7 @@ export function setTimeClocks(employId: number, body: TimeClocksControllerCreate
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
   const payload = {
-    ...body,
-    base_date: format(body.base_date, 'yyyy-MM-dd'),
-    datetime: format(body.datetime, 'yyyy-MM-dd HH:mm:ss'),
+    ...body
   }
 
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {

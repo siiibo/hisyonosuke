@@ -1,7 +1,7 @@
 import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
-import { setHours, setMinutes, setSeconds, subDays } from 'date-fns';
+import { format, setHours, setMinutes, setSeconds, subDays } from 'date-fns';
 
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
@@ -135,19 +135,23 @@ const checkAttendance = (client: SlackClient) => {
   unprocessedClockIn.forEach(clockInMessage => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user);
     const clockInDate = new Date(parseInt(clockInMessage.ts) * 1000);
+    const clockInBaseDate = new Date(clockInDate.getTime());
+
+    const clockInParams = {
+      company_id: FREEE_COMPANY_ID,
+      type: 'clock_out' as const,
+      base_date: format(clockInBaseDate, 'yyyy-MM-dd'),
+      datetime: format(clockInDate, 'yyyy-MM-dd HH:mm:ss')
+    };
 
     try {
-      setTimeClocks(employeeId, {
-        company_id: FREEE_COMPANY_ID,
-        type: 'clock_in',
-        base_date: clockInDate,
-        datetime: clockInDate
-      });
+      setTimeClocks(employeeId, clockInParams);
       client.reactions.add({
         channel: channelId,
         name: doneReaction,
         timestamp: clockInMessage.ts
       });
+      console.info(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
     } catch (e) {
       if (e.message.includes("打刻の種類が正しくありません。")) {
         client.chat.postEphemeral({
@@ -174,32 +178,51 @@ const checkAttendance = (client: SlackClient) => {
   unprocessedClockOut.forEach(clockOutMessage => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user);
     const clockOutDate = new Date(parseInt(clockOutMessage.ts) * 1000);
-    const baseDate = clockOutDate.getHours() > dateStartHour
+    const clockOutBaseDate = clockOutDate.getHours() > dateStartHour
       ? new Date(clockOutDate.getTime())
       : subDays(clockOutDate, 1);
 
+    const clockOutParams = {
+      company_id: FREEE_COMPANY_ID,
+      type: 'clock_out' as const,
+      base_date: format(clockOutBaseDate, 'yyyy-MM-dd'),
+      datetime: format(clockOutDate, 'yyyy-MM-dd HH:mm:ss')
+    };
+
+    const matchedUnprocessedRemote = unprocessedRemote.filter(remoteMessage => {
+      return remoteMessage.user === clockOutMessage.user;
+    });
+
     try {
-      setTimeClocks(employeeId, {
-        company_id: FREEE_COMPANY_ID,
-        type: 'clock_out',
-        base_date: baseDate,
-        datetime: clockOutDate
-      });
+      setTimeClocks(employeeId, clockOutParams);
       client.reactions.add({
         channel: channelId,
         name: doneReaction,
         timestamp: clockOutMessage.ts
       });
-
-      const matchedUnprocessedRemote = unprocessedRemote.filter(remoteMessage => {
-        return remoteMessage.user === clockOutMessage.user;
+      console.info(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
+    } catch (e) {
+      // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
+      // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
+      console.error(e);
+      console.error(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
+      client.chat.postMessage({
+        channel: TEST_CHANNEL_ID,
+        text: JSON.stringify(e.message)
       });
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: clockOutMessage.ts
+      });
+    }
 
+    try {
       if (matchedUnprocessedRemote.length === 1) {
         const workRecord = getWorkRecord(employeeId, clockOutDate);
         updateWorkRecord(employeeId, clockOutDate, {
           company_id: FREEE_COMPANY_ID,
-          clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
+          clock_in_at: new Date(workRecord.clock_in_at).toISOString(),
           clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
           note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
         });
@@ -208,12 +231,11 @@ const checkAttendance = (client: SlackClient) => {
           name: doneReactionForRemote,
           timestamp: matchedUnprocessedRemote[0].ts
         });
+        console.info(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
       }
-
     } catch (e) {
-      // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
-      // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
       console.error(e);
+      console.error(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
         text: JSON.stringify(e.message)
