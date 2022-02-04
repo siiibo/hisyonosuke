@@ -1,6 +1,8 @@
 import { GenericMessageEvent, SlackEvent } from '@slack/bolt';
 import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
+import { setHours, setMinutes, setSeconds, subDays } from 'date-fns';
+
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
 import { getConfig, initConfig } from './config';
@@ -82,10 +84,11 @@ const checkAttendance = (client: SlackClient) => {
 
   const now = new Date();
   let oldest = new Date();
-  oldest.setHours(dateStartHour);
-  oldest.setMinutes(0);
+  oldest = setHours(oldest, dateStartHour);
+  oldest = setMinutes(oldest, 0);
+  oldest = setSeconds(oldest, 0);
   if (now.getHours() <= dateStartHour) {
-    oldest.setDate(now.getDate() - 1);
+    oldest = subDays(oldest, 1);
   }
 
   const messages = client.conversations.history({
@@ -131,13 +134,14 @@ const checkAttendance = (client: SlackClient) => {
 
   unprocessedClockIn.forEach(clockInMessage => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user);
-    const date = new Date(parseInt(clockInMessage.ts) * 1000);
+    const clockInDate = new Date(parseInt(clockInMessage.ts) * 1000);
 
     try {
       setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_in',
-        datetime: date
+        base_date: clockInDate,
+        datetime: clockInDate
       });
       client.reactions.add({
         channel: channelId,
@@ -169,17 +173,17 @@ const checkAttendance = (client: SlackClient) => {
 
   unprocessedClockOut.forEach(clockOutMessage => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user);
-    const date = new Date(parseInt(clockOutMessage.ts) * 1000);
-    let baseDate = new Date(date.getTime());
-    if (date.getHours() < dateStartHour) {
-      baseDate.setDate(date.getDate() - 1);
-    }
+    const clockOutDate = new Date(parseInt(clockOutMessage.ts) * 1000);
+    const baseDate = clockOutDate.getHours() > dateStartHour
+      ? new Date(clockOutDate.getTime())
+      : subDays(clockOutDate, 1);
+
     try {
       setTimeClocks(employeeId, {
         company_id: FREEE_COMPANY_ID,
         type: 'clock_out',
         base_date: baseDate,
-        datetime: date
+        datetime: clockOutDate
       });
       client.reactions.add({
         channel: channelId,
@@ -192,8 +196,8 @@ const checkAttendance = (client: SlackClient) => {
       });
 
       if (matchedUnprocessedRemote.length === 1) {
-        const workRecord = getWorkRecord(employeeId, date);
-        updateWorkRecord(employeeId, date, {
+        const workRecord = getWorkRecord(employeeId, clockOutDate);
+        updateWorkRecord(employeeId, clockOutDate, {
           company_id: FREEE_COMPANY_ID,
           clock_in_at: new Date(workRecord.clock_in_at).toISOString(), //TODO: 型をdate型に変える
           clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
