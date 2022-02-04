@@ -153,6 +153,8 @@ const checkAttendance = (client: SlackClient) => {
       });
       console.info(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
     } catch (e) {
+      console.error(e.stack);
+      console.error(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
       if (e.message.includes("打刻の種類が正しくありません。")) {
         client.chat.postEphemeral({
           channel: channelId,
@@ -161,7 +163,6 @@ const checkAttendance = (client: SlackClient) => {
         });
       } else {
         // FIXME: 例外発生時の処理をちゃんと考える
-        console.error(e);
         client.chat.postMessage({
           channel: TEST_CHANNEL_ID,
           text: JSON.stringify(e.message)
@@ -204,7 +205,7 @@ const checkAttendance = (client: SlackClient) => {
     } catch (e) {
       // FIXME: 例外発生時の処理をちゃんと考える (出勤されていない場合など)
       // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
-      console.error(e);
+      console.error(e.stack);
       console.error(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
@@ -234,7 +235,7 @@ const checkAttendance = (client: SlackClient) => {
         console.info(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
       }
     } catch (e) {
-      console.error(e);
+      console.error(e.stack);
       console.error(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
       client.chat.postMessage({
         channel: TEST_CHANNEL_ID,
