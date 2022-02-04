@@ -84,7 +84,7 @@ const checkAttendance = (client: SlackClient) => {
   let oldest = new Date();
   oldest.setHours(dateStartHour);
   oldest.setMinutes(0);
-  if (now.getTime() <= dateStartHour) {
+  if (now.getHours() <= dateStartHour) {
     oldest.setDate(now.getDate() - 1);
   }
 
@@ -171,7 +171,7 @@ const checkAttendance = (client: SlackClient) => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user);
     const date = new Date(parseInt(clockOutMessage.ts) * 1000);
     let baseDate = new Date(date.getTime());
-    if (date.getTime() < dateStartHour) {
+    if (date.getHours() < dateStartHour) {
       baseDate.setDate(date.getDate() - 1);
     }
     try {
