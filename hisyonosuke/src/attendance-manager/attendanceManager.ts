@@ -155,19 +155,19 @@ const checkAttendance = (client: SlackClient) => {
     } catch (e) {
       console.error(e.stack);
       console.error(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
+
+      let errorFeedBackMessage = '';
       if (e.message.includes("打刻の種類が正しくありません。")) {
-        client.chat.postEphemeral({
-          channel: channelId,
-          user: clockInMessage.user,
-          text: '既に打刻済みです'
-        });
+        errorFeedBackMessage = '既に打刻済みです';
       } else {
-        // FIXME: 例外発生時の処理をちゃんと考える
-        client.chat.postMessage({
-          channel: TEST_CHANNEL_ID,
-          text: JSON.stringify(e.message)
-        });
+        errorFeedBackMessage = e.toString();
       }
+
+      client.chat.postMessage({
+        channel: channelId,
+        text: errorFeedBackMessage,
+        thread_ts: clockInMessage.ts
+      });
       client.reactions.add({
         channel: channelId,
         name: errorReaction,
@@ -207,9 +207,18 @@ const checkAttendance = (client: SlackClient) => {
       // NOTE: 退勤は打刻の重複が許容されているので出勤のエラー対応とは異なる
       console.error(e.stack);
       console.error(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
+
+      let errorFeedBackMessage = '';
+      if (e.message.includes("打刻の種類が正しくありません。")) {
+        errorFeedBackMessage = '出勤打刻が完了していないか、退勤の上書きができない値です.';
+      } else {
+        errorFeedBackMessage = e.toString();
+      }
+
       client.chat.postMessage({
-        channel: TEST_CHANNEL_ID,
-        text: JSON.stringify(e.message)
+        channel: channelId,
+        text: errorFeedBackMessage,
+        thread_ts: clockOutMessage.ts
       });
       client.reactions.add({
         channel: channelId,
@@ -237,9 +246,12 @@ const checkAttendance = (client: SlackClient) => {
     } catch (e) {
       console.error(e.stack);
       console.error(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
+
+      const errorFeedBackMessage = e.toString(); //TODO: エラー内容の知見が溜まったら条件分岐を行う
       client.chat.postMessage({
-        channel: TEST_CHANNEL_ID,
-        text: JSON.stringify(e.message)
+        channel: channelId,
+        text: errorFeedBackMessage,
+        thread_ts: clockOutMessage.ts
       });
       client.reactions.add({
         channel: channelId,
