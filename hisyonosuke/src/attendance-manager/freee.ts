@@ -122,7 +122,7 @@ export function setTimeClocks(employId: number, body: TimeClocksControllerCreate
 
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'post',
-    headers: { 'Authorization': 'Bearer ' + accessToken },
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" },
     contentType: 'application/json',
     payload: JSON.stringify(payload)
   };
@@ -135,7 +135,7 @@ export function getCompanies() {
   const requestUrl = 'https://api.freee.co.jp/api/1/companies';
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'get',
-    headers: { 'Authorization': 'Bearer ' + accessToken }
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" }
   };
   const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
   return JSON.parse(response);
@@ -149,7 +149,7 @@ export function getWorkRecordSummary(companyId: number, employId: number, year: 
   });
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'get',
-    headers: { 'Authorization': 'Bearer ' + accessToken },
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" },
     contentType: 'application/json',
   };
   const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
@@ -161,7 +161,7 @@ export function getMe() {
   const requestUrl = 'https://api.freee.co.jp/hr/api/v1/users/me';
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'get',
-    headers: { 'Authorization': 'Bearer ' + accessToken }
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" }
   };
   const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
   return JSON.parse(response);
@@ -172,7 +172,7 @@ export function getWorkRecord(employId: number, date: Date): WorkRecordSerialize
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'get',
-    headers: { 'Authorization': 'Bearer ' + accessToken }
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" }
   };
   const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
   return JSON.parse(response);
@@ -201,7 +201,7 @@ export function updateWorkRecord(employId: number, date: Date, body: WorkRecordC
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'put',
-    headers: { 'Authorization': 'Bearer ' + accessToken },
+    headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" },
     contentType: 'application/json',
     payload: JSON.stringify(body)
   };
