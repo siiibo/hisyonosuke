@@ -133,13 +133,13 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   unprocessedClockIn.forEach(clockInMessage => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user);
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user, FREEE_COMPANY_ID);
     const clockInDate = new Date(parseInt(clockInMessage.ts) * 1000);
     const clockInBaseDate = new Date(clockInDate.getTime());
 
     const clockInParams = {
       company_id: FREEE_COMPANY_ID,
-      type: 'clock_out' as const,
+      type: 'clock_in' as const,
       base_date: format(clockInBaseDate, 'yyyy-MM-dd'),
       datetime: format(clockInDate, 'yyyy-MM-dd HH:mm:ss')
     };
@@ -177,7 +177,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   unprocessedClockOut.forEach(clockOutMessage => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user);
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user, FREEE_COMPANY_ID);
     const clockOutDate = new Date(parseInt(clockOutMessage.ts) * 1000);
     const clockOutBaseDate = clockOutDate.getHours() > dateStartHour
       ? new Date(clockOutDate.getTime())
@@ -307,17 +307,23 @@ const getMessageListener = (client: SlackClient, event: SlackEvent) => {
   }
 }
 
-const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string): number => {
+const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string, companyId: number): number => {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId
   }).user.profile.email;
-  const employees = getCompanyEmployees();
+  const employees = getCompanyEmployees({
+    company_id: companyId,
+    limit: 100,
+  });
   const target = employees.filter((employee) => {
     return employee.email === email;
   });
-  if (target.length !== 1) {
-    throw new Error('duplicate employee email')
+  if (target.length == 0) {
+    throw new Error(`employee email ${email} was not found.`);
+  }
+  if (target.length > 1) {
+    throw new Error(`employee email ${email} is duplicated.`);
   }
   return target[0].id;
 }
