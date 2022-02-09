@@ -226,38 +226,41 @@ const checkAttendance = (client: SlackClient) => {
         timestamp: clockOutMessage.ts
       });
     }
-
-    try {
-      if (matchedUnprocessedRemote.length === 1) {
-        const workRecord = getWorkRecord(employeeId, clockOutDate);
-        updateWorkRecord(employeeId, clockOutDate, {
-          company_id: FREEE_COMPANY_ID,
-          clock_in_at: new Date(workRecord.clock_in_at).toISOString(),
-          clock_out_at: new Date(workRecord.clock_out_at).toISOString(),
-          note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
-        });
+    if (matchedUnprocessedRemote.length === 1) {
+      const remoteMessage = matchedUnprocessedRemote[0];
+      const targetDate = format(clockOutDate, 'yyyy-MM-dd');
+      const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+      const remoteParams = {
+        company_id: FREEE_COMPANY_ID,
+        clock_in_at: format(new Date(workRecord.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
+        clock_out_at: format(new Date(workRecord.clock_out_at), 'yyyy-MM-dd HH:mm:ss'),
+        note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
+      }
+      try {
+        updateWorkRecord(employeeId, targetDate, remoteParams);
         client.reactions.add({
           channel: channelId,
           name: doneReactionForRemote,
-          timestamp: matchedUnprocessedRemote[0].ts
+          timestamp: remoteMessage.ts
         });
-        console.info(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
-      }
-    } catch (e) {
-      console.error(e.stack);
-      console.error(`user:${employeeId}, type:remote, base_date:${clockOutParams.base_date}`);
+        console.info(`user:${employeeId}, type:remote, clock_in_at:${remoteParams.clock_in_at}, clock_out_at:${remoteParams.clock_out_at}, note:${remoteParams.note}`);
 
-      const errorFeedBackMessage = e.toString(); //TODO: エラー内容の知見が溜まったら条件分岐を行う
-      client.chat.postMessage({
-        channel: channelId,
-        text: errorFeedBackMessage,
-        thread_ts: clockOutMessage.ts
-      });
-      client.reactions.add({
-        channel: channelId,
-        name: errorReaction,
-        timestamp: clockOutMessage.ts
-      });
+      } catch (e) {
+        console.error(e.stack);
+        console.error(`user:${employeeId}, type:remote, clock_in_at:${remoteParams.clock_in_at}, clock_out_at:${remoteParams.clock_out_at}, note:${remoteParams.note}`);
+
+        const errorFeedBackMessage = e.toString(); //TODO: エラー内容の知見が溜まったら条件分岐を行う
+        client.chat.postMessage({
+          channel: channelId,
+          text: errorFeedBackMessage,
+          thread_ts: remoteMessage.ts
+        });
+        client.reactions.add({
+          channel: channelId,
+          name: errorReaction,
+          timestamp: remoteMessage.ts
+        });
+      }
     }
   });
 }

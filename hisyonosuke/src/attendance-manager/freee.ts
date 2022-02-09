@@ -167,9 +167,11 @@ export function getMe() {
   return JSON.parse(response);
 }
 
-export function getWorkRecord(employId: number, date: Date): WorkRecordSerializer {
+export function getWorkRecord(employId: number, date: String, company_id: number): WorkRecordSerializer {
   const accessToken = getService().getAccessToken();
-  const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
+  const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`, {
+    company_id
+  });
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: 'get',
     headers: { 'Authorization': 'Bearer ' + accessToken, "FREEE-VERSION": "2022-02-01" }
@@ -196,7 +198,7 @@ export function getCompanyEmployees(props: {
   return response;
 }
 
-export function updateWorkRecord(employId: number, date: Date, body: WorkRecordControllerRequestBody) {
+export function updateWorkRecord(employId: number, date: String, body: WorkRecordControllerRequestBody) {
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
