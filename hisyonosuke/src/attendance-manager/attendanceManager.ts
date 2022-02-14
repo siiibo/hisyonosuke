@@ -133,7 +133,6 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   unprocessedClockIn.forEach(clockInMessage => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user, FREEE_COMPANY_ID);
     const clockInDate = new Date(parseInt(clockInMessage.ts) * 1000);
     const clockInBaseDate = new Date(clockInDate.getTime());
 
@@ -143,6 +142,28 @@ const checkAttendance = (client: SlackClient) => {
       base_date: format(clockInBaseDate, 'yyyy-MM-dd'),
       datetime: format(clockInDate, 'yyyy-MM-dd HH:mm:ss')
     };
+
+    let employeeId: number;
+
+    try {
+      employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockInMessage.user, FREEE_COMPANY_ID);
+    } catch (e) {
+      console.error(e.stack);
+      console.error(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
+      const errorFeedBackMessage = e.toString();;
+      client.chat.postMessage({
+        channel: channelId,
+        text: errorFeedBackMessage,
+        thread_ts: clockInMessage.ts
+      });
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: clockInMessage.ts
+      });
+
+      throw new Error(e); // FIXME: 後続の処理を走らせないためにおいているが、他の方法がありそう
+    }
 
     try {
       setTimeClocks(employeeId, clockInParams);
@@ -177,7 +198,6 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   unprocessedClockOut.forEach(clockOutMessage => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user, FREEE_COMPANY_ID);
     const clockOutDate = new Date(parseInt(clockOutMessage.ts) * 1000);
     const clockOutBaseDate = clockOutDate.getHours() > dateStartHour
       ? new Date(clockOutDate.getTime())
@@ -193,6 +213,27 @@ const checkAttendance = (client: SlackClient) => {
     const matchedUnprocessedRemote = unprocessedRemote.filter(remoteMessage => {
       return remoteMessage.user === clockOutMessage.user;
     });
+
+    let employeeId: number;
+    try {
+      employeeId = getFreeeEmployeeIdFromSlackUserId(client, clockOutMessage.user, FREEE_COMPANY_ID);
+    } catch (e) {
+      console.error(e.stack);
+      console.error(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
+      const errorFeedBackMessage = e.toString();;
+      client.chat.postMessage({
+        channel: channelId,
+        text: errorFeedBackMessage,
+        thread_ts: clockOutMessage.ts
+      });
+      client.reactions.add({
+        channel: channelId,
+        name: errorReaction,
+        timestamp: clockOutMessage.ts
+      });
+
+      throw new Error(e); // FIXME: 後続の処理を走らせないためにおいているが、他の方法がありそう
+    }
 
     try {
       setTimeClocks(employeeId, clockOutParams);
