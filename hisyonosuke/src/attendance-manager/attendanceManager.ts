@@ -103,7 +103,7 @@ const checkAttendance = (client: SlackClient) => {
 
 
   const unprocessedClockIn = messages.filter(message => {
-    return message.text.match(/:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:/) &&
+    return message.text.match(/^(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:)$/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
@@ -113,7 +113,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   const unprocessedClockOut = messages.filter(message => {
-    return message.text.match(/:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:/) &&
+    return message.text.match(/^(:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:)$/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReaction, errorReaction].includes(reaction.name) &&
@@ -123,7 +123,7 @@ const checkAttendance = (client: SlackClient) => {
   });
 
   const unprocessedRemote = messages.filter(message => {
-    return message.text.match(/:remote:|:remoteshukkin:/) &&
+    return message.text.match(/^(:remote:|:remoteshukkin:)$/) &&
       !message.reactions?.filter(reaction => {
         return (
           [doneReactionForRemote, errorReaction].includes(reaction.name) &&
