@@ -6,7 +6,8 @@ interface Config {
   FREEE_COMPANY_ID: number,
   SLACK_TOKEN: string,
   ATTENDANCE_CHANNEL_ID: string
-  TEST_CHANNEL_ID: string
+  PART_TIMER_CHANNEL_ID: string,
+  TEST_CHANNEL_ID: string,
 }
 
 export function getConfig(): Config {
@@ -17,7 +18,8 @@ export function getConfig(): Config {
     FREEE_COMPANY_ID: Number(props['FREEE_COMPANY_ID']),
     SLACK_TOKEN: props['SLACK_TOKEN'],
     ATTENDANCE_CHANNEL_ID: props['ATTENDANCE_CHANNEL_ID'],
-    TEST_CHANNEL_ID: props['TEST_CHANNEL_ID']
+    PART_TIMER_CHANNEL_ID: props['PART_TIMER_CHANNEL_ID'],
+    TEST_CHANNEL_ID: props['TEST_CHANNEL_ID'],
   }
 }
 
@@ -30,7 +32,8 @@ export function initConfig(): void {
     FREEE_COMPANY_ID: values[2],
     SLACK_TOKEN: values[3],
     ATTENDANCE_CHANNEL_ID: values[4],
-    TEST_CHANNEL_ID: values[5]
+    PART_TIMER_CHANNEL_ID: values[5],
+    TEST_CHANNEL_ID: values[6]
   }
   PropertiesService.getScriptProperties().setProperties(configs);
 }
