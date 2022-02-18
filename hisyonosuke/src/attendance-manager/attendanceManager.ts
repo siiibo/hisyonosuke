@@ -63,7 +63,13 @@ export const periodicallyCheckForAttendanceManager = () => {
   }
 
   const client = getSlackClient();
-  checkAttendance(client);
+
+  const { TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
+
+  // 関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
+  // checkAttendance(client, ATTENDANCE_CHANNEL_ID); // FIXME
+  // checkAttendance(client, PART_TIMER_CHANNEL_ID); // FIXME
+  checkAttendance(client, TEST_CHANNEL_ID);
 }
 
 /*
@@ -72,9 +78,8 @@ export const periodicallyCheckForAttendanceManager = () => {
   triggerの呼び出し毎に、処理済みのメッセージも含めてチェックするという冗長な処理になってしまっている。
   いずれPropServiceなどを使って状態管理するほうが良いかもしれない。
  */
-const checkAttendance = (client: SlackClient) => {
-  const { FREEE_COMPANY_ID, TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID } = getConfig();
-  const channelId = TEST_CHANNEL_ID; // FIXME: ATTENDANCE_CHANNEL_IDに戻す
+const checkAttendance = (client: SlackClient, channelId: string) => {
+  const { FREEE_COMPANY_ID } = getConfig();
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const doneReaction = 'white_check_mark';
   const doneReactionForRemote = 'pencil';
