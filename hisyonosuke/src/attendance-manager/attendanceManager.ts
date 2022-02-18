@@ -81,9 +81,9 @@ export const periodicallyCheckForAttendanceManager = () => {
 const checkAttendance = (client: SlackClient, channelId: string) => {
   const { FREEE_COMPANY_ID } = getConfig();
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
-  const doneReaction = 'white_check_mark';
-  const doneReactionForRemote = 'pencil';
-  const errorReaction = 'warning';
+  const doneReactionForTimeRecord = 'dakoku_ok';
+  const doneReactionForRemoteMemo = 'memo_remote_ok';
+  const errorReaction = 'dakoku_memo_error';
 
   const dateStartHour = 4;
 
@@ -111,7 +111,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return message.text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReaction, errorReaction].includes(reaction.name) &&
+          [doneReactionForTimeRecord, errorReaction].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
@@ -121,7 +121,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return message.text.match(/^\s*(:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReaction, errorReaction].includes(reaction.name) &&
+          [doneReactionForTimeRecord, errorReaction].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
@@ -131,7 +131,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return message.text.match(/^\s*(:remote:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForRemote, errorReaction].includes(reaction.name) &&
+          [doneReactionForRemoteMemo, errorReaction].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
@@ -174,7 +174,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
       setTimeClocks(employeeId, clockInParams);
       client.reactions.add({
         channel: channelId,
-        name: doneReaction,
+        name: doneReactionForTimeRecord,
         timestamp: clockInMessage.ts
       });
       console.info(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
@@ -244,7 +244,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
       setTimeClocks(employeeId, clockOutParams);
       client.reactions.add({
         channel: channelId,
-        name: doneReaction,
+        name: doneReactionForTimeRecord,
         timestamp: clockOutMessage.ts
       });
       console.info(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
@@ -286,7 +286,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
         updateWorkRecord(employeeId, targetDate, remoteParams);
         client.reactions.add({
           channel: channelId,
-          name: doneReactionForRemote,
+          name: doneReactionForRemoteMemo,
           timestamp: remoteMessage.ts
         });
         console.info(`user:${employeeId}, type:remote, clock_in_at:${remoteParams.clock_in_at}, clock_out_at:${remoteParams.clock_out_at}, note:${remoteParams.note}`);
