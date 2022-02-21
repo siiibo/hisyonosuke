@@ -1,11 +1,17 @@
 import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
-import { notificator } from './notificator'
+import { notificator } from './notificator';
+import { attendanceManagerProxy, periodicallyCheckForAttendanceManager, initAttendanceManager } from './attendance-manager/attendanceManager'
 
 const PROPS_SPREADSHEET_ID = '1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU';
 
 const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
+  console.info({
+    appName: 'hisyonoske',
+    ...e
+  });
+
   if (isUrlVerification(e)) {
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)['challenge']);
   }
@@ -101,6 +107,7 @@ export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type:
 
 const init = () => {
   initProperties();
+  initAttendanceManager();
 }
 
 const initProperties = () => {
@@ -110,7 +117,10 @@ const initProperties = () => {
   for (let row of rows.slice(1)) properties[row[0]] = row[1];
 
   const scriptProperties = PropertiesService.getScriptProperties();
-  scriptProperties.deleteAllProperties();
+
+  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
+  // scriptProperties.deleteAllProperties();
+
   scriptProperties.setProperties(properties);
 }
 
@@ -118,3 +128,4 @@ declare const global: any;
 global.doPost = doPost;
 global.init = init;
 global.notificator = notificator;
+global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
