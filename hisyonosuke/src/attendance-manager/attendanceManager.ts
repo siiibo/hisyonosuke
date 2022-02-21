@@ -66,10 +66,9 @@ export const periodicallyCheckForAttendanceManager = () => {
 
   const { TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
 
-  // 関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
-  // checkAttendance(client, ATTENDANCE_CHANNEL_ID); // FIXME
-  // checkAttendance(client, PART_TIMER_CHANNEL_ID); // FIXME
-  checkAttendance(client, TEST_CHANNEL_ID);
+  // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
+  checkAttendance(client, ATTENDANCE_CHANNEL_ID);
+  checkAttendance(client, PART_TIMER_CHANNEL_ID);
 }
 
 /*
