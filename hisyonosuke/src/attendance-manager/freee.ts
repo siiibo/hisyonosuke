@@ -24,6 +24,11 @@ interface EmployeeSerializer {
 }
 
 
+interface WorkRecordTimeRangeResponseSerializer {
+  clock_in_at: string, // DATETIME
+  clock_out_at: string, // DATETIME
+}
+
 interface EmployeeMultiHourlyWageWorkRecordSummarySerializer {
   name: string,
   total_normal_time_mins: number
@@ -43,7 +48,7 @@ interface TimeClocksControllerCreateBody {
 
 interface WorkRecordControllerRequestBody {
   company_id: number,
-  break_records?: any, //TODO
+  break_records?: WorkRecordTimeRangeResponseSerializer[],
   clock_in_at?: string, //DATETIME
   clock_out_at?: string, //DATETIME
   day_pattern?: string,
