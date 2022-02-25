@@ -82,6 +82,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const doneReactionForTimeRecord = 'dakoku_ok';
   const doneReactionForRemoteMemo = 'memo_remote_ok';
+  const doneReactionForLocationSwitching = 'switch_location_ok';
   const errorReaction = 'dakoku_memo_error';
 
   const dateStartHour = 4;
@@ -110,7 +111,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return message.text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForTimeRecord, errorReaction].includes(reaction.name) &&
+          [doneReactionForTimeRecord, doneReactionForLocationSwitching, errorReaction].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
@@ -130,7 +131,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return message.text.match(/^\s*(:remote:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForRemoteMemo, errorReaction].includes(reaction.name) &&
+          [doneReactionForRemoteMemo, doneReactionForLocationSwitching, errorReaction].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
@@ -167,6 +168,44 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
       });
 
       throw new Error(e); // FIXME: 後続の処理を走らせないためにおいているが、他の方法がありそう
+    }
+
+    const matchedUnprocessedRemote = unprocessedRemote.filter(remoteMessage => {
+      return remoteMessage.user === clockInMessage.user;
+    });
+
+    // リモート出勤 → 出社のパターン
+    if (matchedUnprocessedRemote.length === 1 && clockInMessage.text === ':shussha:') {
+      const remoteMessage = matchedUnprocessedRemote[0];
+      try {
+        client.reactions.add({
+          channel: channelId,
+          name: doneReactionForLocationSwitching,
+          timestamp: remoteMessage.ts
+        });
+        client.reactions.add({
+          channel: channelId,
+          name: doneReactionForLocationSwitching,
+          timestamp: clockInMessage.ts
+        });
+      } catch (e) {
+        console.error(e.stack);
+        console.error(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
+
+        const errorFeedBackMessage = e.toString(); //TODO: エラー内容の知見が溜まったら条件分岐を行う
+        client.chat.postMessage({
+          channel: channelId,
+          text: errorFeedBackMessage,
+          thread_ts: clockInMessage.ts
+        });
+        client.reactions.add({
+          channel: channelId,
+          name: errorReaction,
+          timestamp: clockInMessage.ts
+        });
+      }
+
+      return;
     }
 
     try {
