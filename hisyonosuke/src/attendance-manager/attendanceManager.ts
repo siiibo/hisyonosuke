@@ -281,6 +281,9 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
         clock_out_at: format(new Date(workRecord.clock_out_at), 'yyyy-MM-dd HH:mm:ss'),
         note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
       }
+      if (workRecord.break_records) {
+        remoteParams['break_records'] = workRecord.break_records //FIXME: この追加の仕方だと型情報には break_records が含まれない
+      }
       try {
         updateWorkRecord(employeeId, targetDate, remoteParams);
         client.reactions.add({
