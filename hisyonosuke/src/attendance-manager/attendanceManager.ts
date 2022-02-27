@@ -319,7 +319,12 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
         clock_in_at: format(new Date(workRecord.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
         clock_out_at: format(new Date(workRecord.clock_out_at), 'yyyy-MM-dd HH:mm:ss'),
         note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
-        break_records: workRecord.break_records
+        break_records: workRecord.break_records.map(record => {
+          return {
+            clock_in_at: format(new Date(record.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
+            clock_out_at: format(new Date(record.clock_out_at), 'yyyy-MM-dd HH:mm:ss')
+          }
+        })
       }
 
       try {

@@ -93,7 +93,7 @@ interface WorkRecordSummarySerializer {
 }
 
 interface WorkRecordSerializer {
-  break_records: any,
+  break_records: WorkRecordTimeRangeResponseSerializer[],
   clock_in_at: number,
   clock_out_at: number,
   date: string, // DateString,
