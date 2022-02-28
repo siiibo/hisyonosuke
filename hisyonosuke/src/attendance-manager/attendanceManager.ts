@@ -106,32 +106,41 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return;
   }
 
+  const messagesWithoutError = messages.filter(message => {
+    return !message.reactions?.filter(reaction => {
+      return (
+        errorReaction === reaction.name &&
+        reaction.users.includes(hisyonosukeUserId)
+      );
+    }).length
+  });
 
-  const unprocessedClockIn = messages.filter(message => {
+
+  const unprocessedClockIn = messagesWithoutError.filter(message => {
     return message.text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForTimeRecord, doneReactionForLocationSwitching, errorReaction].includes(reaction.name) &&
+          [doneReactionForTimeRecord, doneReactionForLocationSwitching].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
   });
 
-  const unprocessedClockOut = messages.filter(message => {
+  const unprocessedClockOut = messagesWithoutError.filter(message => {
     return message.text.match(/^\s*(:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForTimeRecord, errorReaction].includes(reaction.name) &&
+          [doneReactionForTimeRecord].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
   });
 
-  const unprocessedRemote = messages.filter(message => {
+  const unprocessedRemote = messagesWithoutError.filter(message => {
     return message.text.match(/^\s*(:remote:|:remoteshukkin:)\s*$/) &&
       !message.reactions?.filter(reaction => {
         return (
-          [doneReactionForRemoteMemo, doneReactionForLocationSwitching, errorReaction].includes(reaction.name) &&
+          [doneReactionForRemoteMemo, doneReactionForLocationSwitching].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
       }).length
