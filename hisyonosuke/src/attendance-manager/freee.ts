@@ -4,7 +4,7 @@ import { getService } from './auth'
 import { buildUrl } from './utilities'
 
 
-interface CompaniesEmployeeSerializer {
+export interface CompaniesEmployeeSerializer {
   id: number,
   num: string,
   display_name: string,
@@ -13,7 +13,7 @@ interface CompaniesEmployeeSerializer {
   user_id: number,
   email: string
 }
-interface EmployeeSerializer {
+export interface EmployeeSerializer {
   id: number,
   num: string,
   display_name: string,
@@ -24,29 +24,29 @@ interface EmployeeSerializer {
 }
 
 
-interface WorkRecordTimeRangeResponseSerializer {
+export interface WorkRecordTimeRangeResponseSerializer {
   clock_in_at: string, // DATETIME
   clock_out_at: string, // DATETIME
 }
 
-interface EmployeeMultiHourlyWageWorkRecordSummarySerializer {
+export interface EmployeeMultiHourlyWageWorkRecordSummarySerializer {
   name: string,
   total_normal_time_mins: number
 }
 
-interface HolidaysAndHoursSerializer {
+export interface HolidaysAndHoursSerializer {
   days: number,
   hours: number
 }
 
-interface TimeClocksControllerCreateBody {
+export interface TimeClocksControllerCreateBody {
   company_id: number,
   type: 'clock_in' | 'break_begin' | 'break_end' | 'clock_out',
   base_date: string,  // YYYY-MM-DD
   datetime: string,  // YYYY-MM-DD HH:MM:SS
 }
 
-interface WorkRecordControllerRequestBody {
+export interface WorkRecordControllerRequestBody {
   company_id: number,
   break_records?: WorkRecordTimeRangeResponseSerializer[],
   clock_in_at?: string, //DATETIME
@@ -65,7 +65,7 @@ interface WorkRecordControllerRequestBody {
   use_default_work_pattern?: boolean,
 }
 
-interface WorkRecordSummarySerializer {
+export interface WorkRecordSummarySerializer {
   year: number,
   month: number,
   start_date: string, // DateString,
@@ -92,7 +92,7 @@ interface WorkRecordSummarySerializer {
   work_records: WorkRecordSerializer[]
 }
 
-interface WorkRecordSerializer {
+export interface WorkRecordSerializer {
   break_records: WorkRecordTimeRangeResponseSerializer[],
   clock_in_at: number,
   clock_out_at: number,
