@@ -3,7 +3,7 @@ import { StringIndexed } from '@slack/bolt/dist/types/helpers';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { format, setHours, setMinutes, setSeconds, subDays } from 'date-fns';
 
-import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from './freee';
+import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord, WorkRecordControllerRequestBody } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
 import { getConfig, initConfig } from './config';
 
@@ -314,7 +314,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
       const remoteMessage = matchedUnprocessedRemote[0];
       const targetDate = format(clockOutDate, 'yyyy-MM-dd');
       const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
-      const remoteParams = {
+      const remoteParams: WorkRecordControllerRequestBody = {
         company_id: FREEE_COMPANY_ID,
         clock_in_at: format(new Date(workRecord.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
         clock_out_at: format(new Date(workRecord.clock_out_at), 'yyyy-MM-dd HH:mm:ss'),

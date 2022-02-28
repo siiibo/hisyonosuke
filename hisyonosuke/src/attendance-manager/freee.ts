@@ -46,6 +46,8 @@ export interface TimeClocksControllerCreateBody {
   datetime: string,  // YYYY-MM-DD HH:MM:SS
 }
 
+// https://developer.freee.co.jp/docs/hr/reference#/%E5%8B%A4%E6%80%A0/update_employee_work_record
+// 登録済みの勤怠時間の変更・勤務パターンの変更など、要求によってrequiredが変わるため、nullable typeは厳密ではない
 export interface WorkRecordControllerRequestBody {
   company_id: number,
   break_records?: WorkRecordTimeRangeResponseSerializer[],
