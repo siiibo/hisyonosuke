@@ -4,7 +4,7 @@ import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { format, setHours, setMinutes, setSeconds, subDays } from 'date-fns';
 
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord, WorkRecordControllerRequestBody } from './freee';
-import { getUnixTimeStampString, isWorkDay } from './utilities';
+import { getUnixTimeStampString } from './utilities';
 import { getConfig, initConfig } from './config';
 
 enum IncomingEventType {
@@ -57,11 +57,6 @@ const attendanceManager = (payload: StringIndexed, incomingEventType: IncomingEv
 }
 
 export const periodicallyCheckForAttendanceManager = () => {
-  const now = new Date();
-  if (!isWorkDay(now)) {
-    return;
-  }
-
   const client = getSlackClient();
 
   const { TEST_CHANNEL_ID, ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
@@ -175,7 +170,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     });
 
     // リモート出勤 → 出社のパターン
-    if (matchedUnprocessedRemote.length === 1 && clockInMessage.text === ':shussha:') {
+    if (matchedUnprocessedRemote.length === 1 && clockInMessage.text.match(/^\s*:shussha:\s*$/)) {
       const remoteMessage = matchedUnprocessedRemote[0];
       try {
         client.reactions.add({
