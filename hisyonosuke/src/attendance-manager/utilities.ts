@@ -9,12 +9,12 @@ export function getUnixTimeStampString(date: Date): string {
   return Math.floor(date.getTime() / 1000).toFixed();
 }
 
-export function isWorkDay(targetDate: Date){
+export function isWorkDay(targetDate: Date) {
   return !isWeekend(targetDate) && !isHoliday(targetDate)
 }
 
 function isWeekend(targetDate: Date) {
-  return targetDate.getDay() === (0 || 6);
+  return targetDate.getDay() === 0 || targetDate.getDay() === 6;
 }
 
 function isHoliday(targetDate: Date): boolean {
