@@ -170,7 +170,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     });
 
     // リモート出勤 → 出社のパターン
-    if (matchedUnprocessedRemote.length === 1 && clockInMessage.text === ':shussha:') {
+    if (matchedUnprocessedRemote.length === 1 && clockInMessage.text.match(/^\s*:shussha:\s*$/)) {
       const remoteMessage = matchedUnprocessedRemote[0];
       try {
         client.reactions.add({
