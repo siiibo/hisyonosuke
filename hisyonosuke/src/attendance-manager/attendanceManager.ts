@@ -485,16 +485,21 @@ const getterForUserWorkStatuses = (messages: Message[]): (slackUserId: string) =
   const clockedInUserWorkStatuses = clockedInUsers.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
     const userMessagesLastIndex = userMessages.length - 1;
+    const lastUserCommand  = userMessages[userMessagesLastIndex].text;
     let workStatus: UserWorkStatus['workStatus'];
 
     // 最後のuserMessageからworkStatusを算出できるはず
     // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
     // TODO: ↑の検証
-    if (userMessages[userMessagesLastIndex].text.match(/^\s*(:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:)\s*$/)) {
+    if (lastUserCommand.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
       workStatus = '退勤済み'
-    } else if (userMessages[userMessagesLastIndex].text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:)\s*$/)) {
+    } else if (userMessages[userMessagesLastIndex].text.match(
+      getCommandRegExp([COMMAND_TYPE.CLOCK_IN, COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE])
+    )) {
       workStatus = '勤務中（出社）'
-    } else if (userMessages[userMessagesLastIndex].text.match(/^\s*(:remote:|:remoteshukkin:)\s*$/)) {
+    } else if (userMessages[userMessagesLastIndex].text.match(
+      getCommandRegExp([COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE, COMMAND_TYPE.SWITCH_TO_REMOTE])
+    )) {
       workStatus = '勤務中（リモート）';
     } else {
       // ここには来ない想定
@@ -546,11 +551,15 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
   }
 }
 
-const getCommandType = (message: Message): CommandType | undefined => {
-  const getCommandRegExp = (commands: Commands): RegExp => {
+const getCommandRegExp = (commands: Commands | Commands[]): RegExp => {
+  if (Array.isArray(commands)) {
+    return new RegExp(`^\\s*(${commands.flat().join('|')})\\s*\$`);
+  } else {
     return new RegExp(`^\\s*(${commands.join('|')})\\s*\$`);
   }
+}
 
+const getCommandType = (message: Message): CommandType | undefined => {
   if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
     return 'CLOCK_IN';
   } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
