@@ -6,6 +6,7 @@ import { format, setHours, setMinutes, setSeconds, subDays } from 'date-fns';
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord, WorkRecordControllerRequestBody } from './freee';
 import { getUnixTimeStampString, isWorkDay } from './utilities';
 import { getConfig, initConfig } from './config';
+import { Message } from '@hi-se/web-api/src/response/ConversationsHistoryResponse';
 
 enum IncomingEventType {
   Event,
@@ -15,6 +16,26 @@ enum IncomingEventType {
   ViewAction,
   Shortcut,
 }
+
+interface UserWorkStatus {
+  userSlackId: string,
+  workStatus: '勤務中（出社）' | '勤務中（リモート）' | '退勤済み' // 未出勤は現状利用していない
+  needTrafficExpense: boolean,
+  processedMessages: Message[],
+}
+type CommandType = keyof typeof COMMAND_TYPE;
+type Commands = typeof COMMAND_TYPE[keyof typeof COMMAND_TYPE]
+type ActionType = 'clock_in' | 'clock_out' | 'clock_out_and_add_remote_memo' | 'switch_work_status_to_office' | 'switch_work_status_to_remote';
+
+const DATE_START_HOUR = 4;
+const COMMAND_TYPE = {
+  CLOCK_IN: [':shukkin:', ':sagyoukaishi:', ':kinmukaishi:',],
+  CLOCK_IN_OR_SWITCH_TO_OFFICE: [':shussha:'],
+  CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE: [':remoteshukkin:'],
+  SWITCH_TO_REMOTE: [':remote:'],
+  CLOCK_OUT: [':taikin:', ':sagyoushuuryou:', ':saishuutaikin:', ':kinmushuuryou:']
+} as const;
+
 
 export const initAttendanceManager = () => {
   initConfig();
@@ -69,6 +90,7 @@ export const periodicallyCheckForAttendanceManager = () => {
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
   checkAttendance(client, ATTENDANCE_CHANNEL_ID);
   checkAttendance(client, PART_TIMER_CHANNEL_ID);
+
 }
 
 /*
@@ -364,6 +386,186 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     }
   });
 }
+
+const _checkAttendance = (client: SlackClient, channelId: string) => {
+  const messages = getDailyMessages(client, channelId);
+  if (!messages.length) { return }
+
+  const getUserWorkStatus = getterForUserWorkStatuses(messages);
+
+  const unprocessedMessages = messages; //FIXME; 指定のreactionを含まないメッセージ配列に変更
+
+  const unprocessedCommands = unprocessedMessages.map(message => {
+    return {
+      message,
+      commandType: getCommandType(message)
+    }
+  }).filter(_ => _);
+
+  const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
+    return {
+      message,
+      actionType: getActionType(commandType, getUserWorkStatus(message.user))
+    }
+  });
+
+  actionsToProcess.forEach(({ message, actionType }) => {
+    execAction(message, actionType);
+  });
+}
+
+const execAction = (message: Message, actionType: ActionType) => {
+  switch (actionType) {
+    case 'clock_in':
+      // TODO: 打刻・スタンプ
+      break;
+    case 'switch_work_status_to_office':
+      //TODO: スタンプのみ
+      break;
+    case 'switch_work_status_to_remote':
+      //TODO: スタンプのみ
+      break;
+    case 'clock_out':
+      //TODO: 打刻・スタンプ
+      break;
+    case 'clock_out_and_add_remote_memo':
+    //TODO: 打刻・スタンプ・メモ追加
+  }
+
+}
+
+
+const getDailyMessages = (client: SlackClient, channelId: string) => {
+  const now = new Date();
+  let oldest = new Date();
+  oldest = setHours(oldest, DATE_START_HOUR);
+  oldest = setMinutes(oldest, 0);
+  oldest = setSeconds(oldest, 0);
+  if (now.getHours() <= DATE_START_HOUR) {
+    oldest = subDays(oldest, 1);
+  }
+
+  const messages = client.conversations.history({
+    channel: channelId,
+    oldest: getUnixTimeStampString(oldest),
+    inclusive: true
+  }).messages;
+
+  return messages;
+}
+
+
+
+const getterForUserWorkStatuses = (messages: Message[]): (slackUserId: string) => UserWorkStatus => {
+  //FIXME: checkAttendanceとの重複 ↓
+  const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
+  const doneReactionForTimeRecord = 'dakoku_ok';
+  const doneReactionForRemoteMemo = 'memo_remote_ok';
+  const doneReactionForLocationSwitching = 'switch_location_ok';
+  const errorReaction = 'dakoku_memo_error';
+
+  const messagesWithoutError = messages.filter(message => {
+    return !message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(hisyonosukeUserId) &&
+        reaction.name === errorReaction
+      );
+    }).length
+  });
+  const processedMessages = messagesWithoutError.filter(message => {
+    return message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(hisyonosukeUserId) &&
+        [doneReactionForTimeRecord, doneReactionForRemoteMemo, doneReactionForLocationSwitching].includes(reaction.name)
+      )
+    }).length
+  });
+  const clockedInUsers = Array.from(new Set(processedMessages.map(message => message.user)));
+
+  const clockedInUserWorkStatuses = clockedInUsers.map(userSlackId => {
+    const userMessages = processedMessages.filter(message => message.user === userSlackId);
+    const userMessagesLastIndex = userMessages.length - 1;
+    let workStatus: UserWorkStatus['workStatus'];
+
+    // 最後のuserMessageからworkStatusを算出できるはず
+    // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
+    // TODO: ↑の検証
+    if (userMessages[userMessagesLastIndex].text.match(/^\s*(:taikin:|:sagyoushuuryou:|:saishuutaikin:|:kinmushuuryou:)\s*$/)) {
+      workStatus = '退勤済み'
+    } else if (userMessages[userMessagesLastIndex].text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:)\s*$/)) {
+      workStatus = '勤務中（出社）'
+    } else if (userMessages[userMessagesLastIndex].text.match(/^\s*(:remote:|:remoteshukkin:)\s*$/)) {
+      workStatus = '勤務中（リモート）';
+    } else {
+      // ここには来ない想定
+      console.error(userMessages);
+      throw new Error(); //TODO: エラーメッセージ
+    }
+
+    // 「状態がリモート&出社が一つもない」もののみ交通費がかからず、それ以外は必要
+    const needTrafficExpense = !(
+      workStatus === '勤務中（リモート）' &&
+      userMessages.every(message => !message.text.match(/^\s*:shussha:\s*$/))
+    );
+
+    return {
+      userSlackId,
+      needTrafficExpense,
+      workStatus,
+      processedMessages: userMessages
+    }
+  });
+
+  const getUserWorkStatus = (userSlackId: string) => {
+    const matchedUserWorkStatus = clockedInUserWorkStatuses.filter(userWorkStatus => userWorkStatus.userSlackId === userSlackId);
+    if (matchedUserWorkStatus.length === 0) {
+      return undefined;
+    } else if (matchedUserWorkStatus.length === 1) {
+      matchedUserWorkStatus[0];
+    } else {
+      throw new Error(); //TODO: エラーメッセージ
+    }
+  }
+
+  return getUserWorkStatus;
+}
+
+
+const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus | undefined): ActionType => {
+  switch (commandType) {
+    case 'CLOCK_IN':
+      return 'clock_in';
+    case 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE':
+      return userWorkStatus?.workStatus === '勤務中（出社）' ? 'switch_work_status_to_remote' : 'clock_in';
+    case 'CLOCK_IN_OR_SWITCH_TO_OFFICE':
+      return userWorkStatus?.workStatus === '勤務中（リモート）' ? 'switch_work_status_to_office' : 'clock_in';
+    case 'SWITCH_TO_REMOTE':
+      return 'switch_work_status_to_remote';
+    case 'CLOCK_OUT':
+      return 'clock_out';
+  }
+}
+
+const getCommandType = (message: Message): CommandType | undefined => {
+  const getCommandRegExp = (commands: Commands): RegExp => {
+    return new RegExp(`^\\s*(${commands.join('|')})\\s*\$`);
+  }
+
+  if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
+    return 'CLOCK_IN';
+  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
+    return 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE';
+  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
+    return 'CLOCK_IN_OR_SWITCH_TO_OFFICE';
+  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
+    return 'SWITCH_TO_REMOTE';
+  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
+    return 'CLOCK_OUT';
+  } else {
+    return undefined;
+  }
+}
+
 
 // タイムトリガー形式にしたので削除予定
 const handleSlackEvent = (event: SlackEvent) => {
