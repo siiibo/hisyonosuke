@@ -625,14 +625,11 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
   const clockedInUserIds = Array.from(new Set(processedMessages.map(message => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
-    const workStatus = getUserWorkStatusByLastCommand(userMessages[userMessages.length - 1].text);
+    const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
+    const workStatus = getUserWorkStatusByLastCommand(userCommands[userCommands.length - 1]);
 
-    // 「状態がリモート&出社が一つもない」もののみ交通費がかからず、それ以外は必要
-    // TODO: 検証
-    const needTrafficExpense = !(
-      workStatus === '勤務中（リモート）' &&
-      userMessages.every(message => !message.text.match(/^\s*:shussha:\s*$/))
-    );
+    // 「リモート出勤」よりあとに「出社」がなければ交通費はかからなず、それ以外は必要
+    const needTrafficExpense = userCommands.lastIndexOf('CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE') > userCommands.lastIndexOf('CLOCK_IN_OR_SWITCH_TO_OFFICE');
 
     return {
       userSlackId,
@@ -703,24 +700,23 @@ const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
 }
 
 
-const getUserWorkStatusByLastCommand = (lastUserCommand: string): UserWorkStatus['workStatus'] => {
+const getUserWorkStatusByLastCommand = (_lastUserCommand: CommandType): UserWorkStatus['workStatus'] => {
 
   // 最後のuserMessageからworkStatusを算出できるはず
   // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
   // TODO: ↑の検証
-  if (lastUserCommand.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
-    return '退勤済み';
-  } else if (lastUserCommand.match(
-    getCommandRegExp([COMMAND_TYPE.CLOCK_IN, COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE])
-  )) {
-    return '勤務中（出社）';
-  } else if (lastUserCommand.match(
-    getCommandRegExp([COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE, COMMAND_TYPE.SWITCH_TO_REMOTE])
-  )) {
-    return '勤務中（リモート）';
-  } else {
-    // ここには来ない想定
-    throw new Error(); //TODO: エラーメッセージ
+
+  switch (_lastUserCommand) {
+    case 'CLOCK_OUT':
+      return '退勤済み';
+    case 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE':
+      return '勤務中（リモート）';
+    case 'SWITCH_TO_REMOTE':
+      return '勤務中（リモート）';
+    case 'CLOCK_IN':
+      return '勤務中（出社）';
+    case 'CLOCK_IN_OR_SWITCH_TO_OFFICE':
+      return '勤務中（出社）';
   }
 }
 
