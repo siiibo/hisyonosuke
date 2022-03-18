@@ -623,6 +623,7 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
 const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
+  // TODO: ↓ 「今誰いる？」の機能に流用する
   const clockedInUserIds = Array.from(new Set(processedMessages.map(message => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
