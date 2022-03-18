@@ -406,7 +406,7 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
       message,
       commandType: getCommandType(message)
     }
-  }).filter(_ => _);
+  }).filter(_ => _.commandType);
 
   //TODO: 5分以内に複数のコマンドが入力された場合どうするか
   const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages, hisyonosukeUserId);
