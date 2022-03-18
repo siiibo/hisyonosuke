@@ -734,7 +734,7 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
     case 'SWITCH_TO_REMOTE':
       return 'switch_work_status_to_remote';
     case 'CLOCK_OUT':
-      return 'clock_out';
+      return userWorkStatus.needTrafficExpense ? 'clock_out_and_add_remote_memo' : 'clock_out';
   }
 }
 
