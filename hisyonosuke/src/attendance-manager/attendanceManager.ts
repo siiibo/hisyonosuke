@@ -24,7 +24,7 @@ interface UserWorkStatus {
   processedMessages: Message[],
 }
 type CommandType = keyof typeof COMMAND_TYPE;
-type Commands = typeof COMMAND_TYPE[keyof typeof COMMAND_TYPE]
+type Commands = typeof COMMAND_TYPE[CommandType]
 type ActionType = 'clock_in' | 'clock_out' | 'clock_out_and_add_remote_memo' | 'switch_work_status_to_office' | 'switch_work_status_to_remote';
 
 const DATE_START_HOUR = 4;
