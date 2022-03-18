@@ -574,8 +574,10 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
     case 'CLOCK_IN':
       return 'clock_in';
     case 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE':
+      // TODO: 勤務中（リモート）だった場合
       return userWorkStatus?.workStatus === '勤務中（出社）' ? 'switch_work_status_to_remote' : 'clock_in';
     case 'CLOCK_IN_OR_SWITCH_TO_OFFICE':
+      // TODO: 勤務中（出社）だった場合
       return userWorkStatus?.workStatus === '勤務中（リモート）' ? 'switch_work_status_to_office' : 'clock_in';
     case 'SWITCH_TO_REMOTE':
       return 'switch_work_status_to_remote';
