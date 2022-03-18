@@ -394,12 +394,12 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
 }
 
 const _checkAttendance = (client: SlackClient, channelId: string) => {
+  const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
+
   const messages = getDailyMessages(client, channelId);
   if (!messages.length) { return }
 
-  const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages);
-
-  const unprocessedMessages = messages; //FIXME; 指定のreactionを含まないメッセージ配列に変更
+  const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
 
   const unprocessedCommands = unprocessedMessages.map(message => {
     return {
@@ -408,6 +408,7 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
     }
   }).filter(_ => _);
 
+  const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages, hisyonosukeUserId);
   const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
     return {
       message,
@@ -460,32 +461,8 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   return messages;
 }
 
-
-
-const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId: string) => UserWorkStatus => {
-  //FIXME: checkAttendanceとの重複 ↓
-  const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
-  const doneReactionForTimeRecord = 'dakoku_ok';
-  const doneReactionForRemoteMemo = 'memo_remote_ok';
-  const doneReactionForLocationSwitching = 'switch_location_ok';
-  const errorReaction = 'dakoku_memo_error';
-
-  const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.filter(reaction => {
-      return (
-        reaction.users.includes(hisyonosukeUserId) &&
-        reaction.name === errorReaction
-      );
-    }).length
-  });
-  const processedMessages = messagesWithoutError.filter(message => {
-    return message.reactions?.filter(reaction => {
-      return (
-        reaction.users.includes(hisyonosukeUserId) &&
-        [doneReactionForTimeRecord, doneReactionForRemoteMemo, doneReactionForLocationSwitching].includes(reaction.name)
-      )
-    }).length
-  });
+const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus => {
+  const processedMessages = getProcessedMessages(messages, botUserId);
 
   const clockedInUserIds = Array.from(new Set(processedMessages.map(message => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
@@ -520,6 +497,55 @@ const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId:
     }
   }
 }
+
+const getProcessedMessages = (messages: Message[], botUserId: string) => {
+  const messagesWithoutError = messages.filter(message => {
+    return !message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(botUserId) &&
+        reaction.name === REACTION.ERROR
+      );
+    }).length
+  });
+  const processedMessages = messagesWithoutError.filter(message => {
+    return message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(botUserId) &&
+        [
+          REACTION.DONE_FOR_TIME_RECORD,
+          REACTION.DONE_FOR_REMOTE_MEMO,
+          REACTION.DONE_FOR_LOCATION_SWITCH
+        ].includes(reaction.name)
+      )
+    }).length
+  });
+  return processedMessages;
+}
+
+const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
+  const messagesWithoutError = messages.filter(message => {
+    return !message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(botUserId) &&
+        reaction.name === REACTION.ERROR
+      );
+    }).length
+  });
+  const unprocessedMessages = messagesWithoutError.filter(message => {
+    return !message.reactions?.filter(reaction => {
+      return (
+        reaction.users.includes(botUserId) &&
+        [
+          REACTION.DONE_FOR_TIME_RECORD,
+          REACTION.DONE_FOR_REMOTE_MEMO,
+          REACTION.DONE_FOR_LOCATION_SWITCH
+        ].includes(reaction.name)
+      )
+    }).length
+  });
+  return unprocessedMessages;
+}
+
 
 const getUserWorkStatusByLastCommand = (lastUserCommand: string): UserWorkStatus['workStatus'] => {
 
