@@ -616,7 +616,8 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
     inclusive: true
   }).messages;
 
-  return messages;
+  // 時系列昇順に並び替え
+  return messages.reverse();
 }
 
 const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus => {
