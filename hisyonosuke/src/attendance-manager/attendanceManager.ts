@@ -620,7 +620,7 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   return messages.reverse();
 }
 
-const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus => {
+const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus | undefined => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
   // TODO: ↓ 「今誰いる？」の機能に流用する
