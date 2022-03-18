@@ -480,34 +480,16 @@ const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId:
       )
     }).length
   });
-  const clockedInUsers = Array.from(new Set(processedMessages.map(message => message.user)));
 
-  const clockedInUserWorkStatuses = clockedInUsers.map(userSlackId => {
+  const clockedInUserIds = Array.from(new Set(processedMessages.map(message => message.user)));
+  const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
-    const userMessagesLastIndex = userMessages.length - 1;
-    const lastUserCommand  = userMessages[userMessagesLastIndex].text;
-    let workStatus: UserWorkStatus['workStatus'];
-
-    // 最後のuserMessageからworkStatusを算出できるはず
-    // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
-    // TODO: ↑の検証
-    if (lastUserCommand.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
-      workStatus = '退勤済み'
-    } else if (userMessages[userMessagesLastIndex].text.match(
-      getCommandRegExp([COMMAND_TYPE.CLOCK_IN, COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE])
-    )) {
-      workStatus = '勤務中（出社）'
-    } else if (userMessages[userMessagesLastIndex].text.match(
-      getCommandRegExp([COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE, COMMAND_TYPE.SWITCH_TO_REMOTE])
-    )) {
-      workStatus = '勤務中（リモート）';
-    } else {
-      // ここには来ない想定
-      console.error(userMessages);
-      throw new Error(); //TODO: エラーメッセージ
-    }
+    const workStatus = getUserWorkStatusByLastCommand(userMessages[userMessages.length - 1].text);
 
     // 「状態がリモート&出社が一つもない」もののみ交通費がかからず、それ以外は必要
+    // TODO: 検証
+    // 「リモート出勤より後に出社がなければ交通費は発生しない」
+    // 逆にそれ以外は発生する
     const needTrafficExpense = !(
       workStatus === '勤務中（リモート）' &&
       userMessages.every(message => !message.text.match(/^\s*:shussha:\s*$/))
@@ -531,10 +513,28 @@ const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId:
       throw new Error(); //TODO: エラーメッセージ
     }
   }
-
-  return getUserWorkStatus;
 }
 
+const getUserWorkStatusByLastCommand = (lastUserCommand: string): UserWorkStatus['workStatus'] => {
+
+  // 最後のuserMessageからworkStatusを算出できるはず
+  // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
+  // TODO: ↑の検証
+  if (lastUserCommand.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
+    return '退勤済み';
+  } else if (lastUserCommand.match(
+    getCommandRegExp([COMMAND_TYPE.CLOCK_IN, COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE])
+  )) {
+    return '勤務中（出社）';
+  } else if (lastUserCommand.match(
+    getCommandRegExp([COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE, COMMAND_TYPE.SWITCH_TO_REMOTE])
+  )) {
+    return '勤務中（リモート）';
+  } else {
+    // ここには来ない想定
+    throw new Error(); //TODO: エラーメッセージ
+  }
+}
 
 const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus | undefined): ActionType => {
   switch (commandType) {
