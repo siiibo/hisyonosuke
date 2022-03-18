@@ -503,7 +503,7 @@ const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId:
     }
   });
 
-  const getUserWorkStatus = (userSlackId: string) => {
+  return (userSlackId: string) => {
     const matchedUserWorkStatus = clockedInUserWorkStatuses.filter(userWorkStatus => userWorkStatus.userSlackId === userSlackId);
     if (matchedUserWorkStatus.length === 0) {
       return undefined;
