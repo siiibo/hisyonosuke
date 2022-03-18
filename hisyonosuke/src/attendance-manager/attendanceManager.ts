@@ -391,7 +391,7 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
   const messages = getDailyMessages(client, channelId);
   if (!messages.length) { return }
 
-  const getUserWorkStatus = getterForUserWorkStatuses(messages);
+  const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages);
 
   const unprocessedMessages = messages; //FIXME; 指定のreactionを含まないメッセージ配列に変更
 
@@ -456,7 +456,7 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
 
 
 
-const getterForUserWorkStatuses = (messages: Message[]): (slackUserId: string) => UserWorkStatus => {
+const getterForUserWorkStatusesByMessages = (messages: Message[]): (slackUserId: string) => UserWorkStatus => {
   //FIXME: checkAttendanceとの重複 ↓
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const doneReactionForTimeRecord = 'dakoku_ok';
