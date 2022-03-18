@@ -438,7 +438,7 @@ const execAction = (message: Message, actionType: ActionType) => {
 const getDailyMessages = (client: SlackClient, channelId: string) => {
   const now = new Date();
   let oldest = new Date();
-  oldest = setHours(oldest, DATE_START_HOUR);
+  oldest = setHours(oldest, DATE_START_HOUR);　// グローバル変数に依存
   oldest = setMinutes(oldest, 0);
   oldest = setSeconds(oldest, 0);
   if (now.getHours() <= DATE_START_HOUR) {
