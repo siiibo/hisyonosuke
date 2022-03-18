@@ -492,7 +492,7 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
     if (matchedUserWorkStatus.length === 0) {
       return undefined;
     } else if (matchedUserWorkStatus.length === 1) {
-      matchedUserWorkStatus[0];
+      return matchedUserWorkStatus[0];
     } else {
       throw new Error(); //TODO: エラーメッセージ
     }
