@@ -417,31 +417,188 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
     }
   });
 
+  const { FREEE_COMPANY_ID } = getConfig();
+
   actionsToProcess.forEach(({ message, actionType }) => {
-    execAction(message, actionType);
+    execAction(client, channelId, FREEE_COMPANY_ID, message, actionType);
   });
 }
 
-const execAction = (message: Message, actionType: ActionType) => {
-  switch (actionType) {
-    case 'clock_in':
-      // TODO: 打刻・スタンプ
-      break;
-    case 'switch_work_status_to_office':
-      //TODO: スタンプのみ
-      break;
-    case 'switch_work_status_to_remote':
-      //TODO: スタンプのみ
-      break;
-    case 'clock_out':
-      //TODO: 打刻・スタンプ
-      break;
-    case 'clock_out_and_add_remote_memo':
-    //TODO: 打刻・スタンプ・メモ追加
+const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: number, message: Message, actionType: ActionType) => {
+  let employeeId: number;
+
+  try {
+    employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
+  } catch (e) {
+    console.error(e.stack);
+    console.error(`slackUserId:${message.user}, type: getEmployeeId`);
+    const errorFeedBackMessage = e.toString();;
+    client.chat.postMessage({
+      channel: channelId,
+      text: errorFeedBackMessage,
+      thread_ts: message.ts
+    });
+    client.reactions.add({
+      channel: channelId,
+      name: REACTION.ERROR,
+      timestamp: message.ts
+    });
+    return;
   }
+
+  try {
+    switch (actionType) {
+      case 'clock_in':
+        handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message);
+        break;
+      case 'switch_work_status_to_office':
+        handleSwitchWorkStatusToOffice(client, channelId, message);
+        break;
+      case 'switch_work_status_to_remote':
+        handleSwitchWorkStatusToRemote(client, channelId, message);
+        break;
+      case 'clock_out':
+        handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
+        break;
+      case 'clock_out_and_add_remote_memo':
+        handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
+    }
+  } catch (e) {
+    console.error(e.stack);
+    console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}`);
+
+    let errorFeedBackMessage = e.toString();
+    if (actionType === 'clock_in' && e.message.includes("打刻の種類が正しくありません。")) {
+      errorFeedBackMessage = '既に打刻済みです';
+    }
+    if (actionType === 'clock_out' && e.message.includes("打刻の種類が正しくありません。")) {
+      errorFeedBackMessage = '出勤打刻が完了していないか、退勤の上書きができない値です.';
+    }
+
+    client.chat.postMessage({
+      channel: channelId,
+      text: errorFeedBackMessage,
+      thread_ts: message.ts
+    });
+    client.reactions.add({
+      channel: channelId,
+      name: REACTION.ERROR,
+      timestamp: message.ts
+    });
+  }
+}
+
+const handleClockIn = (
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  message: Message
+) => {
+  const clockInDate = new Date(parseInt(message.ts) * 1000);
+  const clockInBaseDate = new Date(clockInDate.getTime());
+
+  const clockInParams = {
+    company_id: FREEE_COMPANY_ID,
+    type: 'clock_in' as const,
+    base_date: format(clockInBaseDate, 'yyyy-MM-dd'),
+    datetime: format(clockInDate, 'yyyy-MM-dd HH:mm:ss')
+  };
+
+  setTimeClocks(employeeId, clockInParams);
+  client.reactions.add({
+    channel: channelId,
+    name: REACTION.DONE_FOR_TIME_RECORD,
+    timestamp: message.ts
+  });
+  console.info(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
+}
+
+const handleSwitchWorkStatusToOffice = (
+  client: SlackClient,
+  channelId: string,
+  message: Message
+) => {
+  client.reactions.add({
+    channel: channelId,
+    name: REACTION.DONE_FOR_LOCATION_SWITCH,
+    timestamp: message.ts
+  });
+}
+
+const handleSwitchWorkStatusToRemote = (
+  client: SlackClient,
+  channelId: string,
+  message: Message
+) => {
+  client.reactions.add({
+    channel: channelId,
+    name: REACTION.DONE_FOR_LOCATION_SWITCH,
+    timestamp: message.ts
+  });
+}
+
+const handleClockOut = (
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  message: Message
+) => {
+  const clockOutDate = new Date(parseInt(message.ts) * 1000);
+  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
+    ? new Date(clockOutDate.getTime())
+    : subDays(clockOutDate, 1);
+
+  const clockOutParams = {
+    company_id: FREEE_COMPANY_ID,
+    type: 'clock_out' as const,
+    base_date: format(clockOutBaseDate, 'yyyy-MM-dd'),
+    datetime: format(clockOutDate, 'yyyy-MM-dd HH:mm:ss')
+  };
+
+  setTimeClocks(employeeId, clockOutParams);
+  client.reactions.add({
+    channel: channelId,
+    name: REACTION.DONE_FOR_TIME_RECORD,
+    timestamp: message.ts
+  });
+  console.info(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
 
 }
 
+const handleClockOutAndAddRemoteMemo = (
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  message: Message
+) => {
+  handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
+
+  const clockOutDate = new Date(parseInt(message.ts) * 1000);
+  const targetDate = format(clockOutDate, 'yyyy-MM-dd');
+  const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+  const remoteParams: WorkRecordControllerRequestBody = {
+    company_id: FREEE_COMPANY_ID,
+    clock_in_at: format(new Date(workRecord.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
+    clock_out_at: format(new Date(workRecord.clock_out_at), 'yyyy-MM-dd HH:mm:ss'),
+    note: workRecord.note ? `${workRecord.note} リモート` : 'リモート',
+    break_records: workRecord.break_records.map(record => {
+      return {
+        clock_in_at: format(new Date(record.clock_in_at), 'yyyy-MM-dd HH:mm:ss'),
+        clock_out_at: format(new Date(record.clock_out_at), 'yyyy-MM-dd HH:mm:ss')
+      }
+    })
+  }
+  updateWorkRecord(employeeId, targetDate, remoteParams);
+  client.reactions.add({
+    channel: channelId,
+    name: REACTION.DONE_FOR_REMOTE_MEMO,
+    timestamp: message.ts
+  });
+  console.info(`user:${employeeId}, type:remote, clock_in_at:${remoteParams.clock_in_at}, clock_out_at:${remoteParams.clock_out_at}, note:${remoteParams.note}`);
+}
 
 const getDailyMessages = (client: SlackClient, channelId: string) => {
   const now = new Date();
@@ -472,8 +629,6 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
 
     // 「状態がリモート&出社が一つもない」もののみ交通費がかからず、それ以外は必要
     // TODO: 検証
-    // 「リモート出勤より後に出社がなければ交通費は発生しない」
-    // 逆にそれ以外は発生する
     const needTrafficExpense = !(
       workStatus === '勤務中（リモート）' &&
       userMessages.every(message => !message.text.match(/^\s*:shussha:\s*$/))
