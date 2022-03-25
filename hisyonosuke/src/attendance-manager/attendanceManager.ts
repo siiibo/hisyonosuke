@@ -416,12 +416,17 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
 
   const { FREEE_COMPANY_ID } = getConfig();
 
-  actionsToProcess.forEach(({ message, userWorkStatus, actionType }) => {
-    execAction(client, channelId, FREEE_COMPANY_ID, message, actionType);
+  actionsToProcess.forEach((action) => {
+    execAction(client, channelId, FREEE_COMPANY_ID, action);
   });
 }
 
-const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: number, message: Message, actionType: ActionType) => {
+const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: number, action: {
+  message: Message,
+  actionType: ActionType,
+  userWorkStatus: UserWorkStatus
+}) => {
+  const { message, actionType, userWorkStatus } = action;
   let employeeId: number;
 
   try {
@@ -462,7 +467,7 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
     }
   } catch (e) {
     console.error(e.stack);
-    console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}`);
+    console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
 
     let errorFeedBackMessage = e.toString();
     if (actionType === 'clock_in' && e.message.includes("打刻の種類が正しくありません。")) {
