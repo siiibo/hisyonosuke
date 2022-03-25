@@ -626,9 +626,7 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
     const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
     const workStatus = getUserWorkStatusByLastCommand(userCommands[userCommands.length - 1]);
-
-    // 「リモート出勤」よりあとに「出社」がなければ交通費はかからなず、それ以外は必要
-    const needTrafficExpense = userCommands.lastIndexOf('CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE') > userCommands.lastIndexOf('CLOCK_IN_OR_SWITCH_TO_OFFICE');
+    const needTrafficExpense = checkTrafficExpense(userCommands);
 
     return {
       userSlackId,
@@ -696,6 +694,11 @@ const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
     }).length
   });
   return unprocessedMessages;
+}
+
+const checkTrafficExpense = (userCommands: CommandType[]) => {
+  // 「リモート出勤」よりあとに「出社」がなければ交通費はかからなず、それ以外は必要
+  return userCommands.lastIndexOf('CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE') < userCommands.lastIndexOf('CLOCK_IN_OR_SWITCH_TO_OFFICE');
 }
 
 
