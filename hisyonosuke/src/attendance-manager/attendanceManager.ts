@@ -411,15 +411,17 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
   //TODO: 5分以内に複数のコマンドが入力された場合どうするか
   const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages, hisyonosukeUserId);
   const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
+    const userWorkStatus = getUserWorkStatus(message.user);
     return {
       message,
-      actionType: getActionType(commandType, getUserWorkStatus(message.user))
+      userWorkStatus,
+      actionType: getActionType(commandType, userWorkStatus)
     }
   });
 
   const { FREEE_COMPANY_ID } = getConfig();
 
-  actionsToProcess.forEach(({ message, actionType }) => {
+  actionsToProcess.forEach(({ message, userWorkStatus, actionType }) => {
     execAction(client, channelId, FREEE_COMPANY_ID, message, actionType);
   });
 }
