@@ -465,6 +465,7 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
       case 'clock_out_and_add_remote_memo':
         handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
     }
+    console.info(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
   } catch (e) {
     console.error(e.stack);
     console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
@@ -513,7 +514,6 @@ const handleClockIn = (
     name: REACTION.DONE_FOR_TIME_RECORD,
     timestamp: message.ts
   });
-  console.info(`user:${employeeId}, type:${clockInParams.type}, base_date:${clockInParams.base_date}, datetime:${clockInParams.datetime}`);
 }
 
 const handleSwitchWorkStatusToOffice = (
@@ -565,8 +565,6 @@ const handleClockOut = (
     name: REACTION.DONE_FOR_TIME_RECORD,
     timestamp: message.ts
   });
-  console.info(`user:${employeeId}, type:${clockOutParams.type}, base_date:${clockOutParams.base_date}, datetime:${clockOutParams.datetime}`);
-
 }
 
 const handleClockOutAndAddRemoteMemo = (
@@ -599,7 +597,6 @@ const handleClockOutAndAddRemoteMemo = (
     name: REACTION.DONE_FOR_REMOTE_MEMO,
     timestamp: message.ts
   });
-  console.info(`user:${employeeId}, type:remote, clock_in_at:${remoteParams.clock_in_at}, clock_out_at:${remoteParams.clock_out_at}, note:${remoteParams.note}`);
 }
 
 const getDailyMessages = (client: SlackClient, channelId: string) => {
