@@ -130,23 +130,23 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   }
 
   const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.filter(reaction => {
+    return !message.reactions?.some(reaction => {
       return (
         errorReaction === reaction.name &&
         reaction.users.includes(hisyonosukeUserId)
       );
-    }).length
+    })
   });
 
 
   const unprocessedClockIn = messagesWithoutError.filter(message => {
     return message.text.match(/^\s*(:shukkin:|:shussha:|:sagyoukaishi:|:kinmukaishi:|:remoteshukkin:)\s*$/) &&
-      !message.reactions?.filter(reaction => {
+      !message.reactions?.some(reaction => {
         return (
           [doneReactionForTimeRecord, doneReactionForLocationSwitching].includes(reaction.name) &&
           reaction.users.includes(hisyonosukeUserId)
         );
-      }).length
+      })
   });
 
   const unprocessedClockOut = messagesWithoutError.filter(message => {
@@ -652,15 +652,15 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
 
 const getProcessedMessages = (messages: Message[], botUserId: string) => {
   const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.filter(reaction => {
+    return !message.reactions?.some(reaction => {
       return (
         reaction.users.includes(botUserId) &&
         reaction.name === REACTION.ERROR
       );
-    }).length
+    })
   });
   const processedMessages = messagesWithoutError.filter(message => {
-    return message.reactions?.filter(reaction => {
+    return message.reactions?.some(reaction => {
       return (
         reaction.users.includes(botUserId) &&
         [
@@ -669,22 +669,22 @@ const getProcessedMessages = (messages: Message[], botUserId: string) => {
           REACTION.DONE_FOR_LOCATION_SWITCH
         ].includes(reaction.name)
       )
-    }).length
+    })
   });
   return processedMessages;
 }
 
 const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
   const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.filter(reaction => {
+    return !message.reactions?.some(reaction => {
       return (
         reaction.users.includes(botUserId) &&
         reaction.name === REACTION.ERROR
       );
-    }).length
+    })
   });
   const unprocessedMessages = messagesWithoutError.filter(message => {
-    return !message.reactions?.filter(reaction => {
+    return !message.reactions?.some(reaction => {
       return (
         reaction.users.includes(botUserId) &&
         [
@@ -693,7 +693,7 @@ const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
           REACTION.DONE_FOR_LOCATION_SWITCH
         ].includes(reaction.name)
       )
-    }).length
+    })
   });
   return unprocessedMessages;
 }
