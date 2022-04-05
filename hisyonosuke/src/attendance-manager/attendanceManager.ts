@@ -639,14 +639,7 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
   });
 
   return (userSlackId: string) => {
-    const matchedUserWorkStatus = clockedInUserWorkStatuses.filter(userWorkStatus => userWorkStatus.userSlackId === userSlackId);
-    if (matchedUserWorkStatus.length === 0) {
-      return undefined;
-    } else if (matchedUserWorkStatus.length === 1) {
-      return matchedUserWorkStatus[0];
-    } else {
-      throw new Error(); //TODO: エラーメッセージ
-    }
+    return clockedInUserWorkStatuses.find(userWorkStatus => userWorkStatus.userSlackId === userSlackId);
   }
 }
 
