@@ -18,7 +18,6 @@ enum IncomingEventType {
 }
 
 interface UserWorkStatus {
-  userSlackId: string,
   workStatus: '勤務中（出社）' | '勤務中（リモート）' | '退勤済み' // 未出勤は現状利用していない
   needTrafficExpense: boolean,
   processedMessages: Message[],
@@ -404,9 +403,9 @@ const _checkAttendance = (client: SlackClient, channelId: string) => {
   }).filter(_ => _.commandType);
 
   //TODO: 5分以内に複数のコマンドが入力された場合どうするか
-  const getUserWorkStatus = getterForUserWorkStatusesByMessages(messages, hisyonosukeUserId);
+  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
   const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
-    const userWorkStatus = getUserWorkStatus(message.user);
+    const userWorkStatus = userWorkStatuses[message.user];
     return {
       message,
       userWorkStatus,
@@ -619,7 +618,7 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   return messages.reverse();
 }
 
-const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: string): (slackUserId: string) => UserWorkStatus | undefined => {
+const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus } => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
   // TODO: ↓ 「今誰いる？」の機能に流用する
@@ -630,17 +629,17 @@ const getterForUserWorkStatusesByMessages = (messages: Message[], botUserId: str
     const workStatus = getUserWorkStatusByLastCommand(userCommands[userCommands.length - 1]);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
-    return {
+    return [
       userSlackId,
-      needTrafficExpense,
-      workStatus,
-      processedMessages: userMessages
-    }
+      {
+        needTrafficExpense,
+        workStatus,
+        processedMessages: userMessages
+      }
+    ]
   });
 
-  return (userSlackId: string) => {
-    return clockedInUserWorkStatuses.find(userWorkStatus => userWorkStatus.userSlackId === userSlackId);
-  }
+  return Object.fromEntries(clockedInUserWorkStatuses);
 }
 
 const getProcessedMessages = (messages: Message[], botUserId: string) => {
