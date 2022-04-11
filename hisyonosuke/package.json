@@ -5,6 +5,7 @@
   "main": "build",
   "private": true,
   "scripts": {
+    "open": "yarn clasp open",
     "build": "yarn webpack",
     "buildpush": "yarn webpack && clasp push --force",
     "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json"

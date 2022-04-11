@@ -2,7 +2,7 @@ import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
 import { notificator } from './notificator';
-import { attendanceManagerProxy, periodicallyCheckForAttendanceManager, initAttendanceManager } from './attendance-manager/attendanceManager'
+import { periodicallyCheckForAttendanceManager, initAttendanceManager } from './attendance-manager/attendanceManager'
 
 const PROPS_SPREADSHEET_ID = '1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU';
 
