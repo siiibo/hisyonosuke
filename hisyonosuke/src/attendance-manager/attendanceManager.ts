@@ -410,7 +410,7 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
       return 'switch_work_status_to_remote';
     case 'CLOCK_OUT':
       //TODO: 打刻の重複の場合
-      return !userWorkStatus?.needTrafficExpense ? 'clock_out_and_add_remote_memo' : 'clock_out';
+      return userWorkStatus?.needTrafficExpense === false ? 'clock_out_and_add_remote_memo' : 'clock_out';
   }
 }
 
