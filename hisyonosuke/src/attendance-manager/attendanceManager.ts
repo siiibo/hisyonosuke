@@ -150,8 +150,13 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
     console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
 
     let errorFeedBackMessage = e.toString();
-    if (actionType === 'clock_in' && e.message.includes("打刻の種類が正しくありません。")) {
-      errorFeedBackMessage = '既に打刻済みです';
+    if (actionType === 'clock_in') {
+      if (e.message.includes('打刻の日付が不正な値です。')) {
+        errorFeedBackMessage = `前日の退勤を完了してから出勤打刻してください.`;
+      }
+      if (e.message.includes("打刻の種類が正しくありません。")) {
+        errorFeedBackMessage = '既に打刻済みです';
+      }
     }
     if (actionType === 'clock_out' && e.message.includes("打刻の種類が正しくありません。")) {
       errorFeedBackMessage = '出勤打刻が完了していないか、退勤の上書きができない値です.';
