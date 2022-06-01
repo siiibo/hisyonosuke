@@ -1,4 +1,5 @@
 import { SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
+import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';
 import { workflowCustomStep } from './workflow-customstep/workflow-customstep';
 import { notificator } from './notificator';
@@ -16,10 +17,50 @@ const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)['challenge']);
   }
 
+  // Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
+  if (isEvent(e)) {
+    const event = JSON.parse(e.postData.contents)['event'] as SlackEvent;
+    if (event.type === 'app_mention') {
+      const client = getSlackClient();
+      if (isOriginalCommand(event.text, 'アルバイトシフト')) {
+        const calendarId = 'c_1889m1jd2rticjeig08cshi84mnrs4gaedkmiqb2dsn66rrd@resource.calendar.google.com';
+        const calendar = CalendarApp.getCalendarById(calendarId);
+        const targetDate = new Date();
+        const dailyShifts = calendar.getEventsForDay(targetDate);
+
+        if (!dailyShifts.length) {
+          client.chat.postMessage({
+            channel: event.channel,
+            text: '今日の予定はありません'
+          });
+          return;
+        }
+
+        const notificationString = dailyShifts.map(dailyShift => {
+          const title = dailyShift.getTitle()
+          const startTime = Utilities.formatDate(dailyShift.getStartTime(), 'Asia/Tokyo', 'HH:mm');
+          const endTime = Utilities.formatDate(dailyShift.getEndTime(), 'Asia/Tokyo', 'HH:mm');
+          return `${title}  ${startTime} 〜 ${endTime}`
+        }).join('\n');
+
+        client.chat.postMessage({
+          channel: event.channel,
+          text: notificationString
+        });
+      }
+    }
+  }
+
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
 
   return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+}
+
+// attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
+const getSlackClient = () => {
+  const token = PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN');
+  return new SlackClient(token);
 }
 
 const isJson = (e: GoogleAppsScript.Events.DoPost): boolean => {
@@ -103,6 +144,24 @@ export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type:
         return { type: payload.type, callback_id: undefined };
     }
   }
+}
+
+
+// Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
+const isOriginalCommand = (target: string, commandRegExpString: string) => {
+  const regExpString = {
+    slackMarkUp: "([*_~`>]|`{3,})*",
+    slackMention: "<@\\w+[\\w\\s\|]*>\\s+",
+    commandEnd: "($|[\\s.]+)", // SlackBotのリマインダーで英字コマンドを呼び出すと文末にピリオド(.)が追加される
+  }
+  const commandRegExp = new RegExp(
+    regExpString.slackMention +
+    regExpString.slackMarkUp +
+    commandRegExpString +
+    regExpString.slackMarkUp +
+    regExpString.commandEnd
+  );
+  return target.match(commandRegExp);
 }
 
 const init = () => {
