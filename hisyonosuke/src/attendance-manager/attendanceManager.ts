@@ -261,7 +261,10 @@ const handleClockOutAndAddRemoteMemo = (
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
 
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
-  const targetDate = format(clockOutDate, 'yyyy-MM-dd');
+  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
+    ? new Date(clockOutDate.getTime())
+    : subDays(clockOutDate, 1);
+  const targetDate = format(clockOutBaseDate, 'yyyy-MM-dd');
   const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
   const remoteParams: WorkRecordControllerRequestBody = {
     company_id: FREEE_COMPANY_ID,
