@@ -83,20 +83,15 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     }
   }).filter(_ => _.commandType);
 
-  //TODO: 5分以内に複数のコマンドが入力された場合どうするか
-  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
-  const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
-    const userWorkStatus = userWorkStatuses[message.user];
-    return {
-      message,
-      userWorkStatus,
-      actionType: getActionType(commandType, userWorkStatus)
-    }
-  });
-
   const { FREEE_COMPANY_ID } = getConfig();
-  actionsToProcess.forEach((action) => {
-    execAction(client, channelId, FREEE_COMPANY_ID, action);
+
+  let userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
+
+  unprocessedCommands.forEach(({ message, commandType }) => {
+    const userWorkStatus = userWorkStatuses[message.user];
+    const actionType = getActionType(commandType, userWorkStatus);
+    execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
+    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, message);
   });
 }
 
@@ -305,6 +300,27 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   // 時系列昇順に並び替え
   return messages.reverse();
 }
+
+const getUpdatedUserWorkStatus = (
+  userWorkStatus: UserWorkStatus,
+  newMessage: Message,
+) => {
+  const commandType = getCommandType(newMessage);
+  if (!commandType) {
+    return userWorkStatus;
+  }
+  const workStatus = getUserWorkStatusByLastCommand(commandType);
+  const userMessages = [...userWorkStatus.processedMessages, newMessage];
+  const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
+  const needTrafficExpense = checkTrafficExpense(userCommands);
+
+  return {
+    needTrafficExpense,
+    workStatus,
+    processedMessages: userMessages
+  }
+}
+
 
 const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus } => {
   const processedMessages = getProcessedMessages(messages, botUserId);
