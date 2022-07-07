@@ -346,51 +346,37 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
   return Object.fromEntries(clockedInUserWorkStatuses);
 }
 
+
+const isErrorMessage = (message: Message, botUserId: string): boolean => {
+  return message.reactions?.some(reaction => {
+    return (
+      reaction.users.includes(botUserId) &&
+      reaction.name === REACTION.ERROR
+    );
+  });
+}
+
+const isProcessedMessage = (message: Message, botUserId: string): boolean => {
+  return message.reactions?.some(reaction => {
+    return (
+      reaction.users.includes(botUserId) &&
+      [
+        REACTION.DONE_FOR_TIME_RECORD,
+        REACTION.DONE_FOR_REMOTE_MEMO,
+        REACTION.DONE_FOR_LOCATION_SWITCH
+      ].includes(reaction.name)
+    );
+  });
+}
+
 const getProcessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        reaction.name === REACTION.ERROR
-      );
-    })
-  });
-  const processedMessages = messagesWithoutError.filter(message => {
-    return message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        [
-          REACTION.DONE_FOR_TIME_RECORD,
-          REACTION.DONE_FOR_REMOTE_MEMO,
-          REACTION.DONE_FOR_LOCATION_SWITCH
-        ].includes(reaction.name)
-      )
-    })
-  });
-  return processedMessages;
+  const messagesWithoutError = messages.filter(message => !isErrorMessage(message, botUserId));
+  return messagesWithoutError.filter(message => isProcessedMessage(message, botUserId));
 }
 
 const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        reaction.name === REACTION.ERROR
-      );
-    })
-  });
-  const unprocessedMessages = messagesWithoutError.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        [
-          REACTION.DONE_FOR_TIME_RECORD,
-          REACTION.DONE_FOR_REMOTE_MEMO,
-          REACTION.DONE_FOR_LOCATION_SWITCH
-        ].includes(reaction.name)
-      )
-    })
-  });
+  const messagesWithoutError = messages.filter(message => !isErrorMessage(message, botUserId));
+  const unprocessedMessages = messagesWithoutError.filter(message => !isProcessedMessage(message, botUserId));
   return unprocessedMessages;
 }
 
