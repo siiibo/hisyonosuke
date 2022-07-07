@@ -9,7 +9,7 @@ import { Message } from '@hi-se/web-api/src/response/ConversationsHistoryRespons
 interface UserWorkStatus {
   workStatus: '勤務中（出社）' | '勤務中（リモート）' | '退勤済み' // 未出勤は現状利用していない
   needTrafficExpense: boolean,
-  processedMessages: Message[],
+  processedCommands: CommandType[],
 }
 type CommandType = keyof typeof COMMAND_TYPE;
 type Commands = typeof COMMAND_TYPE[CommandType]
@@ -91,7 +91,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
     execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
-    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, message);
+    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
   });
 }
 
@@ -303,15 +303,10 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
 
 const getUpdatedUserWorkStatus = (
   userWorkStatus: UserWorkStatus,
-  newMessage: Message,
-) => {
-  const commandType = getCommandType(newMessage);
-  if (!commandType) {
-    return userWorkStatus;
-  }
-  const workStatus = getUserWorkStatusByLastCommand(commandType);
-  const userMessages = [...userWorkStatus.processedMessages, newMessage];
-  const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
+  newCommand: CommandType,
+): UserWorkStatus => {
+  const workStatus = getUserWorkStatusByLastCommand(newCommand);
+  const userCommands = [...userWorkStatus.processedCommands, newCommand];
   const needTrafficExpense = userWorkStatus.needTrafficExpense ?
     userWorkStatus.needTrafficExpense :
     checkTrafficExpense(userCommands);
@@ -319,7 +314,7 @@ const getUpdatedUserWorkStatus = (
   return {
     needTrafficExpense,
     workStatus,
-    processedMessages: userMessages
+    processedCommands: userCommands
   }
 }
 
@@ -340,7 +335,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
       {
         needTrafficExpense,
         workStatus,
-        processedMessages: userMessages
+        processedCommands: userMessages
       }
     ]
   });
