@@ -312,7 +312,9 @@ const getUpdatedUserWorkStatus = (
   const workStatus = getUserWorkStatusByLastCommand(commandType);
   const userMessages = [...userWorkStatus.processedMessages, newMessage];
   const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
-  const needTrafficExpense = checkTrafficExpense(userCommands);
+  const needTrafficExpense = userWorkStatus.needTrafficExpense ?
+    userWorkStatus.needTrafficExpense :
+    checkTrafficExpense(userCommands);
 
   return {
     needTrafficExpense,
