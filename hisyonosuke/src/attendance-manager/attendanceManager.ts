@@ -305,8 +305,8 @@ const getUpdatedUserWorkStatus = (
   userWorkStatus: UserWorkStatus,
   newCommand: CommandType,
 ): UserWorkStatus => {
-  const workStatus = getUserWorkStatusByLastCommand(newCommand);
   const userCommands = [...userWorkStatus.processedCommands, newCommand];
+  const workStatus = getUserWorkStatusByCommands(userCommands);
   const needTrafficExpense = userWorkStatus.needTrafficExpense ?
     userWorkStatus.needTrafficExpense :
     checkTrafficExpense(userCommands);
@@ -327,7 +327,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
     const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
-    const workStatus = getUserWorkStatusByLastCommand(userCommands[userCommands.length - 1]);
+    const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
     return [
@@ -383,13 +383,14 @@ const checkTrafficExpense = (userCommands: CommandType[]) => {
 }
 
 
-const getUserWorkStatusByLastCommand = (_lastUserCommand: CommandType): UserWorkStatus['workStatus'] => {
+const getUserWorkStatusByCommands = (commands: CommandType[]): UserWorkStatus['workStatus'] => {
 
+  const lastCommand = commands[commands.length - 1];
   // 最後のuserMessageからworkStatusを算出できるはず
   // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
   // TODO: ↑の検証
 
-  switch (_lastUserCommand) {
+  switch (lastCommand) {
     case 'CLOCK_OUT':
       return '退勤済み';
     case 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE':
