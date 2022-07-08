@@ -70,24 +70,17 @@ export const periodicallyCheckForAttendanceManager = () => {
  */
 const checkAttendance = (client: SlackClient, channelId: string) => {
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
+  const { FREEE_COMPANY_ID } = getConfig();
 
   const messages = getDailyMessages(client, channelId);
   if (!messages.length) { return }
 
-  const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
-
-  const unprocessedCommands = unprocessedMessages.map(message => {
-    return {
-      message,
-      commandType: getCommandType(message)
-    }
-  }).filter(_ => _.commandType);
-
-  const { FREEE_COMPANY_ID } = getConfig();
-
   let userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
 
-  unprocessedCommands.forEach(({ message, commandType }) => {
+  const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
+  unprocessedMessages.forEach((message) => {
+    const commandType = getCommandType(message);
+    if (!commandType) { return }
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
     execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
