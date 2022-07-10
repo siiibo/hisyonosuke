@@ -9,7 +9,7 @@ import { Message } from '@hi-se/web-api/src/response/ConversationsHistoryRespons
 interface UserWorkStatus {
   workStatus: '勤務中（出社）' | '勤務中（リモート）' | '退勤済み' // 未出勤は現状利用していない
   needTrafficExpense: boolean,
-  processedMessages: Message[],
+  processedCommands: CommandType[],
 }
 type CommandType = keyof typeof COMMAND_TYPE;
 type Commands = typeof COMMAND_TYPE[CommandType]
@@ -70,33 +70,21 @@ export const periodicallyCheckForAttendanceManager = () => {
  */
 const checkAttendance = (client: SlackClient, channelId: string) => {
   const hisyonosukeUserId = 'U01AY3RHR42'; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
+  const { FREEE_COMPANY_ID } = getConfig();
 
   const messages = getDailyMessages(client, channelId);
   if (!messages.length) { return }
 
+  let userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
+
   const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
-
-  const unprocessedCommands = unprocessedMessages.map(message => {
-    return {
-      message,
-      commandType: getCommandType(message)
-    }
-  }).filter(_ => _.commandType);
-
-  //TODO: 5分以内に複数のコマンドが入力された場合どうするか
-  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
-  const actionsToProcess = unprocessedCommands.map(({ message, commandType }) => {
+  unprocessedMessages.forEach((message) => {
+    const commandType = getCommandType(message);
+    if (!commandType) { return }
     const userWorkStatus = userWorkStatuses[message.user];
-    return {
-      message,
-      userWorkStatus,
-      actionType: getActionType(commandType, userWorkStatus)
-    }
-  });
-
-  const { FREEE_COMPANY_ID } = getConfig();
-  actionsToProcess.forEach((action) => {
-    execAction(client, channelId, FREEE_COMPANY_ID, action);
+    const actionType = getActionType(commandType, userWorkStatus);
+    execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
+    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
   });
 }
 
@@ -306,6 +294,24 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   return messages.reverse();
 }
 
+const getUpdatedUserWorkStatus = (
+  userWorkStatus: UserWorkStatus,
+  newCommand: CommandType,
+): UserWorkStatus => {
+  const userCommands = [...userWorkStatus.processedCommands, newCommand];
+  const workStatus = getUserWorkStatusByCommands(userCommands);
+  const needTrafficExpense = userWorkStatus.needTrafficExpense ?
+    userWorkStatus.needTrafficExpense :
+    checkTrafficExpense(userCommands);
+
+  return {
+    needTrafficExpense,
+    workStatus,
+    processedCommands: userCommands
+  }
+}
+
+
 const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus } => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
@@ -314,7 +320,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
     const userMessages = processedMessages.filter(message => message.user === userSlackId);
     const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
-    const workStatus = getUserWorkStatusByLastCommand(userCommands[userCommands.length - 1]);
+    const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
     return [
@@ -322,7 +328,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
       {
         needTrafficExpense,
         workStatus,
-        processedMessages: userMessages
+        processedCommands: userMessages
       }
     ]
   });
@@ -330,51 +336,37 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
   return Object.fromEntries(clockedInUserWorkStatuses);
 }
 
+
+const isErrorMessage = (message: Message, botUserId: string): boolean => {
+  return message.reactions?.some(reaction => {
+    return (
+      reaction.users.includes(botUserId) &&
+      reaction.name === REACTION.ERROR
+    );
+  });
+}
+
+const isProcessedMessage = (message: Message, botUserId: string): boolean => {
+  return message.reactions?.some(reaction => {
+    return (
+      reaction.users.includes(botUserId) &&
+      [
+        REACTION.DONE_FOR_TIME_RECORD,
+        REACTION.DONE_FOR_REMOTE_MEMO,
+        REACTION.DONE_FOR_LOCATION_SWITCH
+      ].includes(reaction.name)
+    );
+  });
+}
+
 const getProcessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        reaction.name === REACTION.ERROR
-      );
-    })
-  });
-  const processedMessages = messagesWithoutError.filter(message => {
-    return message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        [
-          REACTION.DONE_FOR_TIME_RECORD,
-          REACTION.DONE_FOR_REMOTE_MEMO,
-          REACTION.DONE_FOR_LOCATION_SWITCH
-        ].includes(reaction.name)
-      )
-    })
-  });
-  return processedMessages;
+  const messagesWithoutError = messages.filter(message => !isErrorMessage(message, botUserId));
+  return messagesWithoutError.filter(message => isProcessedMessage(message, botUserId));
 }
 
 const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        reaction.name === REACTION.ERROR
-      );
-    })
-  });
-  const unprocessedMessages = messagesWithoutError.filter(message => {
-    return !message.reactions?.some(reaction => {
-      return (
-        reaction.users.includes(botUserId) &&
-        [
-          REACTION.DONE_FOR_TIME_RECORD,
-          REACTION.DONE_FOR_REMOTE_MEMO,
-          REACTION.DONE_FOR_LOCATION_SWITCH
-        ].includes(reaction.name)
-      )
-    })
-  });
+  const messagesWithoutError = messages.filter(message => !isErrorMessage(message, botUserId));
+  const unprocessedMessages = messagesWithoutError.filter(message => !isProcessedMessage(message, botUserId));
   return unprocessedMessages;
 }
 
@@ -384,13 +376,14 @@ const checkTrafficExpense = (userCommands: CommandType[]) => {
 }
 
 
-const getUserWorkStatusByLastCommand = (_lastUserCommand: CommandType): UserWorkStatus['workStatus'] => {
+const getUserWorkStatusByCommands = (commands: CommandType[]): UserWorkStatus['workStatus'] => {
 
+  const lastCommand = commands[commands.length - 1];
   // 最後のuserMessageからworkStatusを算出できるはず
   // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
   // TODO: ↑の検証
 
-  switch (_lastUserCommand) {
+  switch (lastCommand) {
     case 'CLOCK_OUT':
       return '退勤済み';
     case 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE':
