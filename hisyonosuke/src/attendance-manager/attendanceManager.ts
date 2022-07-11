@@ -318,19 +318,20 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
   // TODO: ↓ 「今誰いる？」の機能に流用する
   const clockedInUserIds = Array.from(new Set(processedMessages.map(message => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map(userSlackId => {
-    const userMessages = processedMessages.filter(message => message.user === userSlackId);
-    const userCommands = userMessages.map(message => getCommandType(message)).filter(_ => _);
+    const userCommands = processedMessages
+      .filter(message => message.user === userSlackId)
+      .map(message => getCommandType(message))
+      .filter(_ => _);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
-    return [
-      userSlackId,
-      {
-        needTrafficExpense,
-        workStatus,
-        processedCommands: userMessages
-      }
-    ]
+    const userWorkStatus: UserWorkStatus = {
+      workStatus,
+      needTrafficExpense,
+      processedCommands: userCommands
+    }
+
+    return [userSlackId, userWorkStatus];
   });
 
   return Object.fromEntries(clockedInUserWorkStatuses);
