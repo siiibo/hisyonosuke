@@ -340,18 +340,22 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
 
 
 const isErrorMessage = (message: Message, botUserId: string): boolean => {
-  return message.reactions?.some(reaction => {
+  if (!message.reactions) { return false }
+  return message.reactions.some(reaction => {
+    if (!reaction.users) { return false }
     return (
-      reaction.users.includes(botUserId) &&
+      reaction.users?.includes(botUserId) &&
       reaction.name === REACTION.ERROR
     );
   });
 }
 
 const isProcessedMessage = (message: Message, botUserId: string): boolean => {
+  if (!message.reactions) { return false }
   return message.reactions?.some(reaction => {
+    if (!reaction.name) { return false }
     return (
-      reaction.users.includes(botUserId) &&
+      reaction.users?.includes(botUserId) &&
       [
         REACTION.DONE_FOR_TIME_RECORD,
         REACTION.DONE_FOR_REMOTE_MEMO,
