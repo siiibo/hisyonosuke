@@ -81,6 +81,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   unprocessedMessages.forEach((message) => {
     const commandType = getCommandType(message);
     if (!commandType) { return }
+    if (!message.user) { return }
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
     execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
@@ -425,15 +426,17 @@ const getCommandRegExp = (commands: Commands | Commands[]): RegExp => {
 }
 
 const getCommandType = (message: Message): CommandType | undefined => {
-  if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
+  const text = message.text;
+  if (!text) { return }
+  if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
     return 'CLOCK_IN';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
     return 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
     return 'CLOCK_IN_OR_SWITCH_TO_OFFICE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
     return 'SWITCH_TO_REMOTE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
     return 'CLOCK_OUT';
   } else {
     return undefined;
@@ -444,7 +447,8 @@ const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: str
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId
-  }).user.profile.email;
+  }).user?.profile?.email;
+  if (!email) { throw new Error('email is undefined.') }
   const employees = getCompanyEmployees({
     company_id: companyId,
     limit: 100,
@@ -463,5 +467,6 @@ const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: str
 
 const getSlackClient = () => {
   const token = PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN');
+  if (!token) { throw Error('SLACK_TOKEN is undefined.') }
   return new SlackClient(token);
 }
