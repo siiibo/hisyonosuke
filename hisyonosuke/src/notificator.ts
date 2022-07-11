@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 
 const DATE_COL = 3;

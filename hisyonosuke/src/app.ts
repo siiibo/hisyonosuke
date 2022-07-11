@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME
 import { ChannelCreatedEvent, EmojiChangedEvent, SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from '@slack/bolt';
 import { GasWebClient as SlackClient } from '@hi-se/web-api';
 import { birthdayRegistrator } from './birthday-registrator/birthday-registrator';

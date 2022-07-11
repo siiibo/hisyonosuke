@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME
 import { View, ViewSubmitAction } from "@slack/bolt";
 
 export const homeModal = (): View => {

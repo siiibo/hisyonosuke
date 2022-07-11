@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME
 import { BlockAction, ViewUpdateResponseAction, ViewPushResponseAction } from '@slack/bolt';
 import { GlobalShortcut } from '@slack/bolt';
 import { ViewSubmitAction } from '@slack/bolt';
