@@ -98,8 +98,9 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
   let employeeId: number;
 
   try {
+    if (!message.user) { throw new Error('user is undefined.') }
     employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
-  } catch (e) {
+  } catch (e: any) {
     console.error(e.stack);
     console.error(`slackUserId:${message.user}, type: getEmployeeId`);
     const errorFeedBackMessage = e.toString();;
@@ -134,7 +135,7 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
         handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
     }
     console.info(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
-  } catch (e) {
+  } catch (e: any) {
     console.error(e.stack);
     console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
 
@@ -171,6 +172,7 @@ const handleClockIn = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   const clockInDate = new Date(parseInt(message.ts) * 1000);
   const clockInBaseDate = new Date(clockInDate.getTime());
 
@@ -220,6 +222,7 @@ const handleClockOut = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
     ? new Date(clockOutDate.getTime())
@@ -247,8 +250,8 @@ const handleClockOutAndAddRemoteMemo = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
     ? new Date(clockOutDate.getTime())
@@ -292,7 +295,7 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   }).messages;
 
   // 時系列昇順に並び替え
-  return messages.reverse();
+  return messages ? messages.reverse() : [];
 }
 
 const getUpdatedUserWorkStatus = (
