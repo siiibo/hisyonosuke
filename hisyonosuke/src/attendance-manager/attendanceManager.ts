@@ -92,7 +92,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
 const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: number, action: {
   message: Message,
   actionType: ActionType,
-  userWorkStatus: UserWorkStatus
+  userWorkStatus: UserWorkStatus | undefined
 }) => {
   const { message, actionType, userWorkStatus } = action;
   let employeeId: number;
@@ -296,12 +296,12 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
 }
 
 const getUpdatedUserWorkStatus = (
-  userWorkStatus: UserWorkStatus,
+  userWorkStatus: UserWorkStatus | undefined,
   newCommand: CommandType,
 ): UserWorkStatus => {
-  const userCommands = [...userWorkStatus.processedCommands, newCommand];
+  const userCommands = userWorkStatus ? [...userWorkStatus.processedCommands, newCommand] : [newCommand];
   const workStatus = getUserWorkStatusByCommands(userCommands);
-  const needTrafficExpense = userWorkStatus.needTrafficExpense ?
+  const needTrafficExpense = userWorkStatus?.needTrafficExpense ?
     userWorkStatus.needTrafficExpense :
     checkTrafficExpense(userCommands);
 
@@ -313,7 +313,7 @@ const getUpdatedUserWorkStatus = (
 }
 
 
-const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus } => {
+const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus | undefined } => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
   // TODO: ↓ 「今誰いる？」の機能に流用する
@@ -322,7 +322,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
     const userCommands = processedMessages
       .filter(message => message.user === userSlackId)
       .map(message => getCommandType(message))
-      .filter(_ => _);
+      .filter((command): command is CommandType => command !== undefined);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
