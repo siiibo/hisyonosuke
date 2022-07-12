@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
 import { View, ViewSubmitAction } from "@slack/bolt";
 
 export const homeModal = (): View => {

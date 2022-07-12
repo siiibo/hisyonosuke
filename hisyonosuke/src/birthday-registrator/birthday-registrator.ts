@@ -1,3 +1,4 @@
+// @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
 import { BlockAction, ViewUpdateResponseAction, ViewPushResponseAction } from '@slack/bolt';
 import { GlobalShortcut } from '@slack/bolt';
 import { ViewSubmitAction } from '@slack/bolt';

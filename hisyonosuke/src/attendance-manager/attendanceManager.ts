@@ -81,6 +81,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   unprocessedMessages.forEach((message) => {
     const commandType = getCommandType(message);
     if (!commandType) { return }
+    if (!message.user) { return }
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
     execAction(client, channelId, FREEE_COMPANY_ID, { message, userWorkStatus, actionType });
@@ -91,14 +92,15 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
 const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: number, action: {
   message: Message,
   actionType: ActionType,
-  userWorkStatus: UserWorkStatus
+  userWorkStatus: UserWorkStatus | undefined
 }) => {
   const { message, actionType, userWorkStatus } = action;
   let employeeId: number;
 
   try {
+    if (!message.user) { throw new Error('user is undefined.') }
     employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
-  } catch (e) {
+  } catch (e: any) {
     console.error(e.stack);
     console.error(`slackUserId:${message.user}, type: getEmployeeId`);
     const errorFeedBackMessage = e.toString();;
@@ -133,7 +135,7 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
         handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
     }
     console.info(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
-  } catch (e) {
+  } catch (e: any) {
     console.error(e.stack);
     console.error(`user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`);
 
@@ -170,6 +172,7 @@ const handleClockIn = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   const clockInDate = new Date(parseInt(message.ts) * 1000);
   const clockInBaseDate = new Date(clockInDate.getTime());
 
@@ -219,6 +222,7 @@ const handleClockOut = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
     ? new Date(clockOutDate.getTime())
@@ -246,8 +250,8 @@ const handleClockOutAndAddRemoteMemo = (
   employeeId: number,
   message: Message
 ) => {
+  if (!message.ts) { throw new Error('message.ts is undefined.') }
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR
     ? new Date(clockOutDate.getTime())
@@ -291,16 +295,16 @@ const getDailyMessages = (client: SlackClient, channelId: string) => {
   }).messages;
 
   // 時系列昇順に並び替え
-  return messages.reverse();
+  return messages ? messages.reverse() : [];
 }
 
 const getUpdatedUserWorkStatus = (
-  userWorkStatus: UserWorkStatus,
+  userWorkStatus: UserWorkStatus | undefined,
   newCommand: CommandType,
 ): UserWorkStatus => {
-  const userCommands = [...userWorkStatus.processedCommands, newCommand];
+  const userCommands = userWorkStatus ? [...userWorkStatus.processedCommands, newCommand] : [newCommand];
   const workStatus = getUserWorkStatusByCommands(userCommands);
-  const needTrafficExpense = userWorkStatus.needTrafficExpense ?
+  const needTrafficExpense = userWorkStatus?.needTrafficExpense ?
     userWorkStatus.needTrafficExpense :
     checkTrafficExpense(userCommands);
 
@@ -312,7 +316,7 @@ const getUpdatedUserWorkStatus = (
 }
 
 
-const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus } => {
+const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): { [userSlackId: string]: UserWorkStatus | undefined } => {
   const processedMessages = getProcessedMessages(messages, botUserId);
 
   // TODO: ↓ 「今誰いる？」の機能に流用する
@@ -321,7 +325,7 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
     const userCommands = processedMessages
       .filter(message => message.user === userSlackId)
       .map(message => getCommandType(message))
-      .filter(_ => _);
+      .filter((command): command is CommandType => command !== undefined);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
 
@@ -339,18 +343,22 @@ const getUserWorkStatusesByMessages = (messages: Message[], botUserId: string): 
 
 
 const isErrorMessage = (message: Message, botUserId: string): boolean => {
-  return message.reactions?.some(reaction => {
+  if (!message.reactions) { return false }
+  return message.reactions.some(reaction => {
+    if (!reaction.users) { return false }
     return (
-      reaction.users.includes(botUserId) &&
+      reaction.users?.includes(botUserId) &&
       reaction.name === REACTION.ERROR
     );
   });
 }
 
 const isProcessedMessage = (message: Message, botUserId: string): boolean => {
+  if (!message.reactions) { return false }
   return message.reactions?.some(reaction => {
+    if (!reaction.name) { return false }
     return (
-      reaction.users.includes(botUserId) &&
+      reaction.users?.includes(botUserId) &&
       [
         REACTION.DONE_FOR_TIME_RECORD,
         REACTION.DONE_FOR_REMOTE_MEMO,
@@ -425,15 +433,17 @@ const getCommandRegExp = (commands: Commands | Commands[]): RegExp => {
 }
 
 const getCommandType = (message: Message): CommandType | undefined => {
-  if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
+  const text = message.text;
+  if (!text) { return }
+  if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
     return 'CLOCK_IN';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
     return 'CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
     return 'CLOCK_IN_OR_SWITCH_TO_OFFICE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
     return 'SWITCH_TO_REMOTE';
-  } else if (message.text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
     return 'CLOCK_OUT';
   } else {
     return undefined;
@@ -444,7 +454,8 @@ const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: str
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId
-  }).user.profile.email;
+  }).user?.profile?.email;
+  if (!email) { throw new Error('email is undefined.') }
   const employees = getCompanyEmployees({
     company_id: companyId,
     limit: 100,
@@ -463,5 +474,6 @@ const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: str
 
 const getSlackClient = () => {
   const token = PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN');
+  if (!token) { throw Error('SLACK_TOKEN is undefined.') }
   return new SlackClient(token);
 }
