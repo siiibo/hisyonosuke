@@ -46,7 +46,8 @@ const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.Tex
           const startTime = Utilities.formatDate(dailyShift.getStartTime(), 'Asia/Tokyo', 'HH:mm');
           const endTime = Utilities.formatDate(dailyShift.getEndTime(), 'Asia/Tokyo', 'HH:mm');
           return `${title}  ${startTime} 〜 ${endTime}`
-        }).join('\n');
+        }).join('\n') + '\n\n' +
+          ':calendar: 勤務開始時に[カレンダー](https://calendar.google.com/calendar)に予定が入っていないか確認しましょう！';
 
         client.chat.postMessage({
           channel: event.channel,
