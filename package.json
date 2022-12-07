@@ -6,6 +6,7 @@
   "private": true,
   "workspaces": [
     "meeting-notifier",
-    "hisyonosuke"
+    "hisyonosuke",
+    "attendance-aggregation"
   ]
 }
