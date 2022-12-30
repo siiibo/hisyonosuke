@@ -7,7 +7,7 @@ const PROPS_SHEET_NAME = 'meeting-notifier';
 
 const ADMIN_SLACK_ID = PropertiesService.getScriptProperties().getProperty('ADMIN_SLACK_ID');
 
-interface NotificationTargetInfo {
+type NotificationTargetInfo = {
   calendar: GoogleAppsScript.Calendar.Calendar,
   event: GoogleAppsScript.Calendar.CalendarEvent,
   guest: GoogleAppsScript.Calendar.EventGuest
