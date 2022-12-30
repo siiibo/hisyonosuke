@@ -4,6 +4,7 @@
   "main": "main.ts",
   "license": "MIT",
   "scripts": {
+    "open": "yarn clasp open",
     "build": "yarn webpack",
     "buildpush": "webpack & clasp push --force"
   },
