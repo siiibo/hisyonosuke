@@ -8,6 +8,10 @@
     "build": "yarn webpack",
     "buildpush": "webpack & clasp push --force"
   },
+  "dependencies": {
+    "@google/clasp": "^2.3.2",
+    "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3"
+  },
   "devDependencies": {
     "@slack/web-api": "^6.2.4",
     "@types/google-apps-script": "^1.0.34",
@@ -18,9 +22,5 @@
     "webpack": "^5.24.3",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2"
-  },
-  "dependencies": {
-    "@google/clasp": "^2.3.2",
-    "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?d4e418688219d2b29e903d6d8f41c0e2e7ef0cc3"
   }
 }
