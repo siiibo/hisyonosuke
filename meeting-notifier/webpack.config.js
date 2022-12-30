@@ -2,36 +2,46 @@ const path = require("path");
 const GasPlugin = require("gas-webpack-plugin");
 
 const mode = "development";
-const entry = path.resolve("src", "main.ts");
 const devtool = "inline-source-map";
+const entry = {
+    app: path.resolve("src", "app.ts"),
+};
 const outPath = path.resolve("build");
-const outFileName = "main.js";
+const outFileName = "[name].js";
 const output = {
-  path: outPath,
-  filename: outFileName,
-  chunkFormat: 'commonjs'
+    path: outPath,
+    filename: outFileName,
 };
 const rules = [
-  {
-    test: /\.[tj]s$/,
-    use: {
-      loader: "babel-loader",
+    {
+        test: /\.[tj]s$/,
+        use: {
+            loader: "ts-loader",
+            options: {
+                allowTsInNodeModules: true,
+                transpileOnly: true,
+                configFile: path.resolve("tsconfig.json"),
+            },
+        },
     },
-  },
 ];
-const resolve = { extensions: [".ts", ".js"] };
+const resolve = {
+    extensions: [".ts", ".js", ".json"],
+    fallback: {
+        path: false,
+        os: false,
+    },
+};
 const plugins = [new GasPlugin()];
-const target = "es5"
 
 module.exports = [
-  {
-    mode,
-    devtool,
-    entry,
-    output,
-    module: { rules },
-    resolve,
-    plugins,
-    target
-  },
+    {
+        mode,
+        entry,
+        devtool,
+        output,
+        module: { rules },
+        resolve,
+        plugins,
+    },
 ];
