@@ -111,7 +111,6 @@ function init(): void {
 
   const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName(PROPS_SHEET_NAME);
   setScriptPropertyFromSpreadsheet(sheet);
-  const calendars = getTargetCalendars();
   setNotificationMessage();
   setTimeBasedTrigger(hourlyCheck, getNextJustTime());
 }
@@ -122,7 +121,6 @@ function hourlyCheck(): void {
       checkAppStatus();
     }
     deleteTriggerAll();
-    const calendars = getTargetCalendars();
     setNotificationMessage();
   } catch (error) {
     sendMessage({
