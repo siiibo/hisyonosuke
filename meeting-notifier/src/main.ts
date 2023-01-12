@@ -7,7 +7,7 @@ const PROPS_SHEET_NAME = 'meeting-notifier';
 
 const ADMIN_SLACK_ID = PropertiesService.getScriptProperties().getProperty('ADMIN_SLACK_ID');
 
-interface NotificationTargetInfo {
+type NotificationTargetInfo = {
   calendar: GoogleAppsScript.Calendar.Calendar,
   event: GoogleAppsScript.Calendar.CalendarEvent,
   guest: GoogleAppsScript.Calendar.EventGuest
@@ -111,7 +111,6 @@ function init(): void {
 
   const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName(PROPS_SHEET_NAME);
   setScriptPropertyFromSpreadsheet(sheet);
-  const calendars = getTargetCalendars();
   setNotificationMessage();
   setTimeBasedTrigger(hourlyCheck, getNextJustTime());
 }
@@ -122,7 +121,6 @@ function hourlyCheck(): void {
       checkAppStatus();
     }
     deleteTriggerAll();
-    const calendars = getTargetCalendars();
     setNotificationMessage();
   } catch (error) {
     sendMessage({
