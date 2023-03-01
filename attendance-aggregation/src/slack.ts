@@ -7,7 +7,7 @@ import { getDateFromUnixTimeStampString, getUnixTimeStampString } from './utils'
 //TOOD: zodに置き換え
 export interface MessageHistory {
   user: string,
-  dateString: string, // TODO: 時刻も含める
+  dateString: string,
   message: string,
   reactions: string[],
 }
@@ -18,11 +18,10 @@ export const getConversationHistory = (client: SlackClient, channelId: string, o
   const channelMessages = _getConversationsHistoryAll(client, channelId, getUnixTimeStampString(oldest), getUnixTimeStampString(latest));
 
   return channelMessages.map(message => {
-    if (!message.ts || !message.user || !message.text) { throw new Error('test') }
     return {
-      user: userIdList[message.user],
-      dateString: format(getDateFromUnixTimeStampString(message.ts), 'yyyy/MM/dd HH:mm:ss'), //TODO: spreadhseet側に移動
-      message: message.text,
+      user: message.user ? userIdList[message.user] : "",
+      dateString: message.ts ? format(getDateFromUnixTimeStampString(message.ts), 'yyyy/MM/dd HH:mm:ss') : "",
+      message: message.text ?? "",
       reactions: message.reactions ? message.reactions.filter(reaction => reaction.users?.includes(HISYONOSUKE_USER_ID)).map(reaction => reaction.name ? reaction.name : '') : []
     }
   })
@@ -71,6 +70,6 @@ export const getUserIdList = (client: SlackClient) => {
   return objectify(userIdAndEmail, f => f.userId, f => f.userEmail) //TODO: define type
 }
 
-export const getSlackClient = (token:string) => {
+export const getSlackClient = (token: string) => {
   return new SlackClient(token);
 }
