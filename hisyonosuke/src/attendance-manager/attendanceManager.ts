@@ -1,6 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { format, setHours, setMinutes, setSeconds, subDays } from "date-fns";
-
+import { format, subDays } from "date-fns";
 import {
   getCompanyEmployees,
   getWorkRecord,
@@ -8,9 +7,10 @@ import {
   updateWorkRecord,
   WorkRecordControllerRequestBody,
 } from "./freee";
-import { getUnixTimeStampString } from "./utilities";
 import { getConfig, initConfig } from "./config";
 import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
+import { REACTION } from "./reaction";
+import { getDailyMessages, getProcessedMessages, getUnprocessedMessages } from "./message";
 
 interface UserWorkStatus {
   workStatus: "勤務中（出社）" | "勤務中（リモート）" | "退勤済み"; // 未出勤は現状利用していない
@@ -34,13 +34,6 @@ const COMMAND_TYPE = {
   SWITCH_TO_REMOTE: [":remote:"],
   CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
-
-const REACTION = {
-  DONE_FOR_TIME_RECORD: "dakoku_ok",
-  DONE_FOR_REMOTE_MEMO: "memo_remote_ok",
-  DONE_FOR_LOCATION_SWITCH: "switch_location_ok",
-  ERROR: "dakoku_memo_error",
-};
 
 export const initAttendanceManager = () => {
   initConfig();
@@ -79,7 +72,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   const hisyonosukeUserId = "U01AY3RHR42"; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const { FREEE_COMPANY_ID } = getConfig();
 
-  const messages = getDailyMessages(client, channelId);
+  const messages = getDailyMessages(client, channelId, DATE_START_HOUR);
   if (!messages.length) {
     return;
   }
@@ -302,26 +295,6 @@ const handleClockOutAndAddRemoteMemo = (
   });
 };
 
-const getDailyMessages = (client: SlackClient, channelId: string) => {
-  const now = new Date();
-  let oldest = new Date();
-  oldest = setHours(oldest, DATE_START_HOUR); // グローバル変数に依存
-  oldest = setMinutes(oldest, 0);
-  oldest = setSeconds(oldest, 0);
-  if (now.getHours() <= DATE_START_HOUR) {
-    oldest = subDays(oldest, 1);
-  }
-
-  const messages = client.conversations.history({
-    channel: channelId,
-    oldest: getUnixTimeStampString(oldest),
-    inclusive: true,
-  }).messages;
-
-  // 時系列昇順に並び替え
-  return messages ? messages.reverse() : [];
-};
-
 const getUpdatedUserWorkStatus = (
   userWorkStatus: UserWorkStatus | undefined,
   newCommand: CommandType
@@ -365,46 +338,6 @@ const getUserWorkStatusesByMessages = (
   });
 
   return Object.fromEntries(clockedInUserWorkStatuses);
-};
-
-const isErrorMessage = (message: Message, botUserId: string): boolean => {
-  if (!message.reactions) {
-    return false;
-  }
-  return message.reactions.some((reaction) => {
-    if (!reaction.users) {
-      return false;
-    }
-    return reaction.users?.includes(botUserId) && reaction.name === REACTION.ERROR;
-  });
-};
-
-const isProcessedMessage = (message: Message, botUserId: string): boolean => {
-  if (!message.reactions) {
-    return false;
-  }
-  return message.reactions?.some((reaction) => {
-    if (!reaction.name) {
-      return false;
-    }
-    return (
-      reaction.users?.includes(botUserId) &&
-      [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
-        reaction.name
-      )
-    );
-  });
-};
-
-const getProcessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
-  return messagesWithoutError.filter((message) => isProcessedMessage(message, botUserId));
-};
-
-const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
-  const unprocessedMessages = messagesWithoutError.filter((message) => !isProcessedMessage(message, botUserId));
-  return unprocessedMessages;
 };
 
 const checkTrafficExpense = (userCommands: CommandType[]) => {
