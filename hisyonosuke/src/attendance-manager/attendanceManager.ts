@@ -11,14 +11,13 @@ import { getConfig, initConfig } from "./config";
 import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
 import { REACTION } from "./reaction";
 import { getDailyMessages, getProcessedMessages, getUnprocessedMessages } from "./message";
+import { CommandType, getCommandType } from "./command";
 
 interface UserWorkStatus {
   workStatus: "勤務中（出社）" | "勤務中（リモート）" | "退勤済み"; // 未出勤は現状利用していない
   needTrafficExpense: boolean;
   processedCommands: CommandType[];
 }
-type CommandType = keyof typeof COMMAND_TYPE;
-type Commands = (typeof COMMAND_TYPE)[CommandType];
 type ActionType =
   | "clock_in"
   | "clock_out"
@@ -27,13 +26,6 @@ type ActionType =
   | "switch_work_status_to_remote";
 
 const DATE_START_HOUR = 4;
-const COMMAND_TYPE = {
-  CLOCK_IN: [":shukkin:", ":sagyoukaishi:", ":kinmukaishi:"],
-  CLOCK_IN_OR_SWITCH_TO_OFFICE: [":shussha:"],
-  CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE: [":remoteshukkin:"],
-  SWITCH_TO_REMOTE: [":remote:"],
-  CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
-} as const;
 
 export const initAttendanceManager = () => {
   initConfig();
@@ -383,34 +375,6 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
     case "CLOCK_OUT":
       //TODO: 打刻の重複の場合
       return userWorkStatus?.needTrafficExpense === false ? "clock_out_and_add_remote_memo" : "clock_out";
-  }
-};
-
-const getCommandRegExp = (commands: Commands | Commands[]): RegExp => {
-  if (Array.isArray(commands)) {
-    return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*$`);
-  } else {
-    return new RegExp(`^\\s*(${commands.join("|")})\\s*$`);
-  }
-};
-
-const getCommandType = (message: Message): CommandType | undefined => {
-  const text = message.text;
-  if (!text) {
-    return;
-  }
-  if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
-    return "CLOCK_IN";
-  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
-    return "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE";
-  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
-    return "CLOCK_IN_OR_SWITCH_TO_OFFICE";
-  } else if (text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
-    return "SWITCH_TO_REMOTE";
-  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
-    return "CLOCK_OUT";
-  } else {
-    return undefined;
   }
 };
 
