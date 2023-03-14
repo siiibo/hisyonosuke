@@ -8,9 +8,8 @@ import {
   WorkRecordControllerRequestBody,
 } from "./freee";
 import { getConfig, initConfig } from "./config";
-import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
 import { REACTION } from "./reaction";
-import { getDailyMessages, getUnprocessedMessages } from "./message";
+import { Message, getDailyMessages, getUnprocessedMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./workStatus";
 import { ActionType, getActionType } from "./action";
@@ -67,9 +66,6 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     if (!commandType) {
       return;
     }
-    if (!message.user) {
-      return;
-    }
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
     execAction(client, channelId, FREEE_COMPANY_ID, {
@@ -95,9 +91,6 @@ const execAction = (
   let employeeId: number;
 
   try {
-    if (!message.user) {
-      throw new Error("user is undefined.");
-    }
     employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
   } catch (e: any) {
     console.error(e.stack);
@@ -175,9 +168,6 @@ const handleClockIn = (
   employeeId: number,
   message: Message
 ) => {
-  if (!message.ts) {
-    throw new Error("message.ts is undefined.");
-  }
   const clockInDate = new Date(parseInt(message.ts) * 1000);
   const clockInBaseDate = new Date(clockInDate.getTime());
 
@@ -219,9 +209,6 @@ const handleClockOut = (
   employeeId: number,
   message: Message
 ) => {
-  if (!message.ts) {
-    throw new Error("message.ts is undefined.");
-  }
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =
     clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
@@ -248,9 +235,6 @@ const handleClockOutAndAddRemoteMemo = (
   employeeId: number,
   message: Message
 ) => {
-  if (!message.ts) {
-    throw new Error("message.ts is undefined.");
-  }
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =

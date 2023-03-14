@@ -1,8 +1,24 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
+import { z } from "zod";
 import { setHours, setMinutes, setSeconds, subDays } from "date-fns";
 import { REACTION } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
+
+export const MessageSchema = z.object({
+  type: z.literal("message"),
+  user: z.string(),
+  text: z.string(),
+  ts: z.string(),
+  reactions: z
+    .array(
+      z.object({
+        name: z.string(),
+        users: z.array(z.string()),
+      })
+    )
+    .optional(),
+});
+export type Message = z.infer<typeof MessageSchema>;
 
 export function isErrorMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
@@ -43,14 +59,19 @@ export function getDailyMessages(client: SlackClient, channelId: string, dateSta
     oldest = subDays(oldest, 1);
   }
 
-  const messages = client.conversations.history({
-    channel: channelId,
-    oldest: getUnixTimeStampString(oldest),
-    inclusive: true,
-  }).messages;
+  const _messages =
+    client.conversations.history({
+      channel: channelId,
+      oldest: getUnixTimeStampString(oldest),
+      inclusive: true,
+    }).messages || [];
 
   // 時系列昇順に並び替え
-  return messages ? messages.reverse() : [];
+  return _messages.filter(isMessage).reverse();
+}
+
+function isMessage(message: unknown): message is z.infer<typeof MessageSchema> {
+  return MessageSchema.safeParse(message).success;
 }
 
 export function getProcessedMessages(messages: Message[], botUserId: string) {

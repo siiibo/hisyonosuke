@@ -1,6 +1,5 @@
-import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
 import { CommandType, getCommandType } from "./command";
-import { getProcessedMessages } from "./message";
+import { Message, getProcessedMessages } from "./message";
 
 export type UserWorkStatus = {
   workStatus: "勤務中（出社）" | "勤務中（リモート）" | "退勤済み"; // 未出勤は現状利用していない

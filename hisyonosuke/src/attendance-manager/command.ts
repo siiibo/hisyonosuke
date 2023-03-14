@@ -1,4 +1,4 @@
-import { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
+import { Message } from "./message";
 
 export type CommandType = keyof typeof COMMAND_TYPE;
 export type Commands = (typeof COMMAND_TYPE)[CommandType];
