@@ -3,10 +3,7 @@ import { WorkflowStepEdit } from "@slack/bolt";
 import { WorkflowStepExecuteEvent } from "@slack/bolt";
 import { ViewWorkflowStepSubmitAction } from "@slack/bolt";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import {
-  ViewsOpenArguments,
-  WorkflowsUpdateStepArguments,
-} from "@hi-se/web-api/src/methods";
+import { ViewsOpenArguments, WorkflowsUpdateStepArguments } from "@hi-se/web-api/src/methods";
 import { getTypeAndCallbackId } from "../app";
 import * as modals from "./modals";
 
@@ -30,15 +27,11 @@ export const workflowCustomStep = (e: GoogleAppsScript.Events.DoPost) => {
 };
 
 const getSlackClient = (): SlackClient => {
-  const token: string =
-    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  const token: string = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   return new SlackClient(token);
 };
 
-const editWorkflowStep = (
-  client: SlackClient,
-  payload: WorkflowStepEdit
-): string => {
+const editWorkflowStep = (client: SlackClient, payload: WorkflowStepEdit): string => {
   const data: ViewsOpenArguments = {
     trigger_id: payload.trigger_id,
     token: PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN"),
@@ -49,10 +42,7 @@ const editWorkflowStep = (
   return "";
 };
 
-const saveWorkflowStep = (
-  client: SlackClient,
-  payload: ViewWorkflowStepSubmitAction
-) => {
+const saveWorkflowStep = (client: SlackClient, payload: ViewWorkflowStepSubmitAction) => {
   const options: WorkflowsUpdateStepArguments = {
     workflow_step_edit_id: payload.workflow_step.workflow_step_edit_id,
     token: PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN"),
@@ -70,10 +60,7 @@ const saveWorkflowStep = (
   return "";
 };
 
-const registerCompany = (
-  client: SlackClient,
-  payload: WorkflowStepExecuteEvent
-) => {
+const registerCompany = (client: SlackClient, payload: WorkflowStepExecuteEvent) => {
   const prop = PropertiesService.getScriptProperties().getProperties();
   const spreadsheet = SpreadsheetApp.openById(prop.IR_SPREADSHEET_ID);
   const sheet = spreadsheet.getSheets()[0];

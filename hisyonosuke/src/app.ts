@@ -11,10 +11,7 @@ import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
 import { notificator } from "./notificator";
-import {
-  periodicallyCheckForAttendanceManager,
-  initAttendanceManager,
-} from "./attendance-manager/attendanceManager";
+import { periodicallyCheckForAttendanceManager, initAttendanceManager } from "./attendance-manager/attendanceManager";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -22,18 +19,14 @@ const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 const EMOJI_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 
-const doPost = (
-  e: GoogleAppsScript.Events.DoPost
-): GoogleAppsScript.Content.TextOutput => {
+const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   console.info({
     appName: "hisyonoske",
     ...e,
   });
 
   if (isUrlVerification(e)) {
-    return ContentService.createTextOutput(
-      JSON.parse(e.postData.contents)["challenge"]
-    );
+    return ContentService.createTextOutput(JSON.parse(e.postData.contents)["challenge"]);
   }
 
   // Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
@@ -42,8 +35,7 @@ const doPost = (
     const client = getSlackClient();
     if (event.type === "app_mention") {
       if (isOriginalCommand(event.text, "アルバイトシフト")) {
-        const calendarId =
-          "c_1889m1jd2rticjeig08cshi84mnrs4gaedkmiqb2dsn66rrd@resource.calendar.google.com";
+        const calendarId = "c_1889m1jd2rticjeig08cshi84mnrs4gaedkmiqb2dsn66rrd@resource.calendar.google.com";
         const calendar = CalendarApp.getCalendarById(calendarId);
         const targetDate = new Date();
         const dailyShifts = calendar.getEventsForDay(targetDate);
@@ -60,16 +52,8 @@ const doPost = (
           dailyShifts
             .map((dailyShift) => {
               const title = dailyShift.getTitle();
-              const startTime = Utilities.formatDate(
-                dailyShift.getStartTime(),
-                "Asia/Tokyo",
-                "HH:mm"
-              );
-              const endTime = Utilities.formatDate(
-                dailyShift.getEndTime(),
-                "Asia/Tokyo",
-                "HH:mm"
-              );
+              const startTime = Utilities.formatDate(dailyShift.getStartTime(), "Asia/Tokyo", "HH:mm");
+              const endTime = Utilities.formatDate(dailyShift.getEndTime(), "Asia/Tokyo", "HH:mm");
               return `${title}  ${startTime} 〜 ${endTime}`;
             })
             .join("\n") +
@@ -93,15 +77,12 @@ const doPost = (
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
 
-  return ContentService.createTextOutput(response).setMimeType(
-    ContentService.MimeType.JSON
-  );
+  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 };
 
 // attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
 const getSlackClient = () => {
-  const token =
-    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  const token = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   return new SlackClient(token);
 };
 
@@ -148,9 +129,7 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   return false;
 };
 
-export const getTypeAndCallbackId = (
-  e: GoogleAppsScript.Events.DoPost
-): { type: string; callback_id: string } => {
+export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string; callback_id: string } => {
   // FIXME: この関数は使わない方向に修正していく
   // 詳細は https://github.com/siiibo/hisyonosuke/pull/1 参照
   if (isAction(e)) {
@@ -215,10 +194,7 @@ const handleEmojiChange = (client: SlackClient, event: EmojiChangedEvent) => {
   }
 };
 
-const handleChannelCreated = (
-  client: SlackClient,
-  event: ChannelCreatedEvent
-) => {
+const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) => {
   client.chat.postMessage({
     channel: CHANNEL_EVENT_POST_CHANNEL,
     text: `<#${event.channel.id}>が追加されました！`,
@@ -231,8 +207,7 @@ const init = () => {
 };
 
 const initProperties = () => {
-  const sheet =
-    SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
+  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
   const rows = sheet.getDataRange().getValues();
   const properties = {};
   for (const row of rows.slice(1)) properties[row[0]] = row[1];
@@ -249,5 +224,4 @@ declare const global: any;
 global.doPost = doPost;
 global.init = init;
 global.notificator = notificator;
-global.periodicallyCheckForAttendanceManager =
-  periodicallyCheckForAttendanceManager;
+global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;

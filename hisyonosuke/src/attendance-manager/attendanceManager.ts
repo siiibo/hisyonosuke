@@ -32,12 +32,7 @@ const COMMAND_TYPE = {
   CLOCK_IN_OR_SWITCH_TO_OFFICE: [":shussha:"],
   CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE: [":remoteshukkin:"],
   SWITCH_TO_REMOTE: [":remote:"],
-  CLOCK_OUT: [
-    ":taikin:",
-    ":sagyoushuuryou:",
-    ":saishuutaikin:",
-    ":kinmushuuryou:",
-  ],
+  CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
 
 const REACTION = {
@@ -89,15 +84,9 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     return;
   }
 
-  const userWorkStatuses = getUserWorkStatusesByMessages(
-    messages,
-    hisyonosukeUserId
-  );
+  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
 
-  const unprocessedMessages = getUnprocessedMessages(
-    messages,
-    hisyonosukeUserId
-  );
+  const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
   unprocessedMessages.forEach((message) => {
     const commandType = getCommandType(message);
     if (!commandType) {
@@ -113,10 +102,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
       userWorkStatus,
       actionType,
     });
-    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(
-      userWorkStatus,
-      commandType
-    );
+    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
   });
 };
 
@@ -137,11 +123,7 @@ const execAction = (
     if (!message.user) {
       throw new Error("user is undefined.");
     }
-    employeeId = getFreeeEmployeeIdFromSlackUserId(
-      client,
-      message.user,
-      FREEE_COMPANY_ID
-    );
+    employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
   } catch (e: any) {
     console.error(e.stack);
     console.error(`slackUserId:${message.user}, type: getEmployeeId`);
@@ -171,34 +153,18 @@ const execAction = (
         handleSwitchWorkStatusToRemote(client, channelId, message);
         break;
       case "clock_out":
-        handleClockOut(
-          client,
-          channelId,
-          FREEE_COMPANY_ID,
-          employeeId,
-          message
-        );
+        handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
         break;
       case "clock_out_and_add_remote_memo":
-        handleClockOutAndAddRemoteMemo(
-          client,
-          channelId,
-          FREEE_COMPANY_ID,
-          employeeId,
-          message
-        );
+        handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
     }
     console.info(
-      `user:${employeeId}, type:${actionType}, messageTs: ${
-        message.ts
-      }\n${JSON.stringify(userWorkStatus, null, 2)}`
+      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
     );
   } catch (e: any) {
     console.error(e.stack);
     console.error(
-      `user:${employeeId}, type:${actionType}, messageTs: ${
-        message.ts
-      }\n${JSON.stringify(userWorkStatus, null, 2)}`
+      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
     );
 
     let errorFeedBackMessage = e.toString();
@@ -210,12 +176,8 @@ const execAction = (
         errorFeedBackMessage = "既に打刻済みです";
       }
     }
-    if (
-      actionType === "clock_out" &&
-      e.message.includes("打刻の種類が正しくありません。")
-    ) {
-      errorFeedBackMessage =
-        "出勤打刻が完了していないか、退勤の上書きができない値です.";
+    if (actionType === "clock_out" && e.message.includes("打刻の種類が正しくありません。")) {
+      errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
     }
 
     client.chat.postMessage({
@@ -259,11 +221,7 @@ const handleClockIn = (
   });
 };
 
-const handleSwitchWorkStatusToOffice = (
-  client: SlackClient,
-  channelId: string,
-  message: Message
-) => {
+const handleSwitchWorkStatusToOffice = (client: SlackClient, channelId: string, message: Message) => {
   client.reactions.add({
     channel: channelId,
     name: REACTION.DONE_FOR_LOCATION_SWITCH,
@@ -271,11 +229,7 @@ const handleSwitchWorkStatusToOffice = (
   });
 };
 
-const handleSwitchWorkStatusToRemote = (
-  client: SlackClient,
-  channelId: string,
-  message: Message
-) => {
+const handleSwitchWorkStatusToRemote = (client: SlackClient, channelId: string, message: Message) => {
   client.reactions.add({
     channel: channelId,
     name: REACTION.DONE_FOR_LOCATION_SWITCH,
@@ -295,9 +249,7 @@ const handleClockOut = (
   }
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =
-    clockOutDate.getHours() > DATE_START_HOUR
-      ? new Date(clockOutDate.getTime())
-      : subDays(clockOutDate, 1);
+    clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
 
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
@@ -327,32 +279,18 @@ const handleClockOutAndAddRemoteMemo = (
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =
-    clockOutDate.getHours() > DATE_START_HOUR
-      ? new Date(clockOutDate.getTime())
-      : subDays(clockOutDate, 1);
+    clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
   const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
   const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
   const remoteParams: WorkRecordControllerRequestBody = {
     company_id: FREEE_COMPANY_ID,
-    clock_in_at: format(
-      new Date(workRecord.clock_in_at),
-      "yyyy-MM-dd HH:mm:ss"
-    ),
-    clock_out_at: format(
-      new Date(workRecord.clock_out_at),
-      "yyyy-MM-dd HH:mm:ss"
-    ),
+    clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
+    clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
     note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
     break_records: workRecord.break_records.map((record) => {
       return {
-        clock_in_at: format(
-          new Date(record.clock_in_at),
-          "yyyy-MM-dd HH:mm:ss"
-        ),
-        clock_out_at: format(
-          new Date(record.clock_out_at),
-          "yyyy-MM-dd HH:mm:ss"
-        ),
+        clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
+        clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
       };
     }),
   };
@@ -388,9 +326,7 @@ const getUpdatedUserWorkStatus = (
   userWorkStatus: UserWorkStatus | undefined,
   newCommand: CommandType
 ): UserWorkStatus => {
-  const userCommands = userWorkStatus
-    ? [...userWorkStatus.processedCommands, newCommand]
-    : [newCommand];
+  const userCommands = userWorkStatus ? [...userWorkStatus.processedCommands, newCommand] : [newCommand];
   const workStatus = getUserWorkStatusByCommands(userCommands);
   const needTrafficExpense = userWorkStatus?.needTrafficExpense
     ? userWorkStatus.needTrafficExpense
@@ -410,9 +346,7 @@ const getUserWorkStatusesByMessages = (
   const processedMessages = getProcessedMessages(messages, botUserId);
 
   // TODO: ↓ 「今誰いる？」の機能に流用する
-  const clockedInUserIds = Array.from(
-    new Set(processedMessages.map((message) => message.user))
-  );
+  const clockedInUserIds = Array.from(new Set(processedMessages.map((message) => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map((userSlackId) => {
     const userCommands = processedMessages
       .filter((message) => message.user === userSlackId)
@@ -441,9 +375,7 @@ const isErrorMessage = (message: Message, botUserId: string): boolean => {
     if (!reaction.users) {
       return false;
     }
-    return (
-      reaction.users?.includes(botUserId) && reaction.name === REACTION.ERROR
-    );
+    return reaction.users?.includes(botUserId) && reaction.name === REACTION.ERROR;
   });
 };
 
@@ -457,46 +389,33 @@ const isProcessedMessage = (message: Message, botUserId: string): boolean => {
     }
     return (
       reaction.users?.includes(botUserId) &&
-      [
-        REACTION.DONE_FOR_TIME_RECORD,
-        REACTION.DONE_FOR_REMOTE_MEMO,
-        REACTION.DONE_FOR_LOCATION_SWITCH,
-      ].includes(reaction.name)
+      [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
+        reaction.name
+      )
     );
   });
 };
 
 const getProcessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(
-    (message) => !isErrorMessage(message, botUserId)
-  );
-  return messagesWithoutError.filter((message) =>
-    isProcessedMessage(message, botUserId)
-  );
+  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
+  return messagesWithoutError.filter((message) => isProcessedMessage(message, botUserId));
 };
 
 const getUnprocessedMessages = (messages: Message[], botUserId: string) => {
-  const messagesWithoutError = messages.filter(
-    (message) => !isErrorMessage(message, botUserId)
-  );
-  const unprocessedMessages = messagesWithoutError.filter(
-    (message) => !isProcessedMessage(message, botUserId)
-  );
+  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
+  const unprocessedMessages = messagesWithoutError.filter((message) => !isProcessedMessage(message, botUserId));
   return unprocessedMessages;
 };
 
 const checkTrafficExpense = (userCommands: CommandType[]) => {
   // 「リモート出勤」よりあとに「出社」がなければ交通費はかからず、それ以外は必要
   return (
-    userCommands.lastIndexOf(
-      "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE"
-    ) <= userCommands.lastIndexOf("CLOCK_IN_OR_SWITCH_TO_OFFICE")
+    userCommands.lastIndexOf("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE") <=
+    userCommands.lastIndexOf("CLOCK_IN_OR_SWITCH_TO_OFFICE")
   );
 };
 
-const getUserWorkStatusByCommands = (
-  commands: CommandType[]
-): UserWorkStatus["workStatus"] => {
+const getUserWorkStatusByCommands = (commands: CommandType[]): UserWorkStatus["workStatus"] => {
   const lastCommand = commands[commands.length - 1];
   // 最後のuserMessageからworkStatusを算出できるはず
   // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
@@ -516,30 +435,21 @@ const getUserWorkStatusByCommands = (
   }
 };
 
-const getActionType = (
-  commandType: CommandType,
-  userWorkStatus: UserWorkStatus | undefined
-): ActionType => {
+const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus | undefined): ActionType => {
   switch (commandType) {
     case "CLOCK_IN":
       return "clock_in";
     case "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE":
       // TODO: 勤務中（リモート）だった場合
-      return userWorkStatus?.workStatus === "勤務中（出社）"
-        ? "switch_work_status_to_remote"
-        : "clock_in";
+      return userWorkStatus?.workStatus === "勤務中（出社）" ? "switch_work_status_to_remote" : "clock_in";
     case "CLOCK_IN_OR_SWITCH_TO_OFFICE":
       // TODO: 勤務中（出社）だった場合
-      return userWorkStatus?.workStatus === "勤務中（リモート）"
-        ? "switch_work_status_to_office"
-        : "clock_in";
+      return userWorkStatus?.workStatus === "勤務中（リモート）" ? "switch_work_status_to_office" : "clock_in";
     case "SWITCH_TO_REMOTE":
       return "switch_work_status_to_remote";
     case "CLOCK_OUT":
       //TODO: 打刻の重複の場合
-      return userWorkStatus?.needTrafficExpense === false
-        ? "clock_out_and_add_remote_memo"
-        : "clock_out";
+      return userWorkStatus?.needTrafficExpense === false ? "clock_out_and_add_remote_memo" : "clock_out";
   }
 };
 
@@ -558,17 +468,9 @@ const getCommandType = (message: Message): CommandType | undefined => {
   }
   if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
     return "CLOCK_IN";
-  } else if (
-    text.match(
-      getCommandRegExp(
-        COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE
-      )
-    )
-  ) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
     return "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE";
-  } else if (
-    text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))
-  ) {
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_OR_SWITCH_TO_OFFICE))) {
     return "CLOCK_IN_OR_SWITCH_TO_OFFICE";
   } else if (text.match(getCommandRegExp(COMMAND_TYPE.SWITCH_TO_REMOTE))) {
     return "SWITCH_TO_REMOTE";
@@ -579,11 +481,7 @@ const getCommandType = (message: Message): CommandType | undefined => {
   }
 };
 
-const getFreeeEmployeeIdFromSlackUserId = (
-  client: SlackClient,
-  slackUserId: string,
-  companyId: number
-): number => {
+const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string, companyId: number): number => {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId,
@@ -608,8 +506,7 @@ const getFreeeEmployeeIdFromSlackUserId = (
 };
 
 const getSlackClient = () => {
-  const token =
-    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  const token = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   if (!token) {
     throw Error("SLACK_TOKEN is undefined.");
   }

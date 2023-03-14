@@ -12,9 +12,7 @@ export const notificator = () => {
   notifyPayday(spreadsheet);
 };
 
-const notifyAnniversary = (
-  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
-) => {
+const notifyAnniversary = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => {
   const dataSheet = spreadsheet.getSheets()[0];
   const configSheet = spreadsheet.getSheets()[1];
   const todayDate = new Date();
@@ -32,18 +30,11 @@ const notifyAnniversary = (
 
   for (const range of ranges) {
     const row = range.getRow();
-    const [_, type, date, name, message] = dataSheet
-      .getRange(row, 1, 1, 5)
-      .getValues()[0];
+    const [_, type, date, name, message] = dataSheet.getRange(row, 1, 1, 5).getValues()[0];
 
     if (range.getColumn() == DATE_COL) {
       if (!isNaN(Date.parse(date)) && isMatch(todayDate, date)) {
-        const postMessage = createMessage(
-          name,
-          date,
-          todayDate,
-          defaultMessage[type] + "\n" + message
-        );
+        const postMessage = createMessage(name, date, todayDate, defaultMessage[type] + "\n" + message);
         postSlackChannel(postMessage);
       }
     }
@@ -51,28 +42,18 @@ const notifyAnniversary = (
 };
 
 const isMatch = (anniversaryDate: Date, todayDate: Date): boolean => {
-  if (
-    todayDate.getMonth() === anniversaryDate.getMonth() &&
-    todayDate.getDate() === anniversaryDate.getDate()
-  ) {
+  if (todayDate.getMonth() === anniversaryDate.getMonth() && todayDate.getDate() === anniversaryDate.getDate()) {
     return true;
   }
   return false;
 };
 
-const createMessage = (
-  name: string,
-  date: Date,
-  current: Date,
-  message: string
-): string => {
+const createMessage = (name: string, date: Date, current: Date, message: string): string => {
   const years = String(current.getFullYear() - date.getFullYear());
   return message.replace(/NAME/g, name).replace(/YEARS/g, years);
 };
 
-const notifyPayday = (
-  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
-) => {
+const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => {
   const configSheet = spreadsheet.getSheets()[1];
 
   const defaultMessage: { [key: string]: string } = {};
@@ -90,11 +71,7 @@ const isPayday = (): boolean => {
     if (date.getDate() == PAYDAY) {
       return true;
     } else {
-      for (
-        date.setDate(date.getDate() + 1);
-        isHoliday(date);
-        date.setDate(date.getDate() + 1)
-      ) {
+      for (date.setDate(date.getDate() + 1); isHoliday(date); date.setDate(date.getDate() + 1)) {
         if (date.getDate() == PAYDAY) {
           return true;
         }
@@ -120,8 +97,7 @@ const isHoliday = (date: Date): boolean => {
 };
 
 const getSlackClient = (): SlackClient => {
-  const token: string =
-    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  const token: string = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   return new SlackClient(token);
 };
 
