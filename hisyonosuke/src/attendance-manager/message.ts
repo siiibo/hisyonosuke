@@ -4,13 +4,15 @@ import { getDate, subDays, set } from "date-fns";
 import { REACTION, ReactionSchema } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
 
-export const MessageSchema = z.object({
-  type: z.literal("message"),
-  user: z.string(),
-  text: z.string(),
-  ts: z.string(),
-  reactions: ReactionSchema.array().optional(),
-});
+export const MessageSchema = z
+  .object({
+    type: z.literal("message"),
+    user: z.string(),
+    text: z.string(),
+    ts: z.string(),
+    reactions: ReactionSchema.array().optional(),
+  })
+  .transform((message) => ({ ...message, date: new Date(parseInt(message.ts) * 1000) }));
 export type Message = z.infer<typeof MessageSchema>;
 export type ProcessedMessage = Message & { isProcessed: true };
 export type UnprocessedMessage = Message & { isProcessed: false };

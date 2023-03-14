@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { format, subDays } from "date-fns";
+import { format, subDays, toDate } from "date-fns";
 import {
   getCompanyEmployees,
   getWorkRecord,
@@ -167,8 +167,8 @@ function handleClockIn(
   employeeId: number,
   message: Message
 ) {
-  const clockInDate = new Date(parseInt(message.ts) * 1000);
-  const clockInBaseDate = new Date(clockInDate.getTime());
+  const clockInDate = message.date;
+  const clockInBaseDate = toDate(clockInDate);
 
   const clockInParams = {
     company_id: FREEE_COMPANY_ID,
@@ -208,9 +208,8 @@ function handleClockOut(
   employeeId: number,
   message: Message
 ) {
-  const clockOutDate = new Date(parseInt(message.ts) * 1000);
-  const clockOutBaseDate =
-    clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
+  const clockOutDate = message.date;
+  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
 
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
@@ -235,9 +234,9 @@ function handleClockOutAndAddRemoteMemo(
   message: Message
 ) {
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-  const clockOutDate = new Date(parseInt(message.ts) * 1000);
-  const clockOutBaseDate =
-    clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
+  const clockOutDate = message.date;
+  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
+
   const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
   const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
   const remoteParams: WorkRecordControllerRequestBody = {
