@@ -19,8 +19,39 @@ export const MessageSchema = z.object({
     .optional(),
 });
 export type Message = z.infer<typeof MessageSchema>;
+export type ProcessedMessage = Message & { isProcessed: true };
+export type UnprocessedMessage = Message & { isProcessed: false };
 
-export function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
+export function getCategorizedDailyMessages(
+  client: SlackClient,
+  channelId: string,
+  botUserId: string,
+  dateStartHour: number
+): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
+  const messages = getDailyMessages(client, channelId, dateStartHour);
+  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
+
+  // NOTE: エラーリアクションがついているメッセージは返り値に含めない
+  return messagesWithoutError.reduce(
+    (acc, message) => {
+      return isProcessedMessage(message, botUserId)
+        ? {
+            ...acc,
+            processedMessages: [...acc.processedMessages, { ...message, isProcessed: true }],
+          }
+        : {
+            ...acc,
+            unprocessedMessages: [...acc.unprocessedMessages, { ...message, isProcessed: false }],
+          };
+    },
+    {
+      processedMessages: [] as ProcessedMessage[],
+      unprocessedMessages: [] as UnprocessedMessage[],
+    }
+  );
+}
+
+function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
   const now = new Date();
   const oldest = set(now, {
     hours: dateStartHour,
@@ -43,17 +74,6 @@ export function getDailyMessages(client: SlackClient, channelId: string, dateSta
 
 function isMessage(message: unknown): message is Message {
   return MessageSchema.safeParse(message).success;
-}
-
-export function getProcessedMessages(messages: Message[], botUserId: string) {
-  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
-  return messagesWithoutError.filter((message) => isProcessedMessage(message, botUserId));
-}
-
-export function getUnprocessedMessages(messages: Message[], botUserId: string) {
-  const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
-  const unprocessedMessages = messagesWithoutError.filter((message) => !isProcessedMessage(message, botUserId));
-  return unprocessedMessages;
 }
 
 function isErrorMessage(message: Message, botUserId: string): boolean {

@@ -9,7 +9,7 @@ import {
 } from "./freee";
 import { getConfig, initConfig } from "./config";
 import { REACTION } from "./reaction";
-import { Message, getDailyMessages, getUnprocessedMessages } from "./message";
+import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
@@ -53,14 +53,16 @@ function checkAttendance(client: SlackClient, channelId: string) {
   const hisyonosukeUserId = "U01AY3RHR42"; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const { FREEE_COMPANY_ID } = getConfig();
 
-  const messages = getDailyMessages(client, channelId, DATE_START_HOUR);
-  if (!messages.length) {
-    return;
-  }
+  const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
+    client,
+    channelId,
+    hisyonosukeUserId,
+    DATE_START_HOUR
+  );
+  if (!unprocessedMessages.length && !processedMessages.length) return;
 
-  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
+  const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
 
-  const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
   unprocessedMessages.forEach((message) => {
     const commandType = getCommandType(message);
     if (!commandType) {

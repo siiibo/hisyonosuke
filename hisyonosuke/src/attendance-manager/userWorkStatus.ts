@@ -1,5 +1,5 @@
 import { CommandType, getCommandType } from "./command";
-import { Message, getProcessedMessages } from "./message";
+import { ProcessedMessage } from "./message";
 
 export type UserWorkStatus = {
   workStatus: "勤務中（出社）" | "勤務中（リモート）" | "退勤済み"; // 未出勤は現状利用していない
@@ -24,12 +24,9 @@ export function getUpdatedUserWorkStatus(
   };
 }
 
-export function getUserWorkStatusesByMessages(
-  messages: Message[],
-  botUserId: string
-): { [userSlackId: string]: UserWorkStatus | undefined } {
-  const processedMessages = getProcessedMessages(messages, botUserId);
-
+export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
+  [userSlackId: string]: UserWorkStatus | undefined;
+} {
   // TODO: ↓ 「今誰いる？」の機能に流用する
   const clockedInUserIds = Array.from(new Set(processedMessages.map((message) => message.user)));
   const clockedInUserWorkStatuses = clockedInUserIds.map((userSlackId) => {
