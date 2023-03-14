@@ -1,5 +1,5 @@
 // @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
-import { GasWebClient as SlackClient } from '@hi-se/web-api';
+import { GasWebClient as SlackClient } from "@hi-se/web-api";
 
 const DATE_COL = 3;
 const PAYDAY = 25;
@@ -10,59 +10,79 @@ export const notificator = () => {
 
   notifyAnniversary(spreadsheet);
   notifyPayday(spreadsheet);
-}
+};
 
-const notifyAnniversary = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => {
+const notifyAnniversary = (
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
+) => {
   const dataSheet = spreadsheet.getSheets()[0];
   const configSheet = spreadsheet.getSheets()[1];
   const todayDate = new Date();
 
-  const defaultMessage: { [key: string]: string; } = {};
+  const defaultMessage: { [key: string]: string } = {};
   for (const row of configSheet.getDataRange().getValues().slice(1)) {
     defaultMessage[row[0]] = row[1];
   }
 
-  const textFinder = dataSheet.createTextFinder(Utilities.formatDate(todayDate, 'Asia/Tokyo', 'MM/dd'))
+  const textFinder = dataSheet
+    .createTextFinder(Utilities.formatDate(todayDate, "Asia/Tokyo", "MM/dd"))
     .matchEntireCell(false);
 
   const ranges = textFinder.findAll();
 
   for (const range of ranges) {
     const row = range.getRow();
-    const [_, type, date, name, message] = dataSheet.getRange(row, 1, 1, 5).getValues()[0];
+    const [_, type, date, name, message] = dataSheet
+      .getRange(row, 1, 1, 5)
+      .getValues()[0];
 
     if (range.getColumn() == DATE_COL) {
       if (!isNaN(Date.parse(date)) && isMatch(todayDate, date)) {
-        const postMessage = createMessage(name, date, todayDate, defaultMessage[type] + '\n' + message);
+        const postMessage = createMessage(
+          name,
+          date,
+          todayDate,
+          defaultMessage[type] + "\n" + message
+        );
         postSlackChannel(postMessage);
       }
     }
   }
-}
+};
 
 const isMatch = (anniversaryDate: Date, todayDate: Date): boolean => {
-  if (todayDate.getMonth() === anniversaryDate.getMonth() && todayDate.getDate() === anniversaryDate.getDate()) {
+  if (
+    todayDate.getMonth() === anniversaryDate.getMonth() &&
+    todayDate.getDate() === anniversaryDate.getDate()
+  ) {
     return true;
   }
   return false;
-}
+};
 
-const createMessage = (name: string, date: Date, current: Date, message: string): string => {
+const createMessage = (
+  name: string,
+  date: Date,
+  current: Date,
+  message: string
+): string => {
   const years = String(current.getFullYear() - date.getFullYear());
   return message.replace(/NAME/g, name).replace(/YEARS/g, years);
-}
+};
 
-const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => {
+const notifyPayday = (
+  spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
+) => {
   const configSheet = spreadsheet.getSheets()[1];
 
-  const defaultMessage: { [key: string]: string; } = {};
+  const defaultMessage: { [key: string]: string } = {};
   for (const row of configSheet.getDataRange().getValues().slice(1)) {
     defaultMessage[row[0]] = row[1];
   }
   if (isPayday()) {
-    postSlackChannel(defaultMessage['給料日']);
+    postSlackChannel(defaultMessage["給料日"]);
   }
-}
+};
 
 const isPayday = (): boolean => {
   const date = new Date();
@@ -70,7 +90,11 @@ const isPayday = (): boolean => {
     if (date.getDate() == PAYDAY) {
       return true;
     } else {
-      for (date.setDate(date.getDate() + 1); isHoliday(date); date.setDate(date.getDate() + 1)) {
+      for (
+        date.setDate(date.getDate() + 1);
+        isHoliday(date);
+        date.setDate(date.getDate() + 1)
+      ) {
         if (date.getDate() == PAYDAY) {
           return true;
         }
@@ -78,7 +102,7 @@ const isPayday = (): boolean => {
     }
   }
   return false;
-}
+};
 
 const isHoliday = (date: Date): boolean => {
   const dayOfWeek = date.getDay();
@@ -93,20 +117,19 @@ const isHoliday = (date: Date): boolean => {
     return true;
   }
   return false;
-}
+};
 
 const getSlackClient = (): SlackClient => {
-  const token: string = PropertiesService.getScriptProperties().getProperty('SLACK_TOKEN');
+  const token: string =
+    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   return new SlackClient(token);
-}
+};
 
 const postSlackChannel = (message: string) => {
   const client = getSlackClient();
   const prop = PropertiesService.getScriptProperties().getProperties();
-  const result = client.chat.postMessage(
-    {
-      channel: prop.POST_CHANNEL_ID,
-      text: message,
-    }
-  );
-}
+  const result = client.chat.postMessage({
+    channel: prop.POST_CHANNEL_ID,
+    text: message,
+  });
+};
