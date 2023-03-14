@@ -364,7 +364,7 @@ export const deleteModal = (): View => {
 }
 
 export const deleteConfirmModal = (payload: ViewSubmitAction): View => {
-  var view: View = {
+  const view: View = {
     "callback_id": "register_anniversary",
     "title": {
       "type": "plain_text",
@@ -422,7 +422,7 @@ export const deleteConfirmModal = (payload: ViewSubmitAction): View => {
 }
 
 export const deleteResultModal = (): View => {
-  var view: View = {
+  const view: View = {
     "title": {
       "type": "plain_text",
       "text": "削除完了",
@@ -449,7 +449,7 @@ export const deleteResultModal = (): View => {
 }
 
 export const deleteNotFoundModal = (payload: ViewSubmitAction): View => {
-  var view: View = {
+  const view: View = {
     "title": {
       "type": "plain_text",
       "text": "検索結果",

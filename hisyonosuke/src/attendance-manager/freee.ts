@@ -148,7 +148,7 @@ export function getCompanies() {
   return JSON.parse(response);
 }
 
-export function getWorkRecordSummary(companyId: number, employId: number, year: number, month: number, workRecords: boolean = false): WorkRecordSummarySerializer {
+export function getWorkRecordSummary(companyId: number, employId: number, year: number, month: number, workRecords = false): WorkRecordSummarySerializer {
 
   const accessToken = getService().getAccessToken();
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_record_summaries/${year}/${month}`, {
@@ -174,7 +174,7 @@ export function getMe() {
   return JSON.parse(response);
 }
 
-export function getWorkRecord(employId: number, date: String, company_id: number): WorkRecordSerializer {
+export function getWorkRecord(employId: number, date: string, company_id: number): WorkRecordSerializer {
   const accessToken = getService().getAccessToken();
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`, {
     company_id
@@ -205,7 +205,7 @@ export function getCompanyEmployees(props: {
   return response;
 }
 
-export function updateWorkRecord(employId: number, date: String, body: WorkRecordControllerRequestBody) {
+export function updateWorkRecord(employId: number, date: string, body: WorkRecordControllerRequestBody) {
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {

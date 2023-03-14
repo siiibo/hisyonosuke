@@ -75,7 +75,7 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
   const messages = getDailyMessages(client, channelId);
   if (!messages.length) { return }
 
-  let userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
+  const userWorkStatuses = getUserWorkStatusesByMessages(messages, hisyonosukeUserId);
 
   const unprocessedMessages = getUnprocessedMessages(messages, hisyonosukeUserId);
   unprocessedMessages.forEach((message) => {
@@ -103,7 +103,7 @@ const execAction = (client: SlackClient, channelId: string, FREEE_COMPANY_ID: nu
   } catch (e: any) {
     console.error(e.stack);
     console.error(`slackUserId:${message.user}, type: getEmployeeId`);
-    const errorFeedBackMessage = e.toString();;
+    const errorFeedBackMessage = e.toString();
     client.chat.postMessage({
       channel: channelId,
       text: errorFeedBackMessage,

@@ -17,8 +17,8 @@ const notifyAnniversary = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
   const configSheet = spreadsheet.getSheets()[1];
   const todayDate = new Date();
 
-  let defaultMessage: { [key: string]: string; } = {};
-  for (let row of configSheet.getDataRange().getValues().slice(1)) {
+  const defaultMessage: { [key: string]: string; } = {};
+  for (const row of configSheet.getDataRange().getValues().slice(1)) {
     defaultMessage[row[0]] = row[1];
   }
 
@@ -27,7 +27,7 @@ const notifyAnniversary = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet
 
   const ranges = textFinder.findAll();
 
-  for (let range of ranges) {
+  for (const range of ranges) {
     const row = range.getRow();
     const [_, type, date, name, message] = dataSheet.getRange(row, 1, 1, 5).getValues()[0];
 
@@ -55,8 +55,8 @@ const createMessage = (name: string, date: Date, current: Date, message: string)
 const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => {
   const configSheet = spreadsheet.getSheets()[1];
 
-  let defaultMessage: { [key: string]: string; } = {};
-  for (let row of configSheet.getDataRange().getValues().slice(1)) {
+  const defaultMessage: { [key: string]: string; } = {};
+  for (const row of configSheet.getDataRange().getValues().slice(1)) {
     defaultMessage[row[0]] = row[1];
   }
   if (isPayday()) {
@@ -65,7 +65,7 @@ const notifyPayday = (spreadsheet: GoogleAppsScript.Spreadsheet.Spreadsheet) => 
 }
 
 const isPayday = (): boolean => {
-  let date = new Date();
+  const date = new Date();
   if (!isHoliday(date)) {
     if (date.getDate() == PAYDAY) {
       return true;

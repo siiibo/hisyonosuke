@@ -153,7 +153,7 @@ const registerAnniversaryDate = (payload: ViewSubmitAction): boolean => {
 
   const ranges = textFinder.findAll();
 
-  for (let range of ranges) {
+  for (const range of ranges) {
     if (range.getColumn() == NAME_COL) {
       const row = range.getRow();
       const typeRegistered = sheet.getRange(row, TYPE_COL).getValue();
@@ -188,7 +188,7 @@ const findAnniversaryDate = (payload: ViewSubmitAction): boolean => {
 
   const ranges = textFinder.findAll();
 
-  for (let range of ranges) {
+  for (const range of ranges) {
     if (range.getColumn() == NAME_COL) {
       const row = range.getRow();
       const typeRegistered = sheet.getRange(row, TYPE_COL).getValue();
@@ -217,7 +217,7 @@ const deleteAnniversaryDate = (payload: ViewSubmitAction): boolean => {
 
   const ranges = textFinder.findAll();
 
-  for (let range of ranges) {
+  for (const range of ranges) {
     if (range.getColumn() == NAME_COL) {
       const row = range.getRow();
       const typeRegistered = sheet.getRange(row, TYPE_COL).getValue();

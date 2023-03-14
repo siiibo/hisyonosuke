@@ -27,7 +27,7 @@ export function authCallback(request: any) {
     return HtmlService.createHtmlOutput('認証に成功しました。タブを閉じてください。');
   } else {
     return HtmlService.createHtmlOutput('認証に失敗しました。');
-  };
+  }
 }
 
 export function printAuth() {

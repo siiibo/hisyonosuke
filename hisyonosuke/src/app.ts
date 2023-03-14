@@ -199,8 +199,8 @@ const init = () => {
 const initProperties = () => {
   const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName('CONFIG');
   const rows = sheet.getDataRange().getValues();
-  let properties = {};
-  for (let row of rows.slice(1)) properties[row[0]] = row[1];
+  const properties = {};
+  for (const row of rows.slice(1)) properties[row[0]] = row[1];
 
   const scriptProperties = PropertiesService.getScriptProperties();
 

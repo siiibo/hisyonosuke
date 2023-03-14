@@ -1,7 +1,7 @@
 import { View } from "@slack/bolt";
 
 export const editStepModal = (): View => {
-  var view: View = {
+  const view: View = {
     "type": "workflow_step",
     "blocks": [
       {
