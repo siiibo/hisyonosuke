@@ -27,10 +27,7 @@ export function initAttendanceManager() {
     }
   });
 
-  ScriptApp.newTrigger(targetFunction.name)
-    .timeBased()
-    .everyMinutes(5) //TODO: 定数化
-    .create();
+  ScriptApp.newTrigger(targetFunction.name).timeBased().everyMinutes(5).create();
 }
 
 export function periodicallyCheckForAttendanceManager() {
