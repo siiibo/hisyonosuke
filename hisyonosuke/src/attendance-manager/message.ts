@@ -56,7 +56,7 @@ export function getUnprocessedMessages(messages: Message[], botUserId: string) {
   return unprocessedMessages;
 }
 
-export function isErrorMessage(message: Message, botUserId: string): boolean {
+function isErrorMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
@@ -68,7 +68,7 @@ export function isErrorMessage(message: Message, botUserId: string): boolean {
   });
 }
 
-export function isProcessedMessage(message: Message, botUserId: string): boolean {
+function isProcessedMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
