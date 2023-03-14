@@ -64,11 +64,12 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
     }).messages || [];
 
   // 時系列昇順に並び替え
-  return _messages.filter(isMessage).reverse();
-}
-
-function isMessage(message: unknown): message is Message {
-  return MessageSchema.safeParse(message).success;
+  return _messages
+    .map((m) => {
+      const parsed = MessageSchema.safeParse(m);
+      return parsed.success ? parsed.data : null;
+    })
+    .filter((m): m is Message => !!m);
 }
 
 function isErrorMessage(message: Message, botUserId: string): boolean {
