@@ -67,7 +67,7 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
   return _messages
     .map((m) => {
       const parsed = MessageSchema.safeParse(m);
-      return parsed.success ? parsed.data : null;
+      return parsed.success ? parsed.data : undefined;
     })
     .filter((m): m is Message => !!m);
 }
