@@ -16,7 +16,7 @@ import { ActionType, getActionType } from "./action";
 
 const DATE_START_HOUR = 4;
 
-export const initAttendanceManager = () => {
+export function initAttendanceManager() {
   initConfig();
 
   const targetFunction = periodicallyCheckForAttendanceManager;
@@ -31,9 +31,9 @@ export const initAttendanceManager = () => {
     .timeBased()
     .everyMinutes(5) //TODO: 定数化
     .create();
-};
+}
 
-export const periodicallyCheckForAttendanceManager = () => {
+export function periodicallyCheckForAttendanceManager() {
   const client = getSlackClient();
 
   const { ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
@@ -41,7 +41,7 @@ export const periodicallyCheckForAttendanceManager = () => {
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
   checkAttendance(client, ATTENDANCE_CHANNEL_ID);
   checkAttendance(client, PART_TIMER_CHANNEL_ID);
-};
+}
 
 /*
   NOTE:
@@ -49,7 +49,7 @@ export const periodicallyCheckForAttendanceManager = () => {
   triggerの呼び出し毎に、処理済みのメッセージも含めてチェックするという冗長な処理になってしまっている。
   いずれPropServiceなどを使って状態管理するほうが良いかもしれない。
  */
-const checkAttendance = (client: SlackClient, channelId: string) => {
+function checkAttendance(client: SlackClient, channelId: string) {
   const hisyonosukeUserId = "U01AY3RHR42"; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   const { FREEE_COMPANY_ID } = getConfig();
 
@@ -75,9 +75,9 @@ const checkAttendance = (client: SlackClient, channelId: string) => {
     });
     userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
   });
-};
+}
 
-const execAction = (
+function execAction(
   client: SlackClient,
   channelId: string,
   FREEE_COMPANY_ID: number,
@@ -86,7 +86,7 @@ const execAction = (
     actionType: ActionType;
     userWorkStatus: UserWorkStatus | undefined;
   }
-) => {
+) {
   const { message, actionType, userWorkStatus } = action;
   let employeeId: number;
 
@@ -159,15 +159,15 @@ const execAction = (
       timestamp: message.ts,
     });
   }
-};
+}
 
-const handleClockIn = (
+function handleClockIn(
   client: SlackClient,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
   message: Message
-) => {
+) {
   const clockInDate = new Date(parseInt(message.ts) * 1000);
   const clockInBaseDate = new Date(clockInDate.getTime());
 
@@ -184,31 +184,31 @@ const handleClockIn = (
     name: REACTION.DONE_FOR_TIME_RECORD,
     timestamp: message.ts,
   });
-};
+}
 
-const handleSwitchWorkStatusToOffice = (client: SlackClient, channelId: string, message: Message) => {
+function handleSwitchWorkStatusToOffice(client: SlackClient, channelId: string, message: Message) {
   client.reactions.add({
     channel: channelId,
     name: REACTION.DONE_FOR_LOCATION_SWITCH,
     timestamp: message.ts,
   });
-};
+}
 
-const handleSwitchWorkStatusToRemote = (client: SlackClient, channelId: string, message: Message) => {
+function handleSwitchWorkStatusToRemote(client: SlackClient, channelId: string, message: Message) {
   client.reactions.add({
     channel: channelId,
     name: REACTION.DONE_FOR_LOCATION_SWITCH,
     timestamp: message.ts,
   });
-};
+}
 
-const handleClockOut = (
+function handleClockOut(
   client: SlackClient,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
   message: Message
-) => {
+) {
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =
     clockOutDate.getHours() > DATE_START_HOUR ? new Date(clockOutDate.getTime()) : subDays(clockOutDate, 1);
@@ -226,15 +226,15 @@ const handleClockOut = (
     name: REACTION.DONE_FOR_TIME_RECORD,
     timestamp: message.ts,
   });
-};
+}
 
-const handleClockOutAndAddRemoteMemo = (
+function handleClockOutAndAddRemoteMemo(
   client: SlackClient,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
   message: Message
-) => {
+) {
   handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
   const clockOutDate = new Date(parseInt(message.ts) * 1000);
   const clockOutBaseDate =
@@ -259,9 +259,9 @@ const handleClockOutAndAddRemoteMemo = (
     name: REACTION.DONE_FOR_REMOTE_MEMO,
     timestamp: message.ts,
   });
-};
+}
 
-const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: string, companyId: number): number => {
+function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({
     user: slackUserId,
@@ -283,12 +283,12 @@ const getFreeeEmployeeIdFromSlackUserId = (client: SlackClient, slackUserId: str
     throw new Error(`employee email ${email} is duplicated.`);
   }
   return target[0].id;
-};
+}
 
-const getSlackClient = () => {
+function getSlackClient() {
   const token = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   if (!token) {
     throw Error("SLACK_TOKEN is undefined.");
   }
   return new SlackClient(token);
-};
+}
