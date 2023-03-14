@@ -20,35 +20,6 @@ export const MessageSchema = z.object({
 });
 export type Message = z.infer<typeof MessageSchema>;
 
-export function isErrorMessage(message: Message, botUserId: string): boolean {
-  if (!message.reactions) {
-    return false;
-  }
-  return message.reactions.some((reaction) => {
-    if (!reaction.users) {
-      return false;
-    }
-    return reaction.users?.includes(botUserId) && reaction.name === REACTION.ERROR;
-  });
-}
-
-export function isProcessedMessage(message: Message, botUserId: string): boolean {
-  if (!message.reactions) {
-    return false;
-  }
-  return message.reactions?.some((reaction) => {
-    if (!reaction.name) {
-      return false;
-    }
-    return (
-      reaction.users?.includes(botUserId) &&
-      [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
-        reaction.name
-      )
-    );
-  });
-}
-
 export function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
   const now = new Date();
   const oldest = set(now, {
@@ -83,4 +54,33 @@ export function getUnprocessedMessages(messages: Message[], botUserId: string) {
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
   const unprocessedMessages = messagesWithoutError.filter((message) => !isProcessedMessage(message, botUserId));
   return unprocessedMessages;
+}
+
+export function isErrorMessage(message: Message, botUserId: string): boolean {
+  if (!message.reactions) {
+    return false;
+  }
+  return message.reactions.some((reaction) => {
+    if (!reaction.users) {
+      return false;
+    }
+    return reaction.users?.includes(botUserId) && reaction.name === REACTION.ERROR;
+  });
+}
+
+export function isProcessedMessage(message: Message, botUserId: string): boolean {
+  if (!message.reactions) {
+    return false;
+  }
+  return message.reactions?.some((reaction) => {
+    if (!reaction.name) {
+      return false;
+    }
+    return (
+      reaction.users?.includes(botUserId) &&
+      [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
+        reaction.name
+      )
+    );
+  });
 }

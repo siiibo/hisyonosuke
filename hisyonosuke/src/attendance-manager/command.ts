@@ -10,14 +10,6 @@ export const COMMAND_TYPE = {
   CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
 
-export function getCommandRegExp(commands: Commands | Commands[]): RegExp {
-  if (Array.isArray(commands)) {
-    return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*$`);
-  } else {
-    return new RegExp(`^\\s*(${commands.join("|")})\\s*$`);
-  }
-}
-
 export function getCommandType(message: Message): CommandType | undefined {
   const text = message.text;
   if (!text) {
@@ -35,5 +27,13 @@ export function getCommandType(message: Message): CommandType | undefined {
     return "CLOCK_OUT";
   } else {
     return undefined;
+  }
+}
+
+export function getCommandRegExp(commands: Commands | Commands[]): RegExp {
+  if (Array.isArray(commands)) {
+    return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*$`);
+  } else {
+    return new RegExp(`^\\s*(${commands.join("|")})\\s*$`);
   }
 }
