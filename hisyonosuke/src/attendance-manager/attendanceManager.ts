@@ -11,7 +11,7 @@ import { getConfig, initConfig } from "./config";
 import { REACTION } from "./reaction";
 import { Message, getDailyMessages, getUnprocessedMessages } from "./message";
 import { getCommandType } from "./command";
-import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./workStatus";
+import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
 
 const DATE_START_HOUR = 4;

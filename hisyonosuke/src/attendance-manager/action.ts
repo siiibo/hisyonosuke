@@ -1,5 +1,5 @@
 import { CommandType } from "./command";
-import { UserWorkStatus } from "./workStatus";
+import { UserWorkStatus } from "./userWorkStatus";
 
 export type ActionType =
   | "clock_in"
