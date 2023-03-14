@@ -10,11 +10,7 @@ export const COMMAND_TYPE = {
   CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
 
-export function getCommandType(message: Message): CommandType | undefined {
-  const text = message.text;
-  if (!text) {
-    return;
-  }
+export function getCommandType({ text }: Message): CommandType | undefined {
   if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN))) {
     return "CLOCK_IN";
   } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE))) {
