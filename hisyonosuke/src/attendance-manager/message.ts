@@ -1,6 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { z } from "zod";
-import { setHours, setMinutes, setSeconds, subDays } from "date-fns";
+import { getDate, subDays, set } from "date-fns";
 import { REACTION } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
 
@@ -51,13 +51,13 @@ export function isProcessedMessage(message: Message, botUserId: string): boolean
 
 export function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
   const now = new Date();
-  let oldest = new Date();
-  oldest = setHours(oldest, dateStartHour);
-  oldest = setMinutes(oldest, 0);
-  oldest = setSeconds(oldest, 0);
-  if (now.getHours() <= dateStartHour) {
-    oldest = subDays(oldest, 1);
-  }
+  const oldest = set(now, {
+    hours: dateStartHour,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+    ...(now.getHours() <= dateStartHour && { date: getDate(subDays(now, 1)) }),
+  });
 
   const _messages =
     client.conversations.history({
