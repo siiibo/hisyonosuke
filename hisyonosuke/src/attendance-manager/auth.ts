@@ -1,22 +1,22 @@
-import { getConfig } from './config';
-
-
+import { getConfig } from "./config";
 
 export function printAuthUrl() {
   const authUrl = getService().getAuthorizationUrl();
   console.log(authUrl);
 }
 
-
 export function getService() {
-  const { FREEE_CLIENT_ID: CLIENT_ID, FREEE_CLIENT_SECRET: CLIENT_SECRET } = getConfig();
-  return OAuth2.createService('freee')
-    .setAuthorizationBaseUrl('https://accounts.secure.freee.co.jp/public_api/authorize')
-    .setTokenUrl('https://accounts.secure.freee.co.jp/public_api/token')
+  const { FREEE_CLIENT_ID: CLIENT_ID, FREEE_CLIENT_SECRET: CLIENT_SECRET } =
+    getConfig();
+  return OAuth2.createService("freee")
+    .setAuthorizationBaseUrl(
+      "https://accounts.secure.freee.co.jp/public_api/authorize"
+    )
+    .setTokenUrl("https://accounts.secure.freee.co.jp/public_api/token")
     .setClientId(CLIENT_ID)
     .setClientSecret(CLIENT_SECRET)
     .setCallbackFunction(authCallback.name)
-    .setPropertyStore(PropertiesService.getUserProperties()) // とりあえず@hi-seのUserPropに保持している
+    .setPropertyStore(PropertiesService.getUserProperties()); // とりあえず@hi-seのUserPropに保持している
 }
 
 export function authCallback(request: any) {
@@ -24,10 +24,12 @@ export function authCallback(request: any) {
   const isAuthorized = service.handleCallback(request);
   console.log(`Effective User: ${Session.getEffectiveUser().getEmail()}`);
   if (isAuthorized) {
-    return HtmlService.createHtmlOutput('認証に成功しました。タブを閉じてください。');
+    return HtmlService.createHtmlOutput(
+      "認証に成功しました。タブを閉じてください。"
+    );
   } else {
-    return HtmlService.createHtmlOutput('認証に失敗しました。');
-  };
+    return HtmlService.createHtmlOutput("認証に失敗しました。");
+  }
 }
 
 export function printAuth() {
@@ -39,4 +41,3 @@ export function printAuth() {
 export function resetAuth() {
   getService().reset();
 }
-
