@@ -127,11 +127,7 @@ export const registerModal = (): View => {
         block_id: "date",
         element: {
           type: "datepicker",
-          initial_date: Utilities.formatDate(
-            new Date(),
-            "Asia/Tokyo",
-            "yyyy-MM-dd"
-          ),
+          initial_date: Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy-MM-dd"),
           placeholder: {
             type: "plain_text",
             text: "日付を選択してください",
@@ -210,8 +206,7 @@ export const registerResultModal = (payload: ViewSubmitAction): View => {
           },
           {
             type: "plain_text",
-            text: payload.view.state.values.type.content.selected_option.text
-              .text,
+            text: payload.view.state.values.type.content.selected_option.text.text,
             emoji: true,
           },
           {
@@ -406,8 +401,7 @@ export const deleteConfirmModal = (payload: ViewSubmitAction): View => {
           },
           {
             type: "plain_text",
-            text: payload.view.state.values.type.content.selected_option.text
-              .text,
+            text: payload.view.state.values.type.content.selected_option.text.text,
             emoji: true,
           },
           {

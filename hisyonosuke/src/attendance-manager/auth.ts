@@ -6,12 +6,9 @@ export function printAuthUrl() {
 }
 
 export function getService() {
-  const { FREEE_CLIENT_ID: CLIENT_ID, FREEE_CLIENT_SECRET: CLIENT_SECRET } =
-    getConfig();
+  const { FREEE_CLIENT_ID: CLIENT_ID, FREEE_CLIENT_SECRET: CLIENT_SECRET } = getConfig();
   return OAuth2.createService("freee")
-    .setAuthorizationBaseUrl(
-      "https://accounts.secure.freee.co.jp/public_api/authorize"
-    )
+    .setAuthorizationBaseUrl("https://accounts.secure.freee.co.jp/public_api/authorize")
     .setTokenUrl("https://accounts.secure.freee.co.jp/public_api/token")
     .setClientId(CLIENT_ID)
     .setClientSecret(CLIENT_SECRET)
@@ -24,9 +21,7 @@ export function authCallback(request: any) {
   const isAuthorized = service.handleCallback(request);
   console.log(`Effective User: ${Session.getEffectiveUser().getEmail()}`);
   if (isAuthorized) {
-    return HtmlService.createHtmlOutput(
-      "認証に成功しました。タブを閉じてください。"
-    );
+    return HtmlService.createHtmlOutput("認証に成功しました。タブを閉じてください。");
   } else {
     return HtmlService.createHtmlOutput("認証に失敗しました。");
   }

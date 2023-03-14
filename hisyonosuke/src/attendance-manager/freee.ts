@@ -122,10 +122,7 @@ export interface WorkRecordSerializer {
   total_latenight_work_mins: number;
 }
 
-export function setTimeClocks(
-  employId: number,
-  body: TimeClocksControllerCreateBody
-) {
+export function setTimeClocks(employId: number, body: TimeClocksControllerCreateBody) {
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
   const payload = {
@@ -200,18 +197,11 @@ export function getMe() {
   return JSON.parse(response);
 }
 
-export function getWorkRecord(
-  employId: number,
-  date: string,
-  company_id: number
-): WorkRecordSerializer {
+export function getWorkRecord(employId: number, date: string, company_id: number): WorkRecordSerializer {
   const accessToken = getService().getAccessToken();
-  const requestUrl = buildUrl(
-    `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`,
-    {
-      company_id,
-    }
-  );
+  const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`, {
+    company_id,
+  });
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "get",
     headers: {
@@ -231,10 +221,7 @@ export function getCompanyEmployees(props: {
   const accessToken = getService().getAccessToken();
   // emailを取得したいので"/api/v1/employees"ではなくこちらを使っている
   // TODO: このエンドポイントはページネーションが不可能なため、100人を超える場合は↑のエントポイントと組み合わせる必要がある？
-  const requestUrl = buildUrl(
-    `https://api.freee.co.jp/hr/api/v1/companies/${props.company_id}/employees`,
-    props
-  );
+  const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/companies/${props.company_id}/employees`, props);
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "get",
     headers: {
@@ -243,17 +230,11 @@ export function getCompanyEmployees(props: {
     },
     contentType: "application/json",
   };
-  const response = JSON.parse(
-    UrlFetchApp.fetch(requestUrl, params).getContentText()
-  );
+  const response = JSON.parse(UrlFetchApp.fetch(requestUrl, params).getContentText());
   return response;
 }
 
-export function updateWorkRecord(
-  employId: number,
-  date: string,
-  body: WorkRecordControllerRequestBody
-) {
+export function updateWorkRecord(employId: number, date: string, body: WorkRecordControllerRequestBody) {
   const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {

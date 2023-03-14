@@ -1,25 +1,16 @@
 // @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
-import {
-  BlockAction,
-  ViewUpdateResponseAction,
-  ViewPushResponseAction,
-} from "@slack/bolt";
+import { BlockAction, ViewUpdateResponseAction, ViewPushResponseAction } from "@slack/bolt";
 import { GlobalShortcut } from "@slack/bolt";
 import { ViewSubmitAction } from "@slack/bolt";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import {
-  ViewsOpenArguments,
-  ViewsPushArguments,
-} from "@hi-se/web-api/src/methods";
+import { ViewsOpenArguments, ViewsPushArguments } from "@hi-se/web-api/src/methods";
 import { getTypeAndCallbackId } from "../app";
 import * as modals from "./modals";
 
 const TYPE_COL = 2;
 const NAME_COL = 4;
 
-export const birthdayRegistrator = (
-  e: GoogleAppsScript.Events.DoPost
-): string => {
+export const birthdayRegistrator = (e: GoogleAppsScript.Events.DoPost): string => {
   const { type, callback_id } = getTypeAndCallbackId(e);
   if (callback_id != "register_anniversary") {
     return "";
@@ -63,15 +54,11 @@ export const birthdayRegistrator = (
 };
 
 const getSlackClient = (): SlackClient => {
-  const token: string =
-    PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  const token: string = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   return new SlackClient(token);
 };
 
-const openHomeModal = (
-  client: SlackClient,
-  payload: GlobalShortcut
-): string => {
+const openHomeModal = (client: SlackClient, payload: GlobalShortcut): string => {
   const data: ViewsOpenArguments = {
     trigger_id: payload.trigger_id,
     token: PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN"),
@@ -82,10 +69,7 @@ const openHomeModal = (
   return "";
 };
 
-const pushRegisterModal = (
-  client: SlackClient,
-  payload: BlockAction
-): string => {
+const pushRegisterModal = (client: SlackClient, payload: BlockAction): string => {
   const data: ViewsPushArguments = {
     trigger_id: payload.trigger_id,
     token: PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN"),
@@ -107,10 +91,7 @@ const pushDeleteModal = (client: SlackClient, payload: BlockAction): string => {
   return "";
 };
 
-const updateRegisterResultModal = (
-  client: SlackClient,
-  payload: ViewSubmitAction
-): string => {
+const updateRegisterResultModal = (client: SlackClient, payload: ViewSubmitAction): string => {
   const response: ViewUpdateResponseAction = {
     response_action: "update",
     view: modals.registerResultModal(payload),
@@ -119,10 +100,7 @@ const updateRegisterResultModal = (
   return JSON.stringify(response);
 };
 
-const pushRegisterFailedModal = (
-  client: SlackClient,
-  payload: ViewSubmitAction
-): string => {
+const pushRegisterFailedModal = (client: SlackClient, payload: ViewSubmitAction): string => {
   const response: ViewPushResponseAction = {
     response_action: "push",
     view: modals.registerFailedModal(),
@@ -130,10 +108,7 @@ const pushRegisterFailedModal = (
   return JSON.stringify(response);
 };
 
-const pushDeleteConfirmModal = (
-  client: SlackClient,
-  payload: ViewSubmitAction
-): string => {
+const pushDeleteConfirmModal = (client: SlackClient, payload: ViewSubmitAction): string => {
   const response: ViewPushResponseAction = {
     response_action: "push",
     view: modals.deleteConfirmModal(payload),
@@ -141,10 +116,7 @@ const pushDeleteConfirmModal = (
   return JSON.stringify(response);
 };
 
-const pushNotFoundModal = (
-  client: SlackClient,
-  payload: ViewSubmitAction
-): string => {
+const pushNotFoundModal = (client: SlackClient, payload: ViewSubmitAction): string => {
   const response: ViewPushResponseAction = {
     response_action: "push",
     view: modals.deleteNotFoundModal(payload),
@@ -152,10 +124,7 @@ const pushNotFoundModal = (
   return JSON.stringify(response);
 };
 
-const updateDeleteResultModal = (
-  client: SlackClient,
-  payload: ViewSubmitAction
-): string => {
+const updateDeleteResultModal = (client: SlackClient, payload: ViewSubmitAction): string => {
   const response: ViewUpdateResponseAction = {
     response_action: "update",
     view: modals.deleteResultModal(),
@@ -168,8 +137,7 @@ const registerAnniversaryDate = (payload: ViewSubmitAction): boolean => {
   const spreadsheet = SpreadsheetApp.openById(prop.BIRTHDAY_SPREADSHEET_ID);
   const sheet = spreadsheet.getSheets()[0];
 
-  const typeRequested =
-    payload.view.state.values.type.content.selected_option.text.text;
+  const typeRequested = payload.view.state.values.type.content.selected_option.text.text;
   const dateRequested = payload.view.state.values.date.content.selected_date;
   const nameRequested = payload.view.state.values.name.content.value;
   const messageRequested = payload.view.state.values.message.content.value;
@@ -195,14 +163,8 @@ const registerAnniversaryDate = (payload: ViewSubmitAction): boolean => {
 
   const lastRow = sheet.getLastRow() + 1;
 
-  const createdAt = Utilities.formatDate(
-    new Date(),
-    "Asia/Tokyo",
-    "yyyy-MM-dd HH:mm:ss"
-  );
-  const values = [
-    [createdAt, typeRequested, dateRequested, nameRequested, messageRequested],
-  ];
+  const createdAt = Utilities.formatDate(new Date(), "Asia/Tokyo", "yyyy-MM-dd HH:mm:ss");
+  const values = [[createdAt, typeRequested, dateRequested, nameRequested, messageRequested]];
   sheet.getRange(lastRow, 1, 1, 5).setValues(values);
 
   return true;
@@ -213,8 +175,7 @@ const findAnniversaryDate = (payload: ViewSubmitAction): boolean => {
   const spreadsheet = SpreadsheetApp.openById(prop.BIRTHDAY_SPREADSHEET_ID);
   const sheet = spreadsheet.getSheets()[0];
 
-  const typeRequested =
-    payload.view.state.values.type.content.selected_option.text.text;
+  const typeRequested = payload.view.state.values.type.content.selected_option.text.text;
   const nameRequested = payload.view.state.values.name.content.value;
 
   const textFinder = sheet
