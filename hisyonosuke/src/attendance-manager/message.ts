@@ -41,7 +41,7 @@ export function getDailyMessages(client: SlackClient, channelId: string, dateSta
   return _messages.filter(isMessage).reverse();
 }
 
-function isMessage(message: unknown): message is z.infer<typeof MessageSchema> {
+function isMessage(message: unknown): message is Message {
   return MessageSchema.safeParse(message).success;
 }
 
