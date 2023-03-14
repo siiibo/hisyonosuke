@@ -1,7 +1,7 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { z } from "zod";
 import { getDate, subDays, set } from "date-fns";
-import { REACTION } from "./reaction";
+import { REACTION, ReactionSchema } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
 
 export const MessageSchema = z.object({
@@ -9,14 +9,7 @@ export const MessageSchema = z.object({
   user: z.string(),
   text: z.string(),
   ts: z.string(),
-  reactions: z
-    .array(
-      z.object({
-        name: z.string(),
-        users: z.array(z.string()),
-      })
-    )
-    .optional(),
+  reactions: ReactionSchema.array().optional(),
 });
 export type Message = z.infer<typeof MessageSchema>;
 export type ProcessedMessage = Message & { isProcessed: true };
