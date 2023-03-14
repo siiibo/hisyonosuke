@@ -12,9 +12,9 @@ export const COMMAND_TYPE = {
 
 export function getCommandRegExp(commands: Commands | Commands[]): RegExp {
   if (Array.isArray(commands)) {
-    return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*\$`);
+    return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*$`);
   } else {
-    return new RegExp(`^\\s*(${commands.join("|")})\\s*\$`);
+    return new RegExp(`^\\s*(${commands.join("|")})\\s*$`);
   }
 }
 
