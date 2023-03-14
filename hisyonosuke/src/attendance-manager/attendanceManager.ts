@@ -281,7 +281,7 @@ const handleClockOutAndAddRemoteMemo = (
 const getDailyMessages = (client: SlackClient, channelId: string) => {
   const now = new Date();
   let oldest = new Date();
-  oldest = setHours(oldest, DATE_START_HOUR);　// グローバル変数に依存
+  oldest = setHours(oldest, DATE_START_HOUR); // グローバル変数に依存
   oldest = setMinutes(oldest, 0);
   oldest = setSeconds(oldest, 0);
   if (now.getHours() <= DATE_START_HOUR) {
@@ -426,9 +426,9 @@ const getActionType = (commandType: CommandType, userWorkStatus: UserWorkStatus 
 
 const getCommandRegExp = (commands: Commands | Commands[]): RegExp => {
   if (Array.isArray(commands)) {
-    return new RegExp(`^\\s*(${commands.flat().join('|')})\\s*\$`);
+    return new RegExp(`^\\s*(${commands.flat().join('|')})\\s*$`);
   } else {
-    return new RegExp(`^\\s*(${commands.join('|')})\\s*\$`);
+    return new RegExp(`^\\s*(${commands.join('|')})\\s*$`);
   }
 }
 
