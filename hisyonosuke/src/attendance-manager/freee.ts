@@ -14,15 +14,6 @@ const CompaniesEmployeeSerializerSchema = z.object({
   payroll_calculation: z.boolean(),
 });
 type CompaniesEmployeeSerializer = z.infer<typeof CompaniesEmployeeSerializerSchema>;
-export interface EmployeeSerializer {
-  id: number;
-  num: string;
-  display_name: string;
-  entry_date: string; // DateString,
-  retire_date: string; // DateString,
-  user_id: number;
-  email: string;
-}
 
 export interface WorkRecordTimeRangeResponseSerializer {
   clock_in_at: string; // DATETIME
@@ -173,20 +164,6 @@ export function setTimeClocks(employId: number, body: TimeClocksControllerCreate
   return JSON.parse(response);
 }
 
-export function getCompanies() {
-  const accessToken = getService().getAccessToken();
-  const requestUrl = "https://api.freee.co.jp/api/1/companies";
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-  };
-  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
-  return JSON.parse(response);
-}
-
 export function getWorkRecordSummary(
   companyId: number,
   employId: number,
@@ -214,19 +191,6 @@ export function getWorkRecordSummary(
   return JSON.parse(response);
 }
 
-export function getMe() {
-  const accessToken = getService().getAccessToken();
-  const requestUrl = "https://api.freee.co.jp/hr/api/v1/users/me";
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-  };
-  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
-  return JSON.parse(response);
-}
 
 export function getWorkRecord(employId: number, date: string, company_id: number): WorkRecordSerializer {
   const accessToken = getService().getAccessToken();
