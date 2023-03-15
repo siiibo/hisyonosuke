@@ -91,7 +91,9 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
       handleChannelCreated(client, event as ChannelCreatedEvent);
     }
   }
-
+  if (isShiftChange(e)){
+    shiftChange(e);
+  }
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
 
@@ -146,6 +148,10 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   }
   return false;
 };
+
+const isShiftChange = (e: GoogleAppsScript.Events.DoPost): boolean => {
+  if (e.parameter.command === '/bot-test');
+}
 
 export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string; callback_id: string } => {
   // FIXME: この関数は使わない方向に修正していく
@@ -217,4 +223,29 @@ const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) =
     channel: CHANNEL_EVENT_POST_CHANNEL,
     text: `<#${event.channel.id}>が追加されました！`,
   });
-};
+}
+
+const init = () => {
+  initProperties();
+  initAttendanceManager();
+}
+
+const initProperties = () => {
+  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName('CONFIG');
+  const rows = sheet.getDataRange().getValues();
+  const properties = {};
+  for (const row of rows.slice(1)) properties[row[0]] = row[1];
+
+  const scriptProperties = PropertiesService.getScriptProperties();
+
+  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
+  // scriptProperties.deleteAllProperties();
+
+  scriptProperties.setProperties(properties);
+}
+
+declare const global: any;
+global.doPost = doPost;
+global.init = init;
+global.notificator = notificator;
+global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
