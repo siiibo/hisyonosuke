@@ -15,6 +15,7 @@
     "@slack/bolt": "^3.3.0",
     "date-fns": "^2.28.0",
     "moment": "^2.29.1",
+    "neverthrow": "^6.0.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {
