@@ -1,3 +1,4 @@
+import { ok, err, Result } from "neverthrow";
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
 
@@ -118,6 +119,35 @@ export interface WorkRecordSerializer {
   total_overtime_work_mins: number;
   total_holiday_work_mins: number;
   total_latenight_work_mins: number;
+}
+
+const fetch = createFetch(getService().getAccessToken());
+
+function createFetch(accessToken: string) {
+  return <T>(
+    url: string,
+    options: {
+      method: "get" | "post" | "put" | "delete";
+      body?: unknown;
+    }
+  ): Result<T, string> => {
+    const response = UrlFetchApp.fetch(url, {
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "FREEE-VERSION": "2022-02-01",
+      },
+      method: options.method,
+      muteHttpExceptions: true,
+      ...(["post", "put"].includes(options.method) && {
+        payload: JSON.stringify(options.body),
+        contentType: "application/json",
+      }),
+    });
+    const responseCode = response.getResponseCode();
+    const responseBody = response.getContentText();
+    const isSuccess = responseCode === 200 || responseCode === 201;
+    return isSuccess ? ok(JSON.parse(responseBody)) : err(responseBody);
+  };
 }
 
 export function setTimeClocks(employId: number, body: TimeClocksControllerCreateBody) {
