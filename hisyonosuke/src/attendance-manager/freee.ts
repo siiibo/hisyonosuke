@@ -1,5 +1,3 @@
-import { format } from "date-fns";
-
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
 
