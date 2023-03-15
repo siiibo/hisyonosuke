@@ -3,11 +3,9 @@ const GasPlugin = require("gas-webpack-plugin");
 
 const mode = "development";
 const devtool = "inline-source-map";
-const entry = {
-  app: path.resolve("src", "app.ts"),
-};
+const entry = path.resolve("src", "index.ts");
 const outPath = path.resolve("build");
-const outFileName = "[name].js";
+const outFileName = "app.js";
 const output = {
   path: outPath,
   filename: outFileName,
@@ -29,7 +27,7 @@ const resolve = {
   extensions: [".ts", ".js", ".json"],
   fallback: {
     path: false,
-    os: false
+    os: false,
   },
 };
 const plugins = [new GasPlugin()];
