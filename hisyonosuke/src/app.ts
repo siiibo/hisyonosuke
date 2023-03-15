@@ -10,8 +10,6 @@ import {
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
-import { notificator } from "./notificator";
-import { periodicallyCheckForAttendanceManager, initAttendanceManager } from "./attendance-manager/attendanceManager";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -19,7 +17,26 @@ const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 const EMOJI_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 
-const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
+export const init = () => {
+  initProperties();
+  initAttendanceManager();
+};
+
+const initProperties = () => {
+  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
+  const rows = sheet.getDataRange().getValues();
+  const properties = {};
+  for (const row of rows.slice(1)) properties[row[0]] = row[1];
+
+  const scriptProperties = PropertiesService.getScriptProperties();
+
+  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
+  // scriptProperties.deleteAllProperties();
+
+  scriptProperties.setProperties(properties);
+};
+
+export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
   console.info({
     appName: "hisyonoske",
     ...e,
@@ -200,28 +217,3 @@ const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) =
     text: `<#${event.channel.id}>が追加されました！`,
   });
 };
-
-const init = () => {
-  initProperties();
-  initAttendanceManager();
-};
-
-const initProperties = () => {
-  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
-  const rows = sheet.getDataRange().getValues();
-  const properties = {};
-  for (const row of rows.slice(1)) properties[row[0]] = row[1];
-
-  const scriptProperties = PropertiesService.getScriptProperties();
-
-  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
-  // scriptProperties.deleteAllProperties();
-
-  scriptProperties.setProperties(properties);
-};
-
-declare const global: any;
-global.doPost = doPost;
-global.init = init;
-global.notificator = notificator;
-global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
