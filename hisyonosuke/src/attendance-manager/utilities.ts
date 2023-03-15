@@ -1,4 +1,8 @@
-export function buildUrl(url: string, params: object) {
+type URIEncodable = {
+  [Key: string]: string | number | boolean;
+};
+
+export function buildUrl(url: string, params: URIEncodable) {
   const paramString = Object.entries(params)
     .map(([key, value]) => {
       return encodeURIComponent(key) + "=" + encodeURIComponent(value);
