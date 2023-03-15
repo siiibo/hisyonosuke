@@ -1,16 +1,19 @@
+import { z } from "zod";
 import { ok, err, Result } from "neverthrow";
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
 
-export interface CompaniesEmployeeSerializer {
-  id: number;
-  num: string;
-  display_name: string;
-  entry_date: string; // DateString
-  retire_date: string; // DateString
-  user_id: number;
-  email: string;
-}
+const CompaniesEmployeeSerializerSchema = z.object({
+  id: z.number().int(),
+  num: z.string().nullable(),
+  display_name: z.string(),
+  entry_date: z.string(), //datetime
+  retire_date: z.string().nullable(), //datetime
+  user_id: z.number().int().nullable(),
+  email: z.string().nullable(),
+  payroll_calculation: z.boolean(),
+});
+type CompaniesEmployeeSerializer = z.infer<typeof CompaniesEmployeeSerializerSchema>;
 export interface EmployeeSerializer {
   id: number;
   num: string;
@@ -259,7 +262,7 @@ export function getCompanyEmployees(props: {
     contentType: "application/json",
   };
   const response = JSON.parse(UrlFetchApp.fetch(requestUrl, params).getContentText());
-  return response;
+  return CompaniesEmployeeSerializerSchema.array().parse(response);
 }
 
 export function updateWorkRecord(employId: number, date: string, body: WorkRecordControllerRequestBody) {
