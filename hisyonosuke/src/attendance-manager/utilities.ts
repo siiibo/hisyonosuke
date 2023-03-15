@@ -1,4 +1,8 @@
-export function buildUrl(url: string, params: Object) {
+type URIEncodable = {
+  [Key: string]: string | number | boolean;
+};
+
+export function buildUrl(url: string, params: URIEncodable) {
   const paramString = Object.entries(params)
     .map(([key, value]) => {
       return encodeURIComponent(key) + "=" + encodeURIComponent(value);
@@ -8,5 +12,5 @@ export function buildUrl(url: string, params: Object) {
 }
 
 export function getUnixTimeStampString(date: Date): string {
-  return Math.floor(date.getTime() / 1000).toFixed();
+  return Math.floor(date.getTime() / 1000).toString();
 }
