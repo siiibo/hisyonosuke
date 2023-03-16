@@ -62,17 +62,6 @@ export function getCompanyEmployees(props: {
 }
 
 export function updateWorkRecord(employId: number, date: string, body: EmployeesWorkRecordsController_update_body) {
-  const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "put",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-    contentType: "application/json",
-    payload: JSON.stringify(body),
-  };
-  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
-  return JSON.parse(response);
+  return fetch(requestUrl, { method: "put", body });
 }
