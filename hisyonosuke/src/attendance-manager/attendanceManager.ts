@@ -8,7 +8,8 @@ import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
-import { ok } from "neverthrow";
+import { err, ok } from "neverthrow";
+import { match } from "ts-pattern";
 
 const DATE_START_HOUR = 4;
 
@@ -32,7 +33,6 @@ export function periodicallyCheckForAttendanceManager() {
   const { ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
 
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
-  checkAttendance(client, "C01AQPDC9S4");
   checkAttendance(client, ATTENDANCE_CHANNEL_ID);
   checkAttendance(client, PART_TIMER_CHANNEL_ID);
 }
@@ -96,49 +96,48 @@ function execAction(
     client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
     return;
   }
+  _execAction(client, channelId, FREEE_COMPANY_ID, employeeId, action);
+}
 
-  try {
-    switch (actionType) {
-      case "clock_in":
-        handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-        break;
-      case "switch_work_status_to_office":
-        handleSwitchWorkStatusToOffice(client, channelId, message);
-        break;
-      case "switch_work_status_to_remote":
-        handleSwitchWorkStatusToRemote(client, channelId, message);
-        break;
-      case "clock_out":
-        handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-        break;
-      case "clock_out_and_add_remote_memo":
-        handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-    }
-    console.info(
-      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
-    );
-  } catch (e: any) {
-    console.error(e.stack);
-    console.error(
-      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
-    );
+function _execAction(
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  action: {
+    message: Message;
+    actionType: ActionType;
+    userWorkStatus: UserWorkStatus | undefined;
+  }
+) {
+  const { message, actionType } = action;
+  const result = match(actionType)
+    .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+    .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
+    .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
+    .with("clock_out", () => handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+    .with("clock_out_and_add_remote_memo", () =>
+      handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+    )
+    .otherwise(() => err("undefined actionType"));
 
-    let errorFeedBackMessage = e.toString();
-    if (actionType === "clock_in") {
-      if (e.message.includes("打刻の日付が不正な値です。")) {
-        errorFeedBackMessage = `前日の退勤を完了してから出勤打刻してください.`;
-      }
-      if (e.message.includes("打刻の種類が正しくありません。")) {
-        errorFeedBackMessage = "既に打刻済みです";
-      }
-    }
-    if (actionType === "clock_out" && e.message.includes("打刻の種類が正しくありません。")) {
-      errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
-    }
-
-    client.chat.postMessage({ channel: channelId, text: errorFeedBackMessage, thread_ts: message.ts });
+  if (result.isErr()) {
+    console.error(JSON.stringify({ employeeId, actionType, message, error: result.error }, null, 2));
+    client.chat.postMessage({ channel: channelId, text: result.error, thread_ts: message.ts });
     client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
   }
+
+  //   if (actionType === "clock_in") {
+  //     if (e.message.includes("打刻の日付が不正な値です。")) {
+  //       errorFeedBackMessage = `前日の退勤を完了してから出勤打刻してください.`;
+  //     }
+  //     if (e.message.includes("打刻の種類が正しくありません。")) {
+  //       errorFeedBackMessage = "既に打刻済みです";
+  //     }
+  //   }
+  //   if (actionType === "clock_out" && e.message.includes("打刻の種類が正しくありません。")) {
+  //     errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
+  //   }
 }
 
 function handleClockIn(
