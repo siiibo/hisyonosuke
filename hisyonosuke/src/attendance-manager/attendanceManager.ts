@@ -9,7 +9,7 @@ import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
-import { match } from "ts-pattern";
+import { match, P } from "ts-pattern";
 
 const DATE_START_HOUR = 4;
 
@@ -126,18 +126,6 @@ function _execAction(
     client.chat.postMessage({ channel: channelId, text: result.error, thread_ts: message.ts });
     client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
   }
-
-  //   if (actionType === "clock_in") {
-  //     if (e.message.includes("打刻の日付が不正な値です。")) {
-  //       errorFeedBackMessage = `前日の退勤を完了してから出勤打刻してください.`;
-  //     }
-  //     if (e.message.includes("打刻の種類が正しくありません。")) {
-  //       errorFeedBackMessage = "既に打刻済みです";
-  //     }
-  //   }
-  //   if (actionType === "clock_out" && e.message.includes("打刻の種類が正しくありません。")) {
-  //     errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
-  //   }
 }
 
 function handleClockIn(
@@ -156,10 +144,23 @@ function handleClockIn(
     datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  return setTimeClocks(employeeId, clockInParams).andThen(() => {
-    client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
-    return ok("ok");
-  });
+  return setTimeClocks(employeeId, clockInParams)
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return match(e)
+        .with(
+          P.when((e) => e.includes("打刻の種類が正しくありません。")),
+          () => err("既に打刻済みです")
+        )
+        .with(
+          P.when((e) => e.includes("打刻の日付が不正な値です。")),
+          () => err("前日の退勤を完了してから出勤打刻してください.")
+        )
+        .otherwise(() => err(e));
+    });
 }
 
 function handleSwitchWorkStatusToOffice(client: SlackClient, channelId: string, message: Message) {
@@ -189,10 +190,19 @@ function handleClockOut(
     datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  return setTimeClocks(employeeId, clockOutParams).andThen(() => {
-    client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
-    return ok("ok");
-  });
+  return setTimeClocks(employeeId, clockOutParams)
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return match(e)
+        .with(
+          P.when((e) => e.includes("打刻の種類が正しくありません。")),
+          () => err("出勤打刻が完了していないか、退勤の上書きができない値です.")
+        )
+        .otherwise(() => err(e));
+    });
 }
 
 function handleClockOutAndAddRemoteMemo(
