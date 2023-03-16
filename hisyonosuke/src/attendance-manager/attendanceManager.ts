@@ -90,16 +90,8 @@ function execAction(
     console.error(e.stack);
     console.error(`slackUserId:${message.user}, type: getEmployeeId`);
     const errorFeedBackMessage = e.toString();
-    client.chat.postMessage({
-      channel: channelId,
-      text: errorFeedBackMessage,
-      thread_ts: message.ts,
-    });
-    client.reactions.add({
-      channel: channelId,
-      name: REACTION.ERROR,
-      timestamp: message.ts,
-    });
+    client.chat.postMessage({ channel: channelId, text: errorFeedBackMessage, thread_ts: message.ts });
+    client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
     return;
   }
 
@@ -142,16 +134,8 @@ function execAction(
       errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
     }
 
-    client.chat.postMessage({
-      channel: channelId,
-      text: errorFeedBackMessage,
-      thread_ts: message.ts,
-    });
-    client.reactions.add({
-      channel: channelId,
-      name: REACTION.ERROR,
-      timestamp: message.ts,
-    });
+    client.chat.postMessage({ channel: channelId, text: errorFeedBackMessage, thread_ts: message.ts });
+    client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
   }
 }
 
@@ -173,27 +157,15 @@ function handleClockIn(
   };
 
   setTimeClocks(employeeId, clockInParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_TIME_RECORD,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
 }
 
 function handleSwitchWorkStatusToOffice(client: SlackClient, channelId: string, message: Message) {
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_LOCATION_SWITCH,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
 }
 
 function handleSwitchWorkStatusToRemote(client: SlackClient, channelId: string, message: Message) {
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_LOCATION_SWITCH,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
 }
 
 function handleClockOut(
@@ -214,11 +186,7 @@ function handleClockOut(
   };
 
   setTimeClocks(employeeId, clockOutParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_TIME_RECORD,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
 }
 
 function handleClockOutAndAddRemoteMemo(
