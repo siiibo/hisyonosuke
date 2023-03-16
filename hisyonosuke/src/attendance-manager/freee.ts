@@ -43,20 +43,11 @@ export function setTimeClocks(employId: number, body: EmployeesTimeClocksControl
   return fetch(requestUrl, { method: "post", body });
 }
 
-export function getWorkRecord(employId: number, date: string, company_id: number): EmployeesWorkRecordSerializer {
-  const accessToken = getService().getAccessToken();
+export function getWorkRecord(employId: number, date: string, company_id: number) {
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`, {
     company_id,
   });
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-  };
-  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
-  return JSON.parse(response);
+  return fetch<EmployeesWorkRecordSerializer>(requestUrl, { method: "get" });
 }
 
 export function getCompanyEmployees(props: {

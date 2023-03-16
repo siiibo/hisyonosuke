@@ -201,7 +201,8 @@ function handleClockOutAndAddRemoteMemo(
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
 
   const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
-  const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+  const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID).unwrapOr(undefined);
+  if (!workRecord) throw new Error("打刻済みの勤務記録が見つかりませんでした。"); // FIXME
   const remoteParams: EmployeesWorkRecordsController_update_body = {
     company_id: FREEE_COMPANY_ID,
     ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
