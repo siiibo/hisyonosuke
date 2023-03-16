@@ -8,6 +8,7 @@ import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
+import { ok } from "neverthrow";
 
 const DATE_START_HOUR = 4;
 
@@ -31,6 +32,7 @@ export function periodicallyCheckForAttendanceManager() {
   const { ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
 
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
+  checkAttendance(client, "C01AQPDC9S4");
   checkAttendance(client, ATTENDANCE_CHANNEL_ID);
   checkAttendance(client, PART_TIMER_CHANNEL_ID);
 }
@@ -156,16 +158,20 @@ function handleClockIn(
     datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  setTimeClocks(employeeId, clockInParams);
-  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+  return setTimeClocks(employeeId, clockInParams).andThen(() => {
+    client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+    return ok("ok");
+  });
 }
 
 function handleSwitchWorkStatusToOffice(client: SlackClient, channelId: string, message: Message) {
   client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
+  return ok("ok");
 }
 
 function handleSwitchWorkStatusToRemote(client: SlackClient, channelId: string, message: Message) {
   client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
+  return ok("ok");
 }
 
 function handleClockOut(
@@ -185,8 +191,10 @@ function handleClockOut(
     datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  setTimeClocks(employeeId, clockOutParams);
-  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+  return setTimeClocks(employeeId, clockOutParams).andThen(() => {
+    client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+    return ok("ok");
+  });
 }
 
 function handleClockOutAndAddRemoteMemo(
@@ -196,27 +204,35 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
   const clockOutDate = message.date;
   const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
-
   const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
-  const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID).unwrapOr(undefined);
-  if (!workRecord) throw new Error("打刻済みの勤務記録が見つかりませんでした。"); // FIXME
-  const remoteParams: EmployeesWorkRecordsController_update_body = {
-    company_id: FREEE_COMPANY_ID,
-    ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
-    ...(workRecord.clock_out_at && { clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss") }),
-    note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-    break_records: workRecord.break_records.map((record) => {
-      return {
-        clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-        clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+
+  return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+    .andThen(() => {
+      return getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+    })
+    .andThen((workRecord) => {
+      const remoteParams: EmployeesWorkRecordsController_update_body = {
+        company_id: FREEE_COMPANY_ID,
+        ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
+        ...(workRecord.clock_out_at && {
+          clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+        }),
+        note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+        break_records: workRecord.break_records.map((record) => {
+          return {
+            clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
+            clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+          };
+        }),
       };
-    }),
-  };
-  updateWorkRecord(employeeId, targetDate, remoteParams);
-  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
+      return updateWorkRecord(employeeId, targetDate, remoteParams);
+    })
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
+      return ok("ok");
+    });
 }
 
 function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
