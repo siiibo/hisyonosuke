@@ -94,7 +94,7 @@ function execAction(
         .with("clock_out_and_add_remote_memo", () =>
           handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
         )
-        .otherwise(() => err("undefined actionType"));
+        .exhaustive();
       return result.orElse((error) => err(`An error occurred for employee ID ${employeeId}: ${error}`));
     })
     .mapErr((error) => {
