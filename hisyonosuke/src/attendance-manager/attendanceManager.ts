@@ -96,13 +96,20 @@ function execAction(
           handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
         )
         .exhaustive();
-      return result.orElse((error) => err({ message: error, employeeId }));
+      return result
+        .andThen((r) => ok({ result: r, employeeId, actionType }))
+        .orElse((error) => err({ message: error, employeeId }));
     })
-    .mapErr((error) => {
-      console.error(JSON.stringify({ actionType, ...error }, null, 2));
-      client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
-      client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-    });
+    .match(
+      (data) => {
+        console.info(JSON.stringify(data, null, 2));
+      },
+      (error) => {
+        console.error(JSON.stringify({ actionType, ...error }, null, 2));
+        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
+        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
+      }
+    );
 }
 
 function handleClockIn(
