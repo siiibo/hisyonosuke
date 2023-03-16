@@ -76,7 +76,7 @@ function checkAttendance(client: SlackClient, channelId: string) {
 function execAction(
   client: SlackClient,
   channelId: string,
-  FREEE_COMPANY_ID: number,
+  freeCompanyId: number,
   action: {
     message: Message;
     actionType: ActionType;
@@ -84,16 +84,16 @@ function execAction(
   }
 ) {
   const { message, actionType } = action;
-  return getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID)
+  return getFreeeEmployeeIdFromSlackUserId(client, message.user, freeCompanyId)
     .orElse((e) => err({ message: e }))
     .andThen((employeeId) => {
       const result = match(actionType)
-        .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+        .with("clock_in", () => handleClockIn(client, channelId, freeCompanyId, employeeId, message))
         .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
         .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
-        .with("clock_out", () => handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+        .with("clock_out", () => handleClockOut(client, channelId, freeCompanyId, employeeId, message))
         .with("clock_out_and_add_remote_memo", () =>
-          handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+          handleClockOutAndAddRemoteMemo(client, channelId, freeCompanyId, employeeId, message)
         )
         .exhaustive();
       return result
