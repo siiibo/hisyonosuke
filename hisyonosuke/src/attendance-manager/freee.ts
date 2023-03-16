@@ -1,5 +1,4 @@
 import { ok, err, Result } from "neverthrow";
-import { schemas } from "./freee.schema";
 import type {
   CompaniesEmployeeSerializer,
   EmployeesWorkRecordSerializer,
@@ -11,6 +10,7 @@ import { buildUrl } from "./utilities";
 
 const fetch = createFetch(getService().getAccessToken());
 
+// TODO: zod schemaを渡したらparseされた状態のResult型で返ってくるようにしたい
 function createFetch(accessToken: string) {
   return <T>(
     url: string,
