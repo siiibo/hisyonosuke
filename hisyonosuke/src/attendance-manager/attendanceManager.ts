@@ -86,38 +86,22 @@ function execAction(
   const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID)
     .andThen((employeeId) => {
-      return _execAction(client, channelId, FREEE_COMPANY_ID, employeeId, action).orElse((error) =>
-        err(`An error occurred for employee ID ${employeeId}: ${error}`)
-      );
+      const result = match(actionType)
+        .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+        .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
+        .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
+        .with("clock_out", () => handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message))
+        .with("clock_out_and_add_remote_memo", () =>
+          handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+        )
+        .otherwise(() => err("undefined actionType"));
+      return result.orElse((error) => err(`An error occurred for employee ID ${employeeId}: ${error}`));
     })
     .mapErr((error) => {
       console.error(JSON.stringify({ actionType, message, error }, null, 2));
       client.chat.postMessage({ channel: channelId, text: error, thread_ts: message.ts });
       client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
     });
-}
-
-function _execAction(
-  client: SlackClient,
-  channelId: string,
-  FREEE_COMPANY_ID: number,
-  employeeId: number,
-  action: {
-    message: Message;
-    actionType: ActionType;
-    userWorkStatus: UserWorkStatus | undefined;
-  }
-) {
-  const { message, actionType } = action;
-  return match(actionType)
-    .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
-    .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
-    .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
-    .with("clock_out", () => handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message))
-    .with("clock_out_and_add_remote_memo", () =>
-      handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
-    )
-    .otherwise(() => err("undefined actionType"));
 }
 
 function handleClockIn(
