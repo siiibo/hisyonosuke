@@ -85,6 +85,7 @@ function execAction(
 ) {
   const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID)
+    .orElse((e) => err({ message: e }))
     .andThen((employeeId) => {
       const result = match(actionType)
         .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
@@ -95,11 +96,11 @@ function execAction(
           handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
         )
         .exhaustive();
-      return result.orElse((error) => err(`An error occurred for employee ID ${employeeId}: ${error}`));
+      return result.orElse((error) => err({ message: error, employeeId }));
     })
     .mapErr((error) => {
-      console.error(JSON.stringify({ actionType, message, error }, null, 2));
-      client.chat.postMessage({ channel: channelId, text: error, thread_ts: message.ts });
+      console.error(JSON.stringify({ actionType, ...error }, null, 2));
+      client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
       client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
     });
 }
