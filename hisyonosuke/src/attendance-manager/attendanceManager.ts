@@ -149,12 +149,11 @@ function handleClockIn(
   message: Message
 ) {
   const clockInDate = message.date;
-  const clockInBaseDate = toDate(clockInDate);
 
   const clockInParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
-    base_date: format(clockInBaseDate, "yyyy-MM-dd"),
+    base_date: format(clockInDate, "yyyy-MM-dd"),
     datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
@@ -182,7 +181,7 @@ function handleClockOut(
   message: Message
 ) {
   const clockOutDate = message.date;
-  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
+  const clockOutBaseDate = getBaseDate(message.date);
 
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
@@ -204,9 +203,7 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const clockOutDate = message.date;
-  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
-  const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
+  const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
 
   return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
@@ -233,6 +230,10 @@ function handleClockOutAndAddRemoteMemo(
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
       return ok("ok");
     });
+}
+
+function getBaseDate(date: Date) {
+  return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
 function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
