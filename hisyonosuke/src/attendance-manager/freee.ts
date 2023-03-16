@@ -39,23 +39,8 @@ function createFetch(accessToken: string) {
 }
 
 export function setTimeClocks(employId: number, body: EmployeesTimeClocksController_create_body) {
-  const accessToken = getService().getAccessToken();
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
-  const payload = {
-    ...body,
-  };
-
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "post",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-    contentType: "application/json",
-    payload: JSON.stringify(payload),
-  };
-  const response = UrlFetchApp.fetch(requestUrl, params).getContentText();
-  return JSON.parse(response);
+  return fetch(requestUrl, { method: "post", body });
 }
 
 export function getWorkRecordSummary(
