@@ -1,12 +1,7 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import {
-  getCompanyEmployees,
-  getWorkRecord,
-  setTimeClocks,
-  updateWorkRecord,
-  WorkRecordControllerRequestBody,
-} from "./freee";
+import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
+import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig, initConfig } from "./config";
 import { REACTION } from "./reaction";
 import { Message, getCategorizedDailyMessages } from "./message";
@@ -239,10 +234,10 @@ function handleClockOutAndAddRemoteMemo(
 
   const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
   const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
-  const remoteParams: WorkRecordControllerRequestBody = {
+  const remoteParams: EmployeesWorkRecordsController_update_body = {
     company_id: FREEE_COMPANY_ID,
-    clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-    clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+    ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
+    ...(workRecord.clock_out_at && { clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss") }),
     note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
     break_records: workRecord.break_records.map((record) => {
       return {
@@ -252,11 +247,7 @@ function handleClockOutAndAddRemoteMemo(
     }),
   };
   updateWorkRecord(employeeId, targetDate, remoteParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_REMOTE_MEMO,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
 }
 
 function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
