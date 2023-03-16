@@ -230,7 +230,8 @@ function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: str
   const employees = getCompanyEmployees({
     company_id: companyId,
     limit: 100,
-  });
+  }).unwrapOr(undefined);
+  if (!employees) throw new Error("employees is undefined."); // FIXME
   const target = employees.filter((employee) => {
     return employee.email === email;
   });

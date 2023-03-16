@@ -54,21 +54,11 @@ export function getCompanyEmployees(props: {
   company_id: number;
   limit?: number; // 1~100, default:50
   offset?: number; // pagination
-}): CompaniesEmployeeSerializer[] {
-  const accessToken = getService().getAccessToken();
+}) {
   // emailを取得したいので"/api/v1/employees"ではなくこちらを使っている
   // TODO: このエンドポイントはページネーションが不可能なため、100人を超える場合は↑のエントポイントと組み合わせる必要がある？
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/companies/${props.company_id}/employees`, props);
-  const params: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    method: "get",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "FREEE-VERSION": "2022-02-01",
-    },
-    contentType: "application/json",
-  };
-  const response = JSON.parse(UrlFetchApp.fetch(requestUrl, params).getContentText());
-  return schemas.CompaniesEmployeeSerializerSchema.array().parse(response);
+  return fetch<CompaniesEmployeeSerializer[]>(requestUrl, { method: "get" });
 }
 
 export function updateWorkRecord(employId: number, date: string, body: EmployeesWorkRecordsController_update_body) {
