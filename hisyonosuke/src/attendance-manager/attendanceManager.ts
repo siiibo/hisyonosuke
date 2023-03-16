@@ -83,20 +83,18 @@ function execAction(
     userWorkStatus: UserWorkStatus | undefined;
   }
 ) {
-  const { message, actionType, userWorkStatus } = action;
-  let employeeId: number;
-
-  try {
-    employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
-  } catch (e: any) {
-    console.error(e.stack);
-    console.error(`slackUserId:${message.user}, type: getEmployeeId`);
-    const errorFeedBackMessage = e.toString();
-    client.chat.postMessage({ channel: channelId, text: errorFeedBackMessage, thread_ts: message.ts });
-    client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-    return;
-  }
-  _execAction(client, channelId, FREEE_COMPANY_ID, employeeId, action);
+  const { message, actionType } = action;
+  return getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID)
+    .andThen((employeeId) => {
+      return _execAction(client, channelId, FREEE_COMPANY_ID, employeeId, action).orElse((error) =>
+        err(`An error occurred for employee ID ${employeeId}: ${error}`)
+      );
+    })
+    .mapErr((error) => {
+      console.error(JSON.stringify({ actionType, message, error }, null, 2));
+      client.chat.postMessage({ channel: channelId, text: error, thread_ts: message.ts });
+      client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
+    });
 }
 
 function _execAction(
@@ -111,7 +109,7 @@ function _execAction(
   }
 ) {
   const { message, actionType } = action;
-  const result = match(actionType)
+  return match(actionType)
     .with("clock_in", () => handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message))
     .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
     .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
@@ -120,12 +118,6 @@ function _execAction(
       handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message)
     )
     .otherwise(() => err("undefined actionType"));
-
-  if (result.isErr()) {
-    console.error(JSON.stringify({ employeeId, actionType, message, error: result.error }, null, 2));
-    client.chat.postMessage({ channel: channelId, text: result.error, thread_ts: message.ts });
-    client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-  }
 }
 
 function handleClockIn(
@@ -245,17 +237,15 @@ function getBaseDate(date: Date) {
   return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
-function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
+function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number) {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({ user: slackUserId }).user?.profile?.email;
-  if (!email) throw new Error("email is undefined.");
+  if (!email) return err("email is undefined.");
 
-  const employees = getCompanyEmployees({ company_id: companyId, limit: 100 }).unwrapOr(undefined);
-  if (!employees) throw new Error("employees is undefined."); // FIXME
-
-  const target = employees.find((employee) => employee.email === email);
-  if (!target) throw new Error("target is undefined."); // FIXME
-  return target.id;
+  return getCompanyEmployees({ company_id: companyId, limit: 100 }).andThen((employees) => {
+    const target = employees.find((employee) => employee.email === email);
+    return target ? ok(target.id) : err("target is undefined.");
+  });
 }
 
 function getSlackClient() {
