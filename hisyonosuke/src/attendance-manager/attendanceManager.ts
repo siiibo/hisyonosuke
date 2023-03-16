@@ -221,27 +221,15 @@ function handleClockOutAndAddRemoteMemo(
 
 function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
-  const email = client.users.info({
-    user: slackUserId,
-  }).user?.profile?.email;
-  if (!email) {
-    throw new Error("email is undefined.");
-  }
-  const employees = getCompanyEmployees({
-    company_id: companyId,
-    limit: 100,
-  }).unwrapOr(undefined);
+  const email = client.users.info({ user: slackUserId }).user?.profile?.email;
+  if (!email) throw new Error("email is undefined.");
+
+  const employees = getCompanyEmployees({ company_id: companyId, limit: 100 }).unwrapOr(undefined);
   if (!employees) throw new Error("employees is undefined."); // FIXME
-  const target = employees.filter((employee) => {
-    return employee.email === email;
-  });
-  if (target.length == 0) {
-    throw new Error(`employee email ${email} was not found.`);
-  }
-  if (target.length > 1) {
-    throw new Error(`employee email ${email} is duplicated.`);
-  }
-  return target[0].id;
+
+  const target = employees.find((employee) => employee.email === email);
+  if (!target) throw new Error("target is undefined."); // FIXME
+  return target.id;
 }
 
 function getSlackClient() {
