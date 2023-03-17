@@ -1,7 +1,7 @@
+import { z } from "zod";
 import { ok, err, Result } from "neverthrow";
+import { schemas } from "./freee.schema";
 import type {
-  CompaniesEmployeeSerializer,
-  EmployeesWorkRecordSerializer,
   EmployeesWorkRecordsController_update_body,
   EmployeesTimeClocksController_create_body,
 } from "./freee.schema";
@@ -10,15 +10,15 @@ import { buildUrl } from "./utilities";
 
 const fetch = createFetch(getService().getAccessToken());
 
-// TODO: zod schemaを渡したらparseされた状態のResult型で返ってくるようにしたい
 function createFetch(accessToken: string) {
-  return <T>(
+  return <Schema>(
     url: string,
     options: {
       method: "get" | "post" | "put" | "delete";
       body?: unknown;
+      schema?: z.ZodType<Schema>;
     }
-  ): Result<T, string> => {
+  ): Result<Schema, string> => {
     const response = UrlFetchApp.fetch(url, {
       headers: {
         Authorization: "Bearer " + accessToken,
@@ -31,23 +31,36 @@ function createFetch(accessToken: string) {
         contentType: "application/json",
       }),
     });
+
     const responseCode = response.getResponseCode();
     const responseBody = response.getContentText();
     const isSuccess = responseCode === 200 || responseCode === 201;
-    return isSuccess ? ok(JSON.parse(responseBody)) : err(responseBody);
+
+    const { schema } = options;
+    if (schema) {
+      const parseResult = schema.safeParse(JSON.parse(responseBody));
+      const parsed = parseResult.success ? ok(parseResult.data) : err(parseResult.error.message);
+      return isSuccess ? parsed : err(responseBody);
+    } else {
+      return isSuccess ? ok(JSON.parse(responseBody)) : err(responseBody);
+    }
   };
 }
 
 export function setTimeClocks(employId: number, body: EmployeesTimeClocksController_create_body) {
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/time_clocks`;
-  return fetch(requestUrl, { method: "post", body });
+  return fetch(requestUrl, {
+    method: "post",
+    body,
+    schema: schemas.EmployeesTimeClocksController_create_response,
+  });
 }
 
 export function getWorkRecord(employId: number, date: string, company_id: number) {
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`, {
     company_id,
   });
-  return fetch<EmployeesWorkRecordSerializer>(requestUrl, { method: "get" });
+  return fetch(requestUrl, { method: "get", schema: schemas.EmployeesWorkRecordSerializerSchema });
 }
 
 export function getCompanyEmployees(props: {
@@ -58,10 +71,10 @@ export function getCompanyEmployees(props: {
   // emailを取得したいので"/api/v1/employees"ではなくこちらを使っている
   // TODO: このエンドポイントはページネーションが不可能なため、100人を超える場合は↑のエントポイントと組み合わせる必要がある？
   const requestUrl = buildUrl(`https://api.freee.co.jp/hr/api/v1/companies/${props.company_id}/employees`, props);
-  return fetch<CompaniesEmployeeSerializer[]>(requestUrl, { method: "get" });
+  return fetch(requestUrl, { method: "get", schema: schemas.CompaniesEmployeeSerializerSchema.array() });
 }
 
 export function updateWorkRecord(employId: number, date: string, body: EmployeesWorkRecordsController_update_body) {
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
-  return fetch(requestUrl, { method: "put", body });
+  return fetch(requestUrl, { method: "put", body, schema: schemas.EmployeesWorkRecordSerializerSchema });
 }
