@@ -55,15 +55,7 @@ function categorizeMessage(
 }
 
 function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
-  const now = new Date();
-  const oldest = set(now, {
-    hours: dateStartHour,
-    minutes: 0,
-    seconds: 0,
-    milliseconds: 0,
-    ...(now.getHours() <= dateStartHour && { date: getDate(subDays(now, 1)) }),
-  });
-
+  const oldest = getDayStartAsDate(new Date(), dateStartHour);
   const _messages =
     client.conversations.history({
       channel: channelId,
@@ -80,6 +72,16 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
     R.filter((m): m is Message => !!m),
     R.sortBy((m) => m.date)
   );
+}
+
+function getDayStartAsDate(date: Date, dateStartHour: number): Date {
+  return set(date, {
+    hours: dateStartHour,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+    ...(date.getHours() <= dateStartHour && { date: getDate(subDays(date, 1)) }),
+  });
 }
 
 function isErrorMessage(message: Message, botUserId: string): boolean {
