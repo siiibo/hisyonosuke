@@ -28,7 +28,14 @@ export function getCategorizedDailyMessages(
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
 
   // NOTE: エラーリアクションがついているメッセージは返り値に含めない
-  return messagesWithoutError.reduce(
+  return categorizeMessage(messagesWithoutError, botUserId);
+}
+
+function categorizeMessage(
+  messages: Message[],
+  botUserId: string
+): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
+  return messages.reduce(
     (acc, message) => {
       return isProcessedMessage(message, botUserId)
         ? {
