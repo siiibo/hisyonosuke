@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
 import {
   ChannelCreatedEvent,
@@ -116,7 +117,7 @@ const isUrlVerification = (e: GoogleAppsScript.Events.DoPost): boolean => {
 };
 
 const isAction = (e: GoogleAppsScript.Events.DoPost): boolean => {
-  if (e.parameter.hasOwnProperty("payload")) {
+  if ("payload" in e.parameter) {
     const type = JSON.parse(e.parameter["payload"])["type"];
     return type === "block_actions" || type === "workflow_step_edit";
   }
@@ -124,7 +125,7 @@ const isAction = (e: GoogleAppsScript.Events.DoPost): boolean => {
 };
 
 const isViewAction = (e: GoogleAppsScript.Events.DoPost): boolean => {
-  if (e.parameter.hasOwnProperty("payload")) {
+  if (e.parameter.payload) {
     const type = JSON.parse(e.parameter["payload"])["type"];
     return type === "view_submission" || type === "view_closed";
   }
@@ -132,7 +133,7 @@ const isViewAction = (e: GoogleAppsScript.Events.DoPost): boolean => {
 };
 
 const isShortcut = (e: GoogleAppsScript.Events.DoPost): boolean => {
-  if (e.parameter.hasOwnProperty("payload")) {
+  if ("payload" in e.parameter) {
     const type = JSON.parse(e.parameter["payload"])["type"];
     return type === "shortcut";
   }
@@ -141,7 +142,7 @@ const isShortcut = (e: GoogleAppsScript.Events.DoPost): boolean => {
 
 const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   if (isJson(e) && e.postData.contents) {
-    return JSON.parse(e.postData.contents).hasOwnProperty("event");
+    return "event" in JSON.parse(e.postData.contents);
   }
   return false;
 };
