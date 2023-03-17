@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
 import { WorkflowStepEdit } from "@slack/bolt";
 import { WorkflowStepExecuteEvent } from "@slack/bolt";
@@ -21,7 +22,7 @@ export const workflowCustomStep = (e: GoogleAppsScript.Events.DoPost) => {
     const payload = JSON.parse(e.parameter["payload"]);
     saveWorkflowStep(client, payload);
   } else if (type == "workflows_step_execute") {
-    const payload = JSON.parse(e.postData.contents).hasOwnProperty("event");
+    const payload = JSON.parse(e.postData.contents)["event"];
     registerCompany(client, payload);
   }
 };
