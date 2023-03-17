@@ -62,7 +62,7 @@ const EmployeesWorkRecordSerializerSchema = z.object({
   total_excess_statutory_work_mins: z.number().int(),
   total_latenight_excess_statutory_work_mins: z.number().int(),
   total_overtime_except_normal_work_mins: z.number().int(),
-  total_latenight_overtime_except_normal_work_min: z.number().int(),
+  total_latenight_overtime_except_normal_work_mins: z.number().int(),
 });
 
 const EmployeesWorkRecordSummarySerializerSchema = z.object({
