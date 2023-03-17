@@ -1,18 +1,15 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import {
-  getCompanyEmployees,
-  getWorkRecord,
-  setTimeClocks,
-  updateWorkRecord,
-  WorkRecordControllerRequestBody,
-} from "./freee";
+import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
+import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig, initConfig } from "./config";
 import { REACTION } from "./reaction";
 import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
+import { err, ok } from "neverthrow";
+import { match, P } from "ts-pattern";
 
 const DATE_START_HOUR = 4;
 
@@ -79,7 +76,7 @@ function checkAttendance(client: SlackClient, channelId: string) {
 function execAction(
   client: SlackClient,
   channelId: string,
-  FREEE_COMPANY_ID: number,
+  freeCompanyId: number,
   action: {
     message: Message;
     actionType: ActionType;
@@ -87,77 +84,32 @@ function execAction(
   }
 ) {
   const { message, actionType, userWorkStatus } = action;
-  let employeeId: number;
-
-  try {
-    employeeId = getFreeeEmployeeIdFromSlackUserId(client, message.user, FREEE_COMPANY_ID);
-  } catch (e: any) {
-    console.error(e.stack);
-    console.error(`slackUserId:${message.user}, type: getEmployeeId`);
-    const errorFeedBackMessage = e.toString();
-    client.chat.postMessage({
-      channel: channelId,
-      text: errorFeedBackMessage,
-      thread_ts: message.ts,
-    });
-    client.reactions.add({
-      channel: channelId,
-      name: REACTION.ERROR,
-      timestamp: message.ts,
-    });
-    return;
-  }
-
-  try {
-    switch (actionType) {
-      case "clock_in":
-        handleClockIn(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-        break;
-      case "switch_work_status_to_office":
-        handleSwitchWorkStatusToOffice(client, channelId, message);
-        break;
-      case "switch_work_status_to_remote":
-        handleSwitchWorkStatusToRemote(client, channelId, message);
-        break;
-      case "clock_out":
-        handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-        break;
-      case "clock_out_and_add_remote_memo":
-        handleClockOutAndAddRemoteMemo(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-    }
-    console.info(
-      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
-    );
-  } catch (e: any) {
-    console.error(e.stack);
-    console.error(
-      `user:${employeeId}, type:${actionType}, messageTs: ${message.ts}\n${JSON.stringify(userWorkStatus, null, 2)}`
-    );
-
-    let errorFeedBackMessage = e.toString();
-    if (actionType === "clock_in") {
-      if (e.message.includes("打刻の日付が不正な値です。")) {
-        errorFeedBackMessage = `前日の退勤を完了してから出勤打刻してください.`;
+  return getFreeeEmployeeIdFromSlackUserId(client, message.user, freeCompanyId)
+    .orElse((e) => err({ message: e }))
+    .andThen((employeeId) => {
+      const result = match(actionType)
+        .with("clock_in", () => handleClockIn(client, channelId, freeCompanyId, employeeId, message))
+        .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
+        .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
+        .with("clock_out", () => handleClockOut(client, channelId, freeCompanyId, employeeId, message))
+        .with("clock_out_and_add_remote_memo", () =>
+          handleClockOutAndAddRemoteMemo(client, channelId, freeCompanyId, employeeId, message)
+        )
+        .exhaustive();
+      return result
+        .andThen((r) => ok({ result: r, employeeId }))
+        .orElse((error) => err({ message: error, employeeId }));
+    })
+    .match(
+      (data) => {
+        console.info(JSON.stringify({ actionType, userWorkStatus, ...data }, null, 2));
+      },
+      (error) => {
+        console.error(JSON.stringify({ actionType, userWorkStatus, ...error }, null, 2));
+        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
+        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
       }
-      if (e.message.includes("打刻の種類が正しくありません。")) {
-        errorFeedBackMessage = "既に打刻済みです";
-      }
-    }
-    if (actionType === "clock_out" && e.message.includes("打刻の種類が正しくありません。")) {
-      errorFeedBackMessage = "出勤打刻が完了していないか、退勤の上書きができない値です.";
-    }
-
-    client.chat.postMessage({
-      channel: channelId,
-      text: errorFeedBackMessage,
-      thread_ts: message.ts,
-    });
-    client.reactions.add({
-      channel: channelId,
-      name: REACTION.ERROR,
-      timestamp: message.ts,
-    });
-  }
+    );
 }
 
 function handleClockIn(
@@ -168,37 +120,41 @@ function handleClockIn(
   message: Message
 ) {
   const clockInDate = message.date;
-  const clockInBaseDate = toDate(clockInDate);
 
   const clockInParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
-    base_date: format(clockInBaseDate, "yyyy-MM-dd"),
+    base_date: format(clockInDate, "yyyy-MM-dd"),
     datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  setTimeClocks(employeeId, clockInParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_TIME_RECORD,
-    timestamp: message.ts,
-  });
+  return setTimeClocks(employeeId, clockInParams)
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return match(e)
+        .with(
+          P.when((e) => e.includes("打刻の種類が正しくありません。")),
+          () => err("既に打刻済みです")
+        )
+        .with(
+          P.when((e) => e.includes("打刻の日付が不正な値です。")),
+          () => err("前日の退勤を完了してから出勤打刻してください.")
+        )
+        .otherwise(() => err(e));
+    });
 }
 
 function handleSwitchWorkStatusToOffice(client: SlackClient, channelId: string, message: Message) {
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_LOCATION_SWITCH,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
+  return ok("ok");
 }
 
 function handleSwitchWorkStatusToRemote(client: SlackClient, channelId: string, message: Message) {
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_LOCATION_SWITCH,
-    timestamp: message.ts,
-  });
+  client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_LOCATION_SWITCH, timestamp: message.ts });
+  return ok("ok");
 }
 
 function handleClockOut(
@@ -209,7 +165,7 @@ function handleClockOut(
   message: Message
 ) {
   const clockOutDate = message.date;
-  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
+  const clockOutBaseDate = getBaseDate(message.date);
 
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
@@ -218,12 +174,19 @@ function handleClockOut(
     datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  setTimeClocks(employeeId, clockOutParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_TIME_RECORD,
-    timestamp: message.ts,
-  });
+  return setTimeClocks(employeeId, clockOutParams)
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return match(e)
+        .with(
+          P.when((e) => e.includes("打刻の種類が正しくありません。")),
+          () => err("出勤打刻が完了していないか、退勤の上書きができない値です.")
+        )
+        .otherwise(() => err(e));
+    });
 }
 
 function handleClockOutAndAddRemoteMemo(
@@ -233,54 +196,48 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message);
-  const clockOutDate = message.date;
-  const clockOutBaseDate = clockOutDate.getHours() > DATE_START_HOUR ? toDate(clockOutDate) : subDays(clockOutDate, 1);
+  const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
 
-  const targetDate = format(clockOutBaseDate, "yyyy-MM-dd");
-  const workRecord = getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
-  const remoteParams: WorkRecordControllerRequestBody = {
-    company_id: FREEE_COMPANY_ID,
-    clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-    clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
-    note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-    break_records: workRecord.break_records.map((record) => {
-      return {
-        clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-        clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+  return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+    .andThen(() => {
+      return getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+    })
+    .andThen((workRecord) => {
+      const remoteParams: EmployeesWorkRecordsController_update_body = {
+        company_id: FREEE_COMPANY_ID,
+        ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
+        ...(workRecord.clock_out_at && {
+          clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+        }),
+        note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+        break_records: workRecord.break_records.map((record) => {
+          return {
+            clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
+            clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+          };
+        }),
       };
-    }),
-  };
-  updateWorkRecord(employeeId, targetDate, remoteParams);
-  client.reactions.add({
-    channel: channelId,
-    name: REACTION.DONE_FOR_REMOTE_MEMO,
-    timestamp: message.ts,
-  });
+      return updateWorkRecord(employeeId, targetDate, remoteParams);
+    })
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
+      return ok("ok");
+    });
 }
 
-function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number): number {
+function getBaseDate(date: Date) {
+  return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
+}
+
+function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number) {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
-  const email = client.users.info({
-    user: slackUserId,
-  }).user?.profile?.email;
-  if (!email) {
-    throw new Error("email is undefined.");
-  }
-  const employees = getCompanyEmployees({
-    company_id: companyId,
-    limit: 100,
+  const email = client.users.info({ user: slackUserId }).user?.profile?.email;
+  if (!email) return err("email is undefined.");
+
+  return getCompanyEmployees({ company_id: companyId, limit: 100 }).andThen((employees) => {
+    const target = employees.find((employee) => employee.email === email);
+    return target ? ok(target.id) : err("target is undefined.");
   });
-  const target = employees.filter((employee) => {
-    return employee.email === email;
-  });
-  if (target.length == 0) {
-    throw new Error(`employee email ${email} was not found.`);
-  }
-  if (target.length > 1) {
-    throw new Error(`employee email ${email} is duplicated.`);
-  }
-  return target[0].id;
 }
 
 function getSlackClient() {
