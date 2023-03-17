@@ -108,6 +108,17 @@ const EmployeesTimeClocksControllerSchema_create_body = z.object({
     .optional(),
 });
 
+const EmployeesTimeClockSerializer = z.object({
+  id: z.number().int().gte(1).lte(2147483647),
+  date: z.string(),
+  type: z.enum(["clock_in", "break_begin", "break_end", "clock_out"]),
+  datetime: z.string(),
+  original_datetime: z.string(),
+  note: z.string().max(255),
+});
+
+const EmployeesTimeClocksController_create_response = z.object({ employee_time_clock: EmployeesTimeClockSerializer });
+
 const EmployeesWorkRecordsControllerSchema_update_body = z.object({
   company_id: z.number().int().gte(1).lte(2147483647),
   break_records: z.array(EmployeesWorkRecordTimeRangeSerializerSchema).optional(),
@@ -143,6 +154,7 @@ export const schemas = {
   CompaniesEmployeeSerializerSchema,
   EmployeesWorkRecordSerializerSchema,
   EmployeesWorkRecordSummarySerializerSchema,
+  EmployeesTimeClocksController_create_response,
 };
 
 export type EmployeesWorkRecordSerializer = z.infer<typeof EmployeesWorkRecordSerializerSchema>;
