@@ -11,6 +11,8 @@ import {
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
+import { shiftChanger } from "./shift-changer/shift-changer";
+import { registerResultModal } from "./birthday-registrator/modals";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -42,7 +44,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     appName: "hisyonoske",
     ...e,
   });
-
   if (isUrlVerification(e)) {
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)["challenge"]);
   }
@@ -91,13 +92,21 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
       handleChannelCreated(client, event as ChannelCreatedEvent);
     }
   }
-  if (isShiftChange(e)){
-    shiftChange(e);
-  }
-  const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
-  workflowCustomStep(e);
 
-  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+  // これだとだめっぽい 多分他の処理にもeが引っかかってる
+  // if (isShiftChange(e)) {
+  //   // switch文?
+  //   shiftChanger(e);
+  //   return ContentService.createTextOutput("");
+  // }
+
+  shiftChanger(e);
+  return ContentService.createTextOutput("");
+
+  // const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
+  // workflowCustomStep(e);
+
+  // return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 };
 
 // attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
@@ -150,8 +159,10 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
 };
 
 const isShiftChange = (e: GoogleAppsScript.Events.DoPost): boolean => {
-  if (e.parameter.command === '/bot-test');
-}
+  if (e.parameter.command) return e.parameter.command === "/bot-test";
+  else if (isAction(e) || isViewAction(e)) return e.parameter.view.external_id === "shift-changer";
+  return false;
+};
 
 export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string; callback_id: string } => {
   // FIXME: この関数は使わない方向に修正していく
@@ -223,29 +234,4 @@ const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) =
     channel: CHANNEL_EVENT_POST_CHANNEL,
     text: `<#${event.channel.id}>が追加されました！`,
   });
-}
-
-const init = () => {
-  initProperties();
-  initAttendanceManager();
-}
-
-const initProperties = () => {
-  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName('CONFIG');
-  const rows = sheet.getDataRange().getValues();
-  const properties = {};
-  for (const row of rows.slice(1)) properties[row[0]] = row[1];
-
-  const scriptProperties = PropertiesService.getScriptProperties();
-
-  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
-  // scriptProperties.deleteAllProperties();
-
-  scriptProperties.setProperties(properties);
-}
-
-declare const global: any;
-global.doPost = doPost;
-global.init = init;
-global.notificator = notificator;
-global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
+};

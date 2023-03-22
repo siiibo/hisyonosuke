@@ -28,6 +28,7 @@ export function initAttendanceManager() {
 }
 
 export function periodicallyCheckForAttendanceManager() {
+  console.log("periodically");
   const client = getSlackClient();
 
   const { ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
