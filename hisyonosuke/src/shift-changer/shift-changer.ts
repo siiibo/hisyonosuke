@@ -204,6 +204,9 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost) => {
       showEvents(userEmail, spreadsheetUrl);
       break;
     }
+  } catch (error) {
+    console.log(error);
+    return ContentService.createTextOutput("403");
   }
 };
 
