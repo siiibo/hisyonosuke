@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ok, err, Result } from "neverthrow";
-import { schemas } from "./freee.schema";
+import { EmployeesWorkRecordTimeRangeSerializer, schemas } from "./freee.schema";
 import type {
   EmployeesWorkRecordsController_update_body,
   EmployeesTimeClocksController_create_body,
@@ -79,4 +79,14 @@ export function getCompanyEmployees(props: {
 export function updateWorkRecord(employId: number, date: string, body: EmployeesWorkRecordsController_update_body) {
   const requestUrl = `https://api.freee.co.jp/hr/api/v1/employees/${employId}/work_records/${date}`;
   return fetch(requestUrl, { method: "put", body, schema: schemas.EmployeesWorkRecordSerializerSchema });
+}
+
+export function getTotalTimeFromTimeRanges(timeRanges: EmployeesWorkRecordTimeRangeSerializer[]) {
+  const sum = timeRanges.reduce((prev, current) => {
+    const start = new Date(current.clock_in_at);
+    const end = new Date(current.clock_out_at);
+    const diff = end.getTime() - start.getTime();
+    return prev + diff;
+  }, 0);
+  return sum;
 }

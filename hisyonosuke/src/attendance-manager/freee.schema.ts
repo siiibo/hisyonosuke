@@ -157,6 +157,9 @@ export const schemas = {
   EmployeesTimeClocksController_create_response,
 };
 
+export type EmployeesWorkRecordTimeRangeSerializer = z.infer<
+  typeof EmployeesWorkRecordTimeRangeSerializerSchema
+>;
 export type EmployeesWorkRecordSerializer = z.infer<typeof EmployeesWorkRecordSerializerSchema>;
 export type CompaniesEmployeeSerializer = z.infer<typeof CompaniesEmployeeSerializerSchema>;
 export type EmployeesTimeClocksController_create_body = z.infer<typeof EmployeesTimeClocksControllerSchema_create_body>;
