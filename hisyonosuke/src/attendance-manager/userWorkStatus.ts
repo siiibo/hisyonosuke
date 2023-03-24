@@ -5,7 +5,7 @@ import { ProcessedMessage } from "./message";
 import { valueOf } from "./utilities";
 
 // 未出勤は現状利用していない
-const WORK_STATUS = {
+export const WORK_STATUS = {
   WORKING_AT_OFFICE: "勤務中（出社）",
   WORKING_REMOTELY: "勤務中（リモート）",
   BREAK: "休憩中",
@@ -61,16 +61,20 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
 }
 
 export function getUserWorkStatusByCommands(commands: CommandType[]): UserWorkStatus["workStatus"] {
-  const lastCommand = R.findLast(commands, (c) => c !== "BREAK_END");
+  const lastCommand = R.last(commands);
   const status = match(lastCommand)
     .with("CLOCK_IN", () => WORK_STATUS.WORKING_AT_OFFICE)
     .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => WORK_STATUS.WORKING_AT_OFFICE)
     .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => WORK_STATUS.WORKING_REMOTELY)
     .with("SWITCH_TO_REMOTE", () => WORK_STATUS.WORKING_REMOTELY)
     .with("BREAK_BEGIN", () => WORK_STATUS.BREAK)
+    .with("BREAK_END", () => {
+      const commandsWithoutBreak = commands.filter((command) => !["BREAK_BEGIN", "BREAK_END"].includes(command));
+      return getUserWorkStatusByCommands(commandsWithoutBreak);
+    })
     .with("CLOCK_OUT", () => WORK_STATUS.CLOCKED_OUT)
     .otherwise(() => {
-      throw new Error("Unexpected command");
+      throw new Error(`Unexpected command: ${lastCommand}`);
     });
   return status;
 }
