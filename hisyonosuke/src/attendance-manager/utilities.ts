@@ -1,3 +1,5 @@
+export type valueOf<T> = T[keyof T];
+
 type URIEncodable = {
   [Key: string]: string | number | boolean;
 };
