@@ -8,7 +8,9 @@ import type {
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
 
-const fetch = createFetch(getService().getAccessToken());
+// ローカルテスト時にはPropertiesServiceが存在しないため、ダミーのfetch関数を作成する
+const fetch =
+  typeof PropertiesService === "undefined" ? createFetch("dummy") : createFetch(getService().getAccessToken());
 
 function createFetch(accessToken: string) {
   return <Schema>(
