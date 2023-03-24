@@ -1,27 +1,34 @@
 import { CommandType } from "./command";
 import { UserWorkStatus } from "./userWorkStatus";
+import { match } from "ts-pattern";
+import { valueOf } from "./utilities";
 
-export type ActionType =
-  | "clock_in"
-  | "clock_out"
-  | "clock_out_and_add_remote_memo"
-  | "switch_work_status_to_office"
-  | "switch_work_status_to_remote";
+const Actions = {
+  CLOCK_IN: "clock_in",
+  CLOCK_OUT: "clock_out",
+  CLOCK_OUT_AND_ADD_REMOTE_MEMO: "clock_out_and_add_remote_memo",
+  SWITCH_TO_OFFICE: "switch_work_status_to_office",
+  SWITCH_TO_REMOTE: "switch_work_status_to_remote",
+  BREAK_BEGIN: "break_begin",
+  BREAK_END: "break_end",
+} as const;
+
+export type ActionType = valueOf<typeof Actions>;
 
 export function getActionType(commandType: CommandType, userWorkStatus: UserWorkStatus | undefined): ActionType {
-  switch (commandType) {
-    case "CLOCK_IN":
-      return "clock_in";
-    case "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE":
-      // TODO: 勤務中（リモート）だった場合
-      return userWorkStatus?.workStatus === "勤務中（出社）" ? "switch_work_status_to_remote" : "clock_in";
-    case "CLOCK_IN_OR_SWITCH_TO_OFFICE":
-      // TODO: 勤務中（出社）だった場合
-      return userWorkStatus?.workStatus === "勤務中（リモート）" ? "switch_work_status_to_office" : "clock_in";
-    case "SWITCH_TO_REMOTE":
-      return "switch_work_status_to_remote";
-    case "CLOCK_OUT":
-      //TODO: 打刻の重複の場合
-      return userWorkStatus?.needTrafficExpense === false ? "clock_out_and_add_remote_memo" : "clock_out";
-  }
+  return match(commandType)
+    .with("CLOCK_IN", () => Actions.CLOCK_IN)
+    .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => {
+      return userWorkStatus?.workStatus === "勤務中（出社）" ? Actions.SWITCH_TO_REMOTE : Actions.CLOCK_IN;
+    })
+    .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => {
+      return userWorkStatus?.workStatus === "勤務中（リモート）" ? Actions.SWITCH_TO_OFFICE : Actions.CLOCK_IN;
+    })
+    .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+    .with("CLOCK_OUT", () => {
+      return userWorkStatus?.needTrafficExpense === false ? Actions.CLOCK_OUT_AND_ADD_REMOTE_MEMO : Actions.CLOCK_OUT;
+    })
+    .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+    .with("BREAK_END", () => Actions.BREAK_END)
+    .exhaustive();
 }

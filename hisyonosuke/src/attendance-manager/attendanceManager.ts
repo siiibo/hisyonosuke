@@ -93,6 +93,8 @@ function execAction(
         .with("clock_out_and_add_remote_memo", () =>
           handleClockOutAndAddRemoteMemo(client, channelId, freeCompanyId, employeeId, message)
         )
+        .with("break_begin", () => ok("ok")) //FIXME
+        .with("break_end", () => ok("ok")) //FIXME
         .exhaustive();
       return result
         .andThen((r) => ok({ result: r, employeeId }))
