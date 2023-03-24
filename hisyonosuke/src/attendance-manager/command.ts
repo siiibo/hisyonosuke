@@ -7,6 +7,8 @@ export const COMMAND_TYPE = {
   CLOCK_IN_OR_SWITCH_TO_OFFICE: [":shussha:"],
   CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE: [":remoteshukkin:"],
   SWITCH_TO_REMOTE: [":remote:"],
+  BREAK_BEGIN: [":kyukeikaishi:"],
+  BREAK_END: [":kyukeishuryou:"],
   CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
 
