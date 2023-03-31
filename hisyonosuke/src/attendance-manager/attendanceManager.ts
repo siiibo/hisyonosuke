@@ -100,8 +100,8 @@ function execAction(
         .with("clock_out_and_add_remote_memo", () =>
           handleClockOutAndAddRemoteMemo(client, channelId, freeCompanyId, employeeId, message)
         )
-        .with("break_begin", () => ok("ok")) //FIXME
-        .with("break_end", () => ok("ok")) //FIXME
+        .with("break_begin", () => handleBreakBegin(client, channelId, freeCompanyId, employeeId, message))
+        .with("break_end", () => handleBreakEnd(client, channelId, freeCompanyId, employeeId, message))
         .exhaustive();
       return result
         .andThen((r) => ok({ result: r, employeeId }))
@@ -151,6 +151,53 @@ function handleClockIn(
           () => err("前日の退勤を完了してから出勤打刻してください.")
         )
         .otherwise(() => err(e));
+    });
+}
+
+function handleBreakBegin(
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  message: Message
+) {
+  const breakBeginDate = message.date;
+  return setTimeClocks(employeeId, {
+    company_id: FREEE_COMPANY_ID,
+    type: "break_begin",
+    base_date: formatForBaseDate(breakBeginDate),
+    datetime: formatForDateTime(breakBeginDate),
+  })
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return err(e);
+    });
+}
+
+function handleBreakEnd(
+  client: SlackClient,
+  channelId: string,
+  FREEE_COMPANY_ID: number,
+  employeeId: number,
+  message: Message
+) {
+  const breakEndDate = message.date;
+
+  return setTimeClocks(employeeId, {
+    company_id: FREEE_COMPANY_ID,
+    type: "break_end",
+    base_date: formatForBaseDate(breakEndDate),
+    datetime: formatForDateTime(breakEndDate),
+  })
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
+    })
+    .orElse((e) => {
+      return err(e);
     });
 }
 
