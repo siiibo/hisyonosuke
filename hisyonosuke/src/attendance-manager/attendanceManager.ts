@@ -1,8 +1,8 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
 import {
-  formatTimeStringForBaseDateRequest,
-  formatTimeStringForRequest,
+  formatForBaseDate,
+  formatForDateTime,
   getCompanyEmployees,
   getWorkRecord,
   setTimeClocks,
@@ -203,7 +203,7 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const targetDate = formatTimeStringForBaseDateRequest(getBaseDate(message.date));
+  const targetDate = formatForBaseDate(getBaseDate(message.date));
 
   return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
@@ -215,13 +215,13 @@ function handleClockOutAndAddRemoteMemo(
       }
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
-        clock_in_at: formatTimeStringForRequest(workRecord.clock_in_at),
-        clock_out_at: formatTimeStringForRequest(workRecord.clock_out_at),
+        clock_in_at: formatForDateTime(workRecord.clock_in_at),
+        clock_out_at: formatForDateTime(workRecord.clock_out_at),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         break_records: workRecord.break_records.map((record) => {
           return {
-            clock_in_at: formatTimeStringForRequest(record.clock_in_at),
-            clock_out_at: formatTimeStringForRequest(record.clock_out_at),
+            clock_in_at: formatForDateTime(record.clock_in_at),
+            clock_out_at: formatForDateTime(record.clock_out_at),
           };
         }),
       };
