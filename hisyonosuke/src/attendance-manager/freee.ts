@@ -97,3 +97,9 @@ export function formatTimeStringForRequest(date: Date | string) {
   const _format = (_date: Date) => format(_date, "yyyy-MM-dd HH:mm:ss");
   return typeof date === "string" ? _format(new Date(date)) : _format(date);
 }
+
+export function formatTimeStringForBaseDateRequest(date: Date | string) {
+  // responseでは「yyyy-MM-ddTHH:mm:ss.SSSZ」の形式で返ってくるが、requestでは「yyyy-MM-dd」の形式にする必要がある
+  const _format = (_date: Date) => format(_date, "yyyy-MM-dd");
+  return typeof date === "string" ? _format(new Date(date)) : _format(date);
+}

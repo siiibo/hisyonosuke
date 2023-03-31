@@ -1,6 +1,7 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
 import {
+  formatTimeStringForBaseDateRequest,
   formatTimeStringForRequest,
   getCompanyEmployees,
   getWorkRecord,
@@ -202,7 +203,7 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
+  const targetDate = formatTimeStringForBaseDateRequest(getBaseDate(message.date));
 
   return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
