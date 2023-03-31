@@ -1,6 +1,12 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
+import {
+  formatTimeStringForRequest,
+  getCompanyEmployees,
+  getWorkRecord,
+  setTimeClocks,
+  updateWorkRecord,
+} from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
 import { REACTION } from "./reaction";
@@ -203,17 +209,18 @@ function handleClockOutAndAddRemoteMemo(
       return getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
     })
     .andThen((workRecord) => {
+      if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
+        return err(`出勤時間か退勤時間が不正な値です.`);
+      }
       const remoteParams: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
-        ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
-        ...(workRecord.clock_out_at && {
-          clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
-        }),
+        clock_in_at: formatTimeStringForRequest(workRecord.clock_in_at),
+        clock_out_at: formatTimeStringForRequest(workRecord.clock_out_at),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         break_records: workRecord.break_records.map((record) => {
           return {
-            clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-            clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+            clock_in_at: formatTimeStringForRequest(record.clock_in_at),
+            clock_out_at: formatTimeStringForRequest(record.clock_out_at),
           };
         }),
       };
