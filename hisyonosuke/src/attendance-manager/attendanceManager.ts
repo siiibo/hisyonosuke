@@ -207,7 +207,7 @@ function handleClockOutAndAddRemoteMemo(
       return freee.getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
     })
     .andThen((workRecord) => {
-      const remoteParams: EmployeesWorkRecordsController_update_body = {
+      const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
         ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
         ...(workRecord.clock_out_at && {
@@ -221,7 +221,7 @@ function handleClockOutAndAddRemoteMemo(
           };
         }),
       };
-      return freee.updateWorkRecord(employeeId, targetDate, remoteParams);
+      return freee.updateWorkRecord(employeeId, targetDate, newWorkRecord);
     })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
