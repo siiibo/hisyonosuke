@@ -212,7 +212,7 @@ function handleClockOutAndAddRemoteMemo(
       if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
         return err(`出勤時間か退勤時間が不正な値です.`);
       }
-      const remoteParams: EmployeesWorkRecordsController_update_body = {
+      const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
         clock_in_at: formatTimeStringForRequest(workRecord.clock_in_at),
         clock_out_at: formatTimeStringForRequest(workRecord.clock_out_at),
@@ -224,7 +224,7 @@ function handleClockOutAndAddRemoteMemo(
           };
         }),
       };
-      return updateWorkRecord(employeeId, targetDate, remoteParams);
+      return updateWorkRecord(employeeId, targetDate, newWorkRecord);
     })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
