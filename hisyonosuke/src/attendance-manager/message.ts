@@ -74,13 +74,13 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
   );
 }
 
-function getDayStartAsDate(date: Date, dateStartHour: number): Date {
+export function getDayStartAsDate(date: Date, dateStartHour: number): Date {
   return set(date, {
     hours: dateStartHour,
     minutes: 0,
     seconds: 0,
     milliseconds: 0,
-    ...(date.getHours() <= dateStartHour && { date: getDate(subDays(date, 1)) }),
+    ...(date.getHours() < dateStartHour && { date: getDate(subDays(date, 1)) }),
   });
 }
 
