@@ -1,5 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { z } from "zod";
+import * as R from "remeda";
 import { getDate, subDays, set } from "date-fns";
 import { REACTION, ReactionSchema } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
@@ -63,13 +64,15 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
       inclusive: true,
     }).messages || [];
 
-  // 時系列昇順に並び替え
-  return _messages
-    .map((m) => {
+  return R.pipe(
+    _messages,
+    R.map((m) => {
       const parsed = MessageSchema.safeParse(m);
       return parsed.success ? parsed.data : undefined;
-    })
-    .filter((m): m is Message => !!m);
+    }),
+    R.filter((m): m is Message => !!m),
+    R.sortBy((m) => m.date)
+  );
 }
 
 function isErrorMessage(message: Message, botUserId: string): boolean {
