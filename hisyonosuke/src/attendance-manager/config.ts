@@ -8,9 +8,6 @@ const ConfigSchema = z.object({
   SLACK_TOKEN: z.string(),
   BOT_USER_ID: z.string(), // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
   CHANNEL_IDS: z.string().transform((v) => v.replace(/\s/g, "").split(",")),
-  ATTENDANCE_CHANNEL_ID: z.string(),
-  PART_TIMER_CHANNEL_ID: z.string(),
-  TEST_CHANNEL_ID: z.string(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
