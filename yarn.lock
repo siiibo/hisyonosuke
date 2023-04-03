@@ -5116,6 +5116,11 @@ regexpp@^3.2.0:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
   integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
 
+remeda@^1.11.0:
+  version "1.11.0"
+  resolved "https://registry.yarnpkg.com/remeda/-/remeda-1.11.0.tgz#9c0259ca360fbaba9cfbb40a7fd784407db4a388"
+  integrity sha512-9eYmE5zbmy5d8R260QAk72ZmZoHH7lmLlQrR9ILi9i+vLpBwvve9+fsytvNGzWRfagml7o5DCx8541DC+++y+w==
+
 remove-trailing-separator@^1.0.1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/remove-trailing-separator/-/remove-trailing-separator-1.1.0.tgz#c24bce2a283adad5bc3f58e0d48249b92379d8ef"
