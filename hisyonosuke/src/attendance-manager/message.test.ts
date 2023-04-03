@@ -1,4 +1,5 @@
-import { getDayStartAsDate } from "./message";
+import { getDayStartAsDate, isErrorMessage, Message } from "./message";
+import { REACTION } from "./reaction";
 
 describe("getDayStartAsDate", () => {
   const DATE_START_HOUR = 4;
@@ -24,5 +25,82 @@ describe("getDayStartAsDate", () => {
     const date = new Date(`2023-03-05T${dateString}+09:00`);
     const result = getDayStartAsDate(date, DATE_START_HOUR);
     expect(result).toEqual(new Date(expected));
+  });
+});
+
+describe("isErrorMessage関数のテスト", () => {
+  const botUserId = "bot123";
+
+  it("リアクションが含まれていない場合はfalseを返す", () => {
+    const message: Message = {
+      date: new Date(),
+      type: "message",
+      user: "user1",
+      text: "こんにちは",
+      ts: "12345",
+    };
+    expect(isErrorMessage(message, botUserId)).toBeFalsy();
+  });
+
+  it("エラーリアクションがボットユーザーによって付与されている場合はtrueを返す", () => {
+    const message: Message = {
+      date: new Date(),
+      type: "message",
+      user: "user1",
+      text: "こんにちは",
+      ts: "12345",
+      reactions: [
+        {
+          name: REACTION.ERROR,
+          users: [botUserId],
+        },
+      ],
+    };
+    expect(isErrorMessage(message, botUserId)).toBeTruthy();
+  });
+
+  it("エラーリアクションが他のユーザーによって付与されている場合はfalseを返す", () => {
+    const message: Message = {
+      date: new Date(),
+      type: "message",
+      user: "user1",
+      text: "こんにちは",
+      ts: "12345",
+      reactions: [
+        {
+          name: REACTION.ERROR,
+          users: ["user2"],
+        },
+      ],
+    };
+    expect(isErrorMessage(message, botUserId)).toBeFalsy();
+  });
+
+  it("エラーリアクション以外のリアクションが付与されている場合はfalseを返す", () => {
+    const message: Message = {
+      date: new Date(),
+      type: "message",
+      user: "user1",
+      text: "こんにちは",
+      ts: "12345",
+      reactions: [
+        {
+          name: REACTION.DONE_FOR_TIME_RECORD,
+          users: [botUserId],
+        },
+      ],
+    };
+    expect(isErrorMessage(message, botUserId)).toBeFalsy();
+  });
+
+  it("リアクションがundefinedの場合はfalseを返す", () => {
+    const message: Message = {
+      date: new Date(),
+      type: "message",
+      user: "user1",
+      text: "こんにちは",
+      ts: "12345",
+    };
+    expect(isErrorMessage(message, botUserId)).toBeFalsy();
   });
 });

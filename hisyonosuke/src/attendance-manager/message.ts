@@ -84,7 +84,7 @@ export function getDayStartAsDate(date: Date, dateStartHour: number): Date {
   });
 }
 
-function isErrorMessage(message: Message, botUserId: string): boolean {
+export function isErrorMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
@@ -100,12 +100,9 @@ function isProcessedMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
-  return message.reactions?.some((reaction) => {
-    if (!reaction.name) {
-      return false;
-    }
+  return message.reactions.some((reaction) => {
     return (
-      reaction.users?.includes(botUserId) &&
+      reaction.users.includes(botUserId) &&
       [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
         reaction.name
       )
