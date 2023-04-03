@@ -13,7 +13,7 @@ export function getService() {
     .setClientId(CLIENT_ID)
     .setClientSecret(CLIENT_SECRET)
     .setCallbackFunction(authCallback.name)
-    .setPropertyStore(PropertiesService.getUserProperties()); // とりあえず@hi-seのUserPropに保持している
+    .setPropertyStore(PropertiesService.getScriptProperties());
 }
 
 export function authCallback(request: any) {
@@ -30,7 +30,7 @@ export function authCallback(request: any) {
 export function printAuth() {
   const props = PropertiesService.getScriptProperties().getProperties();
   console.log(props);
-  console.log(PropertiesService.getUserProperties().getProperties());
+  console.log(PropertiesService.getScriptProperties().getProperties());
 }
 
 export function resetAuth() {
