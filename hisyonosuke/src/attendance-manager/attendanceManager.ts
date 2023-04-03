@@ -28,11 +28,12 @@ export function initAttendanceManager() {
 export function periodicallyCheckForAttendanceManager() {
   const client = getSlackClient();
 
-  const { ATTENDANCE_CHANNEL_ID, PART_TIMER_CHANNEL_ID } = getConfig();
+  const { CHANNEL_IDS, BOT_USER_ID } = getConfig();
 
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
-  checkAttendance(client, ATTENDANCE_CHANNEL_ID);
-  checkAttendance(client, PART_TIMER_CHANNEL_ID);
+  CHANNEL_IDS.forEach((channelId) => {
+    checkAttendance(client, channelId, BOT_USER_ID);
+  });
 }
 
 /*
@@ -41,14 +42,13 @@ export function periodicallyCheckForAttendanceManager() {
   triggerの呼び出し毎に、処理済みのメッセージも含めてチェックするという冗長な処理になってしまっている。
   いずれPropServiceなどを使って状態管理するほうが良いかもしれない。
  */
-function checkAttendance(client: SlackClient, channelId: string) {
-  const hisyonosukeUserId = "U01AY3RHR42"; // ボットはbot_idとuser_idの2つのidを持ち、リアクションにはuser_idが使われる
+function checkAttendance(client: SlackClient, channelId: string, botUserId: string) {
   const { FREEE_COMPANY_ID } = getConfig();
 
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
     client,
     channelId,
-    hisyonosukeUserId,
+    botUserId,
     DATE_START_HOUR
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
