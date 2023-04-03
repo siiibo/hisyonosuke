@@ -2,7 +2,7 @@ import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
 import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
-import { getConfig, initConfig } from "./config";
+import { getConfig } from "./config";
 import { REACTION } from "./reaction";
 import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
@@ -14,8 +14,6 @@ import { match, P } from "ts-pattern";
 const DATE_START_HOUR = 4;
 
 export function initAttendanceManager() {
-  initConfig();
-
   const targetFunction = periodicallyCheckForAttendanceManager;
 
   ScriptApp.getProjectTriggers().forEach((trigger) => {
