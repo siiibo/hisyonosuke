@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "open": "yarn clasp open",
+    "test": "jest",
     "build": "yarn webpack",
     "buildpush:prod": "yarn webpack && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
     "buildpush:dev": " yarn webpack && cross-env clasp_config_project=.clasp.dev.json clasp push --force",
