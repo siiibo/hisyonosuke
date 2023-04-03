@@ -3,6 +3,7 @@ import { z } from "zod";
 const CONFIG_SPREADSHEET_ID = "1fAxgi14OJx6f8RrnUMMoELF--mSZPMWgl3Zz_CUGYL8";
 
 const ConfigSchema = z.object({
+  ATTENDANCE_MANAGER_ENV: z.union([z.literal("production"), z.literal("development")]),
   FREEE_CLIENT_ID: z.string(),
   FREEE_CLIENT_SECRET: z.string(),
   FREEE_COMPANY_ID: z.preprocess((v) => Number(v), z.number()),
