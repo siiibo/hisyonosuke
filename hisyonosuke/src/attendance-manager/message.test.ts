@@ -34,7 +34,6 @@ describe("isErrorMessage関数のテスト", () => {
   it("リアクションが含まれていない場合はfalseを返す", () => {
     const message: Message = {
       date: new Date(),
-      type: "message",
       user: "user1",
       text: "こんにちは",
       ts: "12345",
@@ -45,7 +44,6 @@ describe("isErrorMessage関数のテスト", () => {
   it("エラーリアクションがボットユーザーによって付与されている場合はtrueを返す", () => {
     const message: Message = {
       date: new Date(),
-      type: "message",
       user: "user1",
       text: "こんにちは",
       ts: "12345",
@@ -62,7 +60,6 @@ describe("isErrorMessage関数のテスト", () => {
   it("エラーリアクションが他のユーザーによって付与されている場合はfalseを返す", () => {
     const message: Message = {
       date: new Date(),
-      type: "message",
       user: "user1",
       text: "こんにちは",
       ts: "12345",
@@ -79,7 +76,6 @@ describe("isErrorMessage関数のテスト", () => {
   it("エラーリアクション以外のリアクションが付与されている場合はfalseを返す", () => {
     const message: Message = {
       date: new Date(),
-      type: "message",
       user: "user1",
       text: "こんにちは",
       ts: "12345",
@@ -96,7 +92,6 @@ describe("isErrorMessage関数のテスト", () => {
   it("リアクションがundefinedの場合はfalseを返す", () => {
     const message: Message = {
       date: new Date(),
-      type: "message",
       user: "user1",
       text: "こんにちは",
       ts: "12345",
