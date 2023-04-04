@@ -7,7 +7,6 @@ import { getUnixTimeStampString } from "./utilities";
 
 export const MessageSchema = z
   .object({
-    type: z.literal("message"),
     user: z.string(),
     text: z.string(),
     ts: z.string(),
