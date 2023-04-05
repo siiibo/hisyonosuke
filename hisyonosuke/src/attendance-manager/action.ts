@@ -15,20 +15,75 @@ const Actions = {
 
 export type ActionType = valueOf<typeof Actions>;
 
+// TODO: Result型を利用してあり得ないパターンを事前に弾く。呼び出し側の整理が必要。
 export function getActionType(commandType: CommandType, userWorkStatus: UserWorkStatus | undefined): ActionType {
-  return match(commandType)
-    .with("CLOCK_IN", () => Actions.CLOCK_IN)
-    .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => {
-      return userWorkStatus?.workStatus === "勤務中（出社）" ? Actions.SWITCH_TO_REMOTE : Actions.CLOCK_IN;
+  return match(userWorkStatus)
+    .with(undefined, () => {
+      // 未出勤状態
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
     })
-    .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => {
-      return userWorkStatus?.workStatus === "勤務中（リモート）" ? Actions.SWITCH_TO_OFFICE : Actions.CLOCK_IN;
+    .with({ workStatus: "勤務中（出社）" }, () => {
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
     })
-    .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
-    .with("CLOCK_OUT", () => {
-      return userWorkStatus?.needTrafficExpense === false ? Actions.CLOCK_OUT_AND_ADD_REMOTE_MEMO : Actions.CLOCK_OUT;
+    .with({ workStatus: "勤務中（リモート）", needTrafficExpense: true }, () => {
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT_AND_ADD_REMOTE_MEMO)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
     })
-    .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
-    .with("BREAK_END", () => Actions.BREAK_END)
+    .with({ workStatus: "勤務中（リモート）", needTrafficExpense: false }, () => {
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
+    })
+    .with({ workStatus: "休憩中" }, () => {
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
+    })
+    .with({ workStatus: "退勤済み" }, () => {
+      return match(commandType)
+        .with("CLOCK_IN", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
+        .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
+        .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
+        .with("BREAK_END", () => Actions.BREAK_END)
+        .exhaustive();
+    })
     .exhaustive();
 }
