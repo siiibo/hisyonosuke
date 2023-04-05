@@ -10,7 +10,7 @@ import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus
 import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
-import { calculateBreakTimeMsToAdd, createAdditionalBreakTime } from "./breackRecord";
+import { calculateBreakTimeMsToAdd, createAdditionalBreakTime } from "./breakRecord";
 
 const DATE_START_HOUR = 4;
 

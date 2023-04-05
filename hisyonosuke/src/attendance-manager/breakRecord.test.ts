@@ -1,4 +1,4 @@
-import { createAdditionalBreakTime, calculateBreakTimeMsToAdd } from "./breackRecord";
+import { createAdditionalBreakTime, calculateBreakTimeMsToAdd } from "./breakRecord";
 
 describe("calculateBreakTimeToAdd", () => {
   it("労働時間が6時間30分以上8時間未満、休憩時間が45分未満の場合、休憩時間を45分になるように差分を返す", () => {
