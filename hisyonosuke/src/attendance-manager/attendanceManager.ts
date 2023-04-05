@@ -1,13 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import {
-  formatForBaseDate,
-  formatForDateTime,
-  getCompanyEmployees,
-  getWorkRecord,
-  setTimeClocks,
-  updateWorkRecord,
-} from "./freee";
+import { formatDate, getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
 import { REACTION } from "./reaction";
@@ -165,8 +158,8 @@ function handleBreakBegin(
   return setTimeClocks(employeeId, {
     company_id: FREEE_COMPANY_ID,
     type: "break_begin",
-    base_date: formatForBaseDate(breakBeginDate),
-    datetime: formatForDateTime(breakBeginDate),
+    base_date: formatDate(breakBeginDate, "date"),
+    datetime: formatDate(breakBeginDate, "datetime"),
   })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
@@ -189,8 +182,8 @@ function handleBreakEnd(
   return setTimeClocks(employeeId, {
     company_id: FREEE_COMPANY_ID,
     type: "break_end",
-    base_date: formatForBaseDate(breakEndDate),
-    datetime: formatForDateTime(breakEndDate),
+    base_date: formatDate(breakEndDate, "datetime"),
+    datetime: formatDate(breakEndDate, "datetime"),
   })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
@@ -250,7 +243,7 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const targetDate = formatForBaseDate(getBaseDate(message.date));
+  const targetDate = formatDate(getBaseDate(message.date), "date");
 
   return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
@@ -262,13 +255,13 @@ function handleClockOutAndAddRemoteMemo(
       }
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
-        clock_in_at: formatForDateTime(workRecord.clock_in_at),
-        clock_out_at: formatForDateTime(workRecord.clock_out_at),
+        clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+        clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         break_records: workRecord.break_records.map((record) => {
           return {
-            clock_in_at: formatForDateTime(record.clock_in_at),
-            clock_out_at: formatForDateTime(record.clock_out_at),
+            clock_in_at: formatDate(record.clock_in_at, "datetime"),
+            clock_out_at: formatDate(record.clock_out_at, "datetime"),
           };
         }),
       };
