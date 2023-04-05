@@ -23,6 +23,10 @@ export function getCommandType({ text }: Message): CommandType | undefined {
     return "SWITCH_TO_REMOTE";
   } else if (text.match(getCommandRegExp(COMMAND_TYPE.CLOCK_OUT))) {
     return "CLOCK_OUT";
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.BREAK_BEGIN))) {
+    return "BREAK_BEGIN";
+  } else if (text.match(getCommandRegExp(COMMAND_TYPE.BREAK_END))) {
+    return "BREAK_END";
   } else {
     return undefined;
   }
