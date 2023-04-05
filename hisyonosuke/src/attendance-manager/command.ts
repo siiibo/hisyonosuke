@@ -7,8 +7,8 @@ export const COMMAND_TYPE = {
   CLOCK_IN_OR_SWITCH_TO_OFFICE: [":shussha:"],
   CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE: [":remoteshukkin:"],
   SWITCH_TO_REMOTE: [":remote:"],
-  BREAK_BEGIN: [":kyukeikaishi:"],
-  BREAK_END: [":kyukeishuryou:"],
+  BREAK_BEGIN: [":riseki:", ":chuushoku:", ":break:"],
+  BREAK_END: [":back:", ":modori:", ":imback:"],
   CLOCK_OUT: [":taikin:", ":sagyoushuuryou:", ":saishuutaikin:", ":kinmushuuryou:"],
 } as const;
 
@@ -31,7 +31,6 @@ export function getCommandType({ text }: Message): CommandType | undefined {
     return undefined;
   }
 }
-
 export function getCommandRegExp(commands: Commands | Commands[]): RegExp {
   if (Array.isArray(commands)) {
     return new RegExp(`^\\s*(${commands.flat().join("|")})\\s*$`);
