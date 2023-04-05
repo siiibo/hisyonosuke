@@ -43,7 +43,6 @@ export function calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_rec
       ([, totalBreakTimeMin]) => 60 - totalBreakTimeMin
     )
     .otherwise(() => 0);
-  console.log([totalWorkTimeMs, totalBreakTimeMs]);
   return minutesToMilliseconds(needToAddBreakTimeMin);
 }
 
