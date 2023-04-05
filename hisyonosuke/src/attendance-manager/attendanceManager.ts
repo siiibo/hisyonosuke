@@ -10,6 +10,7 @@ import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus
 import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
+import { calculateBreakTimeMsToAdd, createAdditionalBreakTime } from "./breackRecord";
 
 const DATE_START_HOUR = 4;
 
@@ -222,10 +223,6 @@ function handleClockOut(
   };
 
   return setTimeClocks(employeeId, clockOutParams)
-    .andThen(() => {
-      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
-      return ok("ok");
-    })
     .orElse((e) => {
       return match(e)
         .with(
@@ -233,6 +230,52 @@ function handleClockOut(
           () => err("出勤打刻が完了していないか、退勤の上書きができない値です.")
         )
         .otherwise(() => err(e));
+    })
+    .andThen(() => {
+      return getWorkRecord(employeeId, format(clockOutDate, "yyyy-MM-dd"), FREEE_COMPANY_ID);
+    })
+    .andThen((workRecord) => {
+      if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
+        return err(`出勤時間か退勤時間が不正な値です.`);
+      }
+
+      const timeRecord = {
+        clock_in_at: workRecord.clock_in_at,
+        clock_out_at: workRecord.clock_out_at,
+        break_records: workRecord.break_records,
+      };
+
+      const breakTimeMsToAdd = calculateBreakTimeMsToAdd(timeRecord);
+      console.log(timeRecord, breakTimeMsToAdd);
+      if (breakTimeMsToAdd === 0) {
+        return ok("ok");
+      }
+      const additionalBreakTime = createAdditionalBreakTime(timeRecord, breakTimeMsToAdd);
+      const newNote = `自動追加(休憩: ${formatDate(additionalBreakTime.clock_in_at, "timeConcise")} - ${formatDate(
+        additionalBreakTime.clock_out_at,
+        "timeConcise"
+      )})`;
+
+      const newWorkRecord: EmployeesWorkRecordsController_update_body = {
+        company_id: FREEE_COMPANY_ID,
+        clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+        clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
+        note: workRecord.note ? `${workRecord.note} ${newNote}` : newNote,
+        break_records: [
+          ...workRecord.break_records.map((record) => {
+            return {
+              clock_in_at: formatDate(record.clock_in_at, "datetime"),
+              clock_out_at: formatDate(record.clock_out_at, "datetime"),
+            };
+          }),
+          additionalBreakTime,
+        ],
+      };
+      return updateWorkRecord(employeeId, formatDate(clockOutBaseDate, "date"), newWorkRecord);
+    })
+    .andThen(() => {
+      client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
+      return ok("ok");
     });
 }
 
