@@ -22,8 +22,8 @@ export function getActionType(commandType: CommandType, userWorkStatus: UserWork
       // 未出勤状態
       return match(commandType)
         .with("CLOCK_IN", () => Actions.CLOCK_IN)
-        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.SWITCH_TO_REMOTE)
-        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.SWITCH_TO_OFFICE)
+        .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => Actions.CLOCK_IN)
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => Actions.CLOCK_IN)
         .with("SWITCH_TO_REMOTE", () => Actions.SWITCH_TO_REMOTE)
         .with("CLOCK_OUT", () => Actions.CLOCK_OUT)
         .with("BREAK_BEGIN", () => Actions.BREAK_BEGIN)
