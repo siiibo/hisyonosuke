@@ -53,7 +53,7 @@ export function getActionType(
         )
         .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => ok(Actions.SWITCH_TO_OFFICE))
         .with("SWITCH_TO_REMOTE", () => err({ message: "すでにリモート状態です" }))
-        .with("CLOCK_OUT", () => ok(Actions.CLOCK_OUT_AND_ADD_REMOTE_MEMO))
+        .with("CLOCK_OUT", () => ok(Actions.CLOCK_OUT))
         .with("BREAK_BEGIN", () => ok(Actions.BREAK_BEGIN))
         .with("BREAK_END", () => ok(Actions.BREAK_END))
         .exhaustive();
@@ -66,7 +66,7 @@ export function getActionType(
         )
         .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => ok(Actions.SWITCH_TO_OFFICE))
         .with("SWITCH_TO_REMOTE", () => err({ message: "すでにリモート状態です" }))
-        .with("CLOCK_OUT", () => ok(Actions.CLOCK_OUT))
+        .with("CLOCK_OUT", () => ok(Actions.CLOCK_OUT_AND_ADD_REMOTE_MEMO))
         .with("BREAK_BEGIN", () => ok(Actions.BREAK_BEGIN))
         .with("BREAK_END", () => ok(Actions.BREAK_END))
         .exhaustive();
