@@ -248,7 +248,6 @@ function handleClockOut(
       };
 
       const breakTimeMsToAdd = calculateBreakTimeMsToAdd(timeRecord);
-      console.log(timeRecord, breakTimeMsToAdd);
       if (breakTimeMsToAdd === 0) {
         return ok("ok");
       }
