@@ -67,8 +67,17 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
       message,
       userWorkStatus,
       actionType,
-    });
-    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
+    }).match(
+      (data) => {
+        userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
+        console.info(JSON.stringify({ actionType, userWorkStatus, ...data }, null, 2));
+      },
+      (error) => {
+        console.error(JSON.stringify({ actionType, userWorkStatus, ...error }, null, 2));
+        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
+        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
+      }
+    );
   });
 }
 
@@ -100,17 +109,7 @@ function execAction(
       return result
         .andThen((r) => ok({ result: r, employeeId }))
         .orElse((error) => err({ message: error, employeeId }));
-    })
-    .match(
-      (data) => {
-        console.info(JSON.stringify({ actionType, userWorkStatus, ...data }, null, 2));
-      },
-      (error) => {
-        console.error(JSON.stringify({ actionType, userWorkStatus, ...error }, null, 2));
-        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
-        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-      }
-    );
+    });
 }
 
 function handleClockIn(
