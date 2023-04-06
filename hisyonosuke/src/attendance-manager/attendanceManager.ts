@@ -185,7 +185,7 @@ function handleBreakEnd(
   return setTimeClocks(employeeId, {
     company_id: FREEE_COMPANY_ID,
     type: "break_end",
-    base_date: formatDate(breakEndDate, "datetime"),
+    base_date: formatDate(breakEndDate, "date"),
     datetime: formatDate(breakEndDate, "datetime"),
   })
     .andThen(() => {
