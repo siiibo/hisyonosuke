@@ -12,6 +12,8 @@ const Actions = {
   SWITCH_TO_REMOTE: "switch_work_status_to_remote",
   BREAK_BEGIN: "break_begin",
   BREAK_END: "break_end",
+  BREAK_END_AND_SWITCH_TO_OFFICE: "break_end_and_switch_to_office",
+  BREAK_END_AND_SWITCH_TO_REMOTE: "break_end_and_switch_to_remote",
 } as const;
 
 export type ActionType = valueOf<typeof Actions>;
@@ -74,6 +76,8 @@ export function getActionType(
     .with({ workStatus: "休憩中" }, () => {
       return match(commandType)
         .with("BREAK_END", () => ok(Actions.BREAK_END))
+        .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => ok(Actions.BREAK_END_AND_SWITCH_TO_OFFICE))
+        .with("SWITCH_TO_REMOTE", () => ok(Actions.BREAK_END_AND_SWITCH_TO_REMOTE))
         .otherwise(() => err({ message: "休憩を終了してからコマンドを実行してください." }));
     })
     .with({ workStatus: "退勤済み" }, () => {

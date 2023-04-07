@@ -108,6 +108,16 @@ function execAction(
         )
         .with("break_begin", () => handleBreakBegin(client, channelId, freeCompanyId, employeeId, message))
         .with("break_end", () => handleBreakEnd(client, channelId, freeCompanyId, employeeId, message))
+        .with("break_end_and_switch_to_office", () =>
+          handleBreakEnd(client, channelId, freeCompanyId, employeeId, message).andThen(() =>
+            handleSwitchWorkStatusToOffice(client, channelId, message)
+          )
+        )
+        .with("break_end_and_switch_to_remote", () =>
+          handleBreakEnd(client, channelId, freeCompanyId, employeeId, message).andThen(() =>
+            handleSwitchWorkStatusToRemote(client, channelId, message)
+          )
+        )
         .exhaustive();
       return result
         .andThen((r) => ok({ result: r, employeeId, actionType }))
