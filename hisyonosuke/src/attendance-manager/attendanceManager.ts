@@ -265,16 +265,10 @@ function handleClockOut(
 
       console.info(JSON.stringify({ message: "additionalBreakTime", ...additionalBreakTime }, null, 2));
 
-      const newNote = `自動追加(休憩: ${formatDate(additionalBreakTime.clock_in_at, "timeConcise")} - ${formatDate(
-        additionalBreakTime.clock_out_at,
-        "timeConcise"
-      )})`;
-
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
         clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
         clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
-        note: workRecord.note ? `${workRecord.note} ${newNote}` : newNote,
         break_records: [
           ...workRecord.break_records.map((record) => {
             return {
