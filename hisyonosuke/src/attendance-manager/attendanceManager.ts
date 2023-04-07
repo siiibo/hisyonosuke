@@ -262,6 +262,9 @@ function handleClockOut(
         return ok("ok");
       }
       const additionalBreakTime = createAdditionalBreakTime(timeRecord, breakTimeMsToAdd);
+
+      console.info(JSON.stringify({ message: "additionalBreakTime", ...additionalBreakTime }, null, 2));
+
       const newNote = `自動追加(休憩: ${formatDate(additionalBreakTime.clock_in_at, "timeConcise")} - ${formatDate(
         additionalBreakTime.clock_out_at,
         "timeConcise"
