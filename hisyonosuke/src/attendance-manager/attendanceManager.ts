@@ -263,7 +263,7 @@ function handleClockOut(
       }
       const additionalBreakTime = createAdditionalBreakTime(timeRecord, breakTimeMsToAdd);
 
-      console.info(JSON.stringify({ message: "additionalBreakTime", ...additionalBreakTime }, null, 2));
+      console.info(JSON.stringify({ message: "additionalBreakTime", additionalBreakTime }, null, 2));
 
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
