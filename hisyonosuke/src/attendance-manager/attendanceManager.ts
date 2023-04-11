@@ -11,6 +11,7 @@ import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
 import { calculateBreakTimeMsToAdd, createAdditionalBreakTime } from "./breakRecord";
+import * as R from "remeda";
 
 const DATE_START_HOUR = 4;
 
@@ -34,6 +35,36 @@ export function periodicallyCheckForAttendanceManager() {
   // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
   CHANNEL_IDS.forEach((channelId) => {
     checkAttendance(client, channelId, BOT_USER_ID);
+  });
+}
+
+/**
+ * 朝4時付近にTimeTriggerをセットしておく
+ * 前日のuserWorkStatusを取得し、退勤していない人を強制退勤させる
+ * 強制退勤した人の情報は、朝の9時にSlackで通知する
+ */
+export function forceCheckOut() {
+  const client = getSlackClient();
+
+  const { CHANNEL_IDS, BOT_USER_ID, FREEE_COMPANY_ID } = getConfig();
+
+  CHANNEL_IDS.forEach((channelId) => {
+    const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
+      client,
+      channelId,
+      BOT_USER_ID,
+      DATE_START_HOUR
+    );
+    if (!unprocessedMessages.length && !processedMessages.length) return;
+
+    const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
+    const a = Object.entries(userWorkStatuses);
+    R.pipe(
+      getUserWorkStatusesByMessages(processedMessages),
+      (u) => Object.entries(u),
+      R.filter(([_, userWorkStatus]) => userWorkStatus?.workStatus !== "退勤済み"),
+      R.map(([userId, _]) => userId)
+    );
   });
 }
 
@@ -259,6 +290,7 @@ function handleClockOut(
 
       const breakTimeMsToAdd = calculateBreakTimeMsToAdd(timeRecord);
       if (breakTimeMsToAdd === 0) {
+        console.info("breakTimeMsToAdd is 0. skip update work record.");
         return ok("ok");
       }
       const additionalBreakTime = createAdditionalBreakTime(timeRecord, breakTimeMsToAdd);
