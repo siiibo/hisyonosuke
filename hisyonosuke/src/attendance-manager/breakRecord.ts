@@ -19,8 +19,8 @@ type BreakRecordWithClockInAndOut = EmployeesWorkRecordTimeRangeSerializer & {
 };
 
 export function calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_records }: BreakRecordWithClockInAndOut) {
-  const totalWorkTimeMs = getTotalTimeFromTimeRanges([{ clock_in_at, clock_out_at }]);
-  const totalBreakTimeMs = getTotalTimeFromTimeRanges(break_records);
+  const totalWorkTimeMin = millisecondsToMinutes(getTotalTimeFromTimeRanges([{ clock_in_at, clock_out_at }]));
+  const totalBreakTimeMin = millisecondsToMinutes(getTotalTimeFromTimeRanges(break_records));
 
   /**
    * 追加が必要な休憩時間
@@ -30,7 +30,7 @@ export function calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_rec
    * (8h以上, 1h未満)の場合 → totalBreakTimeが1hになるように差分を返す
    * その他の場合は何もしない
    */
-  const needToAddBreakTimeMin = match([millisecondsToMinutes(totalWorkTimeMs), millisecondsToMinutes(totalBreakTimeMs)])
+  const needToAddBreakTimeMin = match([totalWorkTimeMin, totalBreakTimeMin])
     .with(
       P.when(
         ([totalWorkTimeMin, totalBreakTimeMin]) =>
