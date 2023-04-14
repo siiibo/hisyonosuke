@@ -24,19 +24,19 @@ export function calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_rec
 
   const breakTimeToAdd = match([totalWorkTimeMin, totalBreakTimeMin])
     .with(
-      P.when(([wT]) => wT > 360 && wT <= 405),
+      P.when(([wT]) => 360 < wT && wT <= 405),
       ([wT, bT]) => wT - 360 - bT
     )
     .with(
-      P.when(([wT]) => wT > 405 && wT <= 525),
+      P.when(([wT]) => 405 < wT && wT <= 525),
       ([, bT]) => 45 - bT
     )
     .with(
-      P.when(([wT]) => wT > 525 && wT <= 540),
+      P.when(([wT]) => 525 < wT && wT <= 540),
       ([wT, bT]) => wT - 480 - bT
     )
     .with(
-      P.when(([wT]) => wT > 540),
+      P.when(([wT]) => 540 < wT),
       ([, bT]) => 60 - bT
     )
     .otherwise(() => 0);
