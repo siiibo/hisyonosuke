@@ -1,36 +1,113 @@
-import { createAdditionalBreakTime, calculateBreakTimeMsToAdd } from "./breakRecord";
+import { createAdditionalBreakTime, calculateBreakTimeMsToAdd, BreakRecordWithClockInAndOut } from "./breakRecord";
 
-describe("calculateBreakTimeToAdd", () => {
-  it("労働時間が6時間30分以上8時間未満、休憩時間が45分未満の場合、休憩時間を45分になるように差分を返す", () => {
-    const clock_in_at = "2020-01-01T09:00:00.000Z";
-    const clock_out_at = "2020-01-01T15:30:00.000Z";
-    const break_records = [{ clock_in_at: "2020-01-01T12:00:00.000Z", clock_out_at: "2020-01-01T12:30:00.000Z" }];
-    expect(calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_records })).toBe(900000);
-  });
+describe("calculateBreakTimeMsToAdd", () => {
+  const testCases: [BreakRecordWithClockInAndOut, number, string][] = [
+    // 拘束時間 ≤ 360
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T14:00:00+09:00",
+        break_records: [],
+      },
+      0,
+      "拘束時間が300分、打刻済み休憩時間が0分の場合、要追加休憩時間は0分",
+    ],
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T15:00:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:30:00+09:00" }],
+      },
+      0,
+      "拘束時間が360分、打刻済み休憩時間が30分の場合、要追加休憩時間は0分",
+    ],
+    // 360 < 拘束時間 ≤ 405
 
-  it("労働時間が8時間以上、休憩時間が1時間未満の場合、休憩時間を1時間になるように差分を返す", () => {
-    const clock_in_at = "2020-01-01T09:00:00.000Z";
-    const clock_out_at = "2020-01-01T17:00:00.000Z";
-    const break_records = [{ clock_in_at: "2020-01-01T12:00:00.000Z", clock_out_at: "2020-01-01T12:30:00.000Z" }];
-    expect(calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_records })).toBe(1800000);
-  });
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T17:05:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:15:00+09:00" }],
+      },
+      30 * 60 * 1000,
+      "拘束時間が365分、打刻済み休憩時間が15分の場合、要追加休憩時間は0分",
+    ],
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T15:23:00+09:00",
+        break_records: [],
+      },
+      23 * 60 * 1000,
+      "拘束時間が383分、打刻済み休憩時間が0分の場合、要追加休憩時間は23分",
+    ],
+    // 405 < 拘束時間 ≤ 525
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T16:00:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:15:00+09:00" }],
+      },
+      30 * 60 * 1000,
+      "拘束時間が420分、打刻済み休憩時間が15分の場合、要追加休憩時間は30分",
+    ],
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T16:23:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:18:00+09:00" }],
+      },
+      27 * 60 * 1000,
+      "拘束時間が443分、打刻済み休憩時間が18分の場合、要追加休憩時間は25分",
+    ],
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T16:30:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T13:00:00+09:00" }],
+      },
+      0,
+      "拘束時間が450分、打刻済み休憩時間が60分の場合、要追加休憩時間は0分",
+    ],
+    // 525 < 拘束時間 ≤ 540
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T18:00:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:30:00+09:00" }],
+      },
+      30 * 60 * 1000,
+      "拘束時間が540分、打刻済み休憩時間が30分の場合、要追加休憩時間は30分",
+    ],
+    // 540 < 拘束時間
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T18:30:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:30:00+09:00" }],
+      },
+      30 * 60 * 1000,
+      "拘束時間が570分、打刻済み休憩時間が30分の場合、要追加休憩時間は30分",
+    ],
+    [
+      {
+        clock_in_at: "2023-04-14T09:00:00+09:00",
+        clock_out_at: "2023-04-14T19:00:00+09:00",
+        break_records: [{ clock_in_at: "2023-04-14T12:00:00+09:00", clock_out_at: "2023-04-14T12:45:00+09:00" }],
+      },
+      15 * 60 * 1000,
+      "拘束時間が600分、打刻済み休憩時間が45分の場合、要追加休憩時間は15分",
+    ],
+  ];
 
-  it("労働時間が6時間30分以上8時間未満、休憩時間が45分以上の場合、何もしない", () => {
-    const clock_in_at = "2020-01-01T09:00:00.000Z";
-    const clock_out_at = "2020-01-01T15:30:00.000Z";
-    const break_records = [{ clock_in_at: "2020-01-01T12:00:00.000Z", clock_out_at: "2020-01-01T13:00:00.000Z" }];
-    expect(calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_records })).toBe(0);
-  });
-
-  it("労働時間が8時間以上、休憩時間が1時間以上の場合、何もしない", () => {
-    const clock_in_at = "2020-01-01T09:00:00.000Z";
-    const clock_out_at = "2020-01-01T17:00:00.000Z";
-    const break_records = [{ clock_in_at: "2020-01-01T12:00:00.000Z", clock_out_at: "2020-01-01T13:00:00.000Z" }];
-    expect(calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_records })).toBe(0);
+  testCases.forEach(([input, expectedResult, description]) => {
+    it(description, () => {
+      expect(calculateBreakTimeMsToAdd(input)).toBe(expectedResult);
+    });
   });
 });
 
-describe("休憩時間の追加テスト", () => {
+describe("createAdditionalBreakTime", () => {
   const clockInBefore13 = "2023-03-30 09:00:00";
   const clockInAfter13 = "2023-03-30 14:00:00";
   const clockOutAfter13 = "2023-03-30 18:00:00";

@@ -14,7 +14,7 @@ import { getTotalTimeFromTimeRanges } from "./freee";
 import { EmployeesWorkRecordTimeRangeSerializer } from "./freee.schema";
 import * as R from "remeda";
 
-type BreakRecordWithClockInAndOut = EmployeesWorkRecordTimeRangeSerializer & {
+export type BreakRecordWithClockInAndOut = EmployeesWorkRecordTimeRangeSerializer & {
   break_records: EmployeesWorkRecordTimeRangeSerializer[];
 };
 
@@ -22,28 +22,25 @@ export function calculateBreakTimeMsToAdd({ clock_in_at, clock_out_at, break_rec
   const totalWorkTimeMin = millisecondsToMinutes(getTotalTimeFromTimeRanges([{ clock_in_at, clock_out_at }]));
   const totalBreakTimeMin = millisecondsToMinutes(getTotalTimeFromTimeRanges(break_records));
 
-  /**
-   * 追加が必要な休憩時間
-   *
-   * (totalWorkTime, totalBreakTime) が
-   * (6h30min以上8h未満, 45min未満)の場合 → totalBreakTimeが45minになるように差分を返す
-   * (8h以上, 1h未満)の場合 → totalBreakTimeが1hになるように差分を返す
-   * その他の場合は何もしない
-   */
-  const needToAddBreakTimeMin = match([totalWorkTimeMin, totalBreakTimeMin])
+  const breakTimeToAdd = match([totalWorkTimeMin, totalBreakTimeMin])
     .with(
-      P.when(
-        ([totalWorkTimeMin, totalBreakTimeMin]) =>
-          totalWorkTimeMin >= 6 * 60 + 30 && totalWorkTimeMin < 8 * 60 && totalBreakTimeMin < 45
-      ),
-      ([, totalBreakTimeMin]) => 45 - totalBreakTimeMin
+      P.when(([wT]) => wT > 360 && wT <= 405),
+      ([wT, bT]) => wT - 360 - bT
     )
     .with(
-      P.when(([totalWorkTimeMin, totalBreakTimeMin]) => totalWorkTimeMin >= 8 * 60 && totalBreakTimeMin < 60),
-      ([, totalBreakTimeMin]) => 60 - totalBreakTimeMin
+      P.when(([wT]) => wT > 405 && wT <= 525),
+      ([, bT]) => 45 - bT
+    )
+    .with(
+      P.when(([wT]) => wT > 525 && wT <= 540),
+      ([wT, bT]) => wT - 480 - bT
+    )
+    .with(
+      P.when(([wT]) => wT > 540),
+      ([, bT]) => 60 - bT
     )
     .otherwise(() => 0);
-  return minutesToMilliseconds(needToAddBreakTimeMin);
+  return breakTimeToAdd > 0 ? minutesToMilliseconds(breakTimeToAdd) : 0;
 }
 
 export const createNewTimeRecord = (startTime: Date, breakDuration: number): EmployeesWorkRecordTimeRangeSerializer => {
