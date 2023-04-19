@@ -79,7 +79,7 @@ function withRetry<TReturn>(
     if (result.isOk()) return result;
     if (i === times || !shouldRetry(result.error)) return result;
 
-    console.warn(`Retrying (${i}/${times}) after error: ${result.error}\nfunc: ${func.name}`);
+    console.warn(`Retry ${i} time(s) with error: ${result.error}\nfunc: ${func.name}`);
     if (delay) Utilities.sleep(delay);
     if (backoff) Utilities.sleep(backoff(i));
   }
