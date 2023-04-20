@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ok, err, Result } from "neverthrow";
+import { match } from "ts-pattern";
 import { schemas } from "./freee.schema";
 import type {
   EmployeesWorkRecordsController_update_body,
@@ -19,32 +20,70 @@ function createFetch(accessToken: string) {
       schema?: z.ZodType<Schema>;
     }
   ): Result<Schema, string> => {
-    const response = UrlFetchApp.fetch(url, {
-      headers: {
-        Authorization: "Bearer " + accessToken,
-        "FREEE-VERSION": "2022-02-01",
+    const wrappedFetch = () => {
+      const response = UrlFetchApp.fetch(url, {
+        headers: {
+          Authorization: "Bearer " + accessToken,
+          "FREEE-VERSION": "2022-02-01",
+        },
+        method: options.method,
+        muteHttpExceptions: true,
+        ...(["post", "put"].includes(options.method) && {
+          payload: JSON.stringify(options.body),
+          contentType: "application/json",
+        }),
+      });
+
+      const responseCode = response.getResponseCode();
+      const responseBody = response.getContentText();
+
+      return match(responseCode)
+        .with(200, 201, () => {
+          if (!options.schema) return ok(JSON.parse(responseBody));
+          const parseResult = options.schema.safeParse(JSON.parse(responseBody));
+          return parseResult.success ? ok(parseResult.data) : err(parseResult.error.message);
+        })
+        .with(500, () => {
+          return err("Error: Internal Server Error");
+        })
+        .otherwise(() => err(responseBody));
+    };
+    return withRetry(
+      {
+        times: 3,
+        delay: 1000,
+        backoff: (count) => count * 1000,
+        shouldRetry: (error) => error === "Error: Internal Server Error",
       },
-      method: options.method,
-      muteHttpExceptions: true,
-      ...(["post", "put"].includes(options.method) && {
-        payload: JSON.stringify(options.body),
-        contentType: "application/json",
-      }),
-    });
-
-    const responseCode = response.getResponseCode();
-    const responseBody = response.getContentText();
-    const isSuccess = responseCode === 200 || responseCode === 201;
-
-    const { schema } = options;
-    if (schema) {
-      const parseResult = schema.safeParse(JSON.parse(responseBody));
-      const parsed = parseResult.success ? ok(parseResult.data) : err(parseResult.error.message);
-      return isSuccess ? parsed : err(responseBody);
-    } else {
-      return isSuccess ? ok(JSON.parse(responseBody)) : err(responseBody);
-    }
+      wrappedFetch
+    );
   };
+}
+
+function withRetry<TReturn>(
+  options: {
+    times?: number;
+    delay?: number;
+    backoff?: (count: number) => number;
+    shouldRetry?: (error: string) => boolean;
+  },
+  func: () => Result<TReturn, string>
+): Result<TReturn, string> {
+  const times = options.times ?? 3;
+  const delay = options.delay;
+  const backoff = options.backoff;
+  const shouldRetry = options.shouldRetry ?? (() => true);
+
+  for (let i = 1; i <= times; i++) {
+    const result = func();
+    if (result.isOk()) return result;
+    if (i === times || !shouldRetry(result.error)) return result;
+
+    console.warn(`Retry ${i} time(s) with error: ${result.error}\nfunc: ${func.name}`);
+    if (delay) Utilities.sleep(delay);
+    if (backoff) Utilities.sleep(backoff(i));
+  }
+  return err("Error: Unreachable code path");
 }
 
 export function setTimeClocks(employId: number, body: EmployeesTimeClocksController_create_body) {
