@@ -11,6 +11,7 @@ import {
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
+import { initAttendanceManager } from "./attendance-manager/attendanceManager";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
