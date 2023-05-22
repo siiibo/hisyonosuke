@@ -1,5 +1,5 @@
 import { doPost, init } from "./app";
-import { notificator } from "./notificator";
+import { notificator } from "./birthday-registrator/notificator";
 import { periodicallyCheckForAttendanceManager } from "./attendance-manager/attendanceManager";
 
 /**
