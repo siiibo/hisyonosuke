@@ -12,6 +12,7 @@ import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
 import { initAttendanceManager } from "./attendance-manager/attendanceManager";
+import { init as initPartTimerShift } from "./part-timer-shift/notify";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -22,6 +23,7 @@ const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 export const init = () => {
   initProperties();
   initAttendanceManager();
+  initPartTimerShift();
 };
 
 const initProperties = () => {
@@ -52,39 +54,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   if (isEvent(e)) {
     const event = JSON.parse(e.postData.contents)["event"] as SlackEvent;
     const client = getSlackClient();
-    if (event.type === "app_mention") {
-      if (isOriginalCommand(event.text, "アルバイトシフト")) {
-        const calendarId = "c_1889m1jd2rticjeig08cshi84mnrs4gaedkmiqb2dsn66rrd@resource.calendar.google.com";
-        const calendar = CalendarApp.getCalendarById(calendarId);
-        const targetDate = new Date();
-        const dailyShifts = calendar.getEventsForDay(targetDate);
-
-        if (!dailyShifts.length) {
-          client.chat.postMessage({
-            channel: event.channel,
-            text: "今日の予定はありません",
-          });
-          return;
-        }
-
-        const notificationString =
-          dailyShifts
-            .map((dailyShift) => {
-              const title = dailyShift.getTitle();
-              const startTime = Utilities.formatDate(dailyShift.getStartTime(), "Asia/Tokyo", "HH:mm");
-              const endTime = Utilities.formatDate(dailyShift.getEndTime(), "Asia/Tokyo", "HH:mm");
-              return `${title}  ${startTime} 〜 ${endTime}`;
-            })
-            .join("\n") +
-          "\n\n" +
-          ":calendar: 勤務開始時に<https://calendar.google.com/calendar|カレンダー>に予定が入っていないか確認しましょう！";
-
-        client.chat.postMessage({
-          channel: event.channel,
-          text: notificationString,
-        });
-      }
-    }
     if (event.type === "emoji_changed") {
       handleEmojiChange(client, event as EmojiChangedEvent);
     }
