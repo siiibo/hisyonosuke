@@ -8,8 +8,10 @@ import type {
 } from "./freee.schema";
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
+import { getConfig } from "./config";
 
-const fetch = createFetch(getService().getAccessToken());
+const fetch =
+  getConfig().ATTENDANCE_MANAGER_ENV === "production" ? createFetch(getService().getAccessToken()) : UrlFetchApp.fetch;
 
 function createFetch(accessToken: string) {
   return <Schema>(
