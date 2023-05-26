@@ -14,5 +14,12 @@
   "webapp": {
     "executeAs": "USER_DEPLOYING",
     "access": "ANYONE_ANONYMOUS"
+  },
+  "addOns": {
+    "sheets": {
+      "homepageTrigger": {
+        "runFunction": "onInstall"
+      }
+    }
   }
 }
