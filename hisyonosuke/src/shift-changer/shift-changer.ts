@@ -140,6 +140,7 @@ export const callRegistration = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const payload = {
+    external_id: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
@@ -157,6 +158,7 @@ export const callModificationAndDeletion = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const payload = {
+    external_id: "shift-changer",
     operationType: "modificationAndDeletion",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
@@ -174,6 +176,7 @@ export const callShowEvents = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const payload = {
+    external_id: "shift-changer",
     operationType: "showEvents",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
@@ -208,12 +211,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost) => {
     console.log(error);
     return ContentService.createTextOutput("403");
   }
-};
-
-const getSpreadsheet = () => {
-  const spreadsheetUrl =
-    "https://docs.google.com/spreadsheets/d/1YsyCYCKTT7tDRazqtYLGVIuegOYRthC4uPuAAPzCU0k/edit#gid=0";
-  return SpreadsheetApp.openByUrl(spreadsheetUrl);
 };
 
 const registration = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
