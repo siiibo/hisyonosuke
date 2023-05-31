@@ -86,7 +86,7 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
 
-  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+  // return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 };
 
 // attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
@@ -135,6 +135,12 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   if (isJson(e) && e.postData.contents) {
     return "event" in JSON.parse(e.postData.contents);
   }
+  return false;
+};
+
+const isShiftChange = (e: GoogleAppsScript.Events.DoPost): boolean => {
+  if (e.parameter.command) return e.parameter.command === "/bot-test";
+  else if (isAction(e) || isViewAction(e)) return e.parameter.view.external_id === "shift-changer";
   return false;
 };
 
