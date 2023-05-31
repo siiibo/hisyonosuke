@@ -8,7 +8,6 @@ import type {
 } from "./freee.schema";
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
-import { getConfig } from "./config";
 
 export class Freee {
   private fetch;
