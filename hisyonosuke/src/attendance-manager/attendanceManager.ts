@@ -1,6 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import { getCompanyEmployees, getWorkRecord, setTimeClocks, updateWorkRecord } from "./freee";
+import { Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
 import { REACTION } from "./reaction";
@@ -62,7 +62,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
     }
     const userWorkStatus = userWorkStatuses[message.user];
     const actionType = getActionType(commandType, userWorkStatus);
-    execAction(client, channelId, FREEE_COMPANY_ID, {
+    execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
       message,
       userWorkStatus,
       actionType,
@@ -73,6 +73,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
 
 function execAction(
   client: SlackClient,
+  freee: Freee,
   channelId: string,
   freeCompanyId: number,
   action: {
@@ -82,16 +83,16 @@ function execAction(
   }
 ) {
   const { message, actionType, userWorkStatus } = action;
-  return getFreeeEmployeeIdFromSlackUserId(client, message.user, freeCompanyId)
+  return getFreeeEmployeeIdFromSlackUserId(client, freee, message.user, freeCompanyId)
     .orElse((e) => err({ message: e }))
     .andThen((employeeId) => {
       const result = match(actionType)
-        .with("clock_in", () => handleClockIn(client, channelId, freeCompanyId, employeeId, message))
+        .with("clock_in", () => handleClockIn(client, freee, channelId, freeCompanyId, employeeId, message))
         .with("switch_work_status_to_office", () => handleSwitchWorkStatusToOffice(client, channelId, message))
         .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
-        .with("clock_out", () => handleClockOut(client, channelId, freeCompanyId, employeeId, message))
+        .with("clock_out", () => handleClockOut(client, freee, channelId, freeCompanyId, employeeId, message))
         .with("clock_out_and_add_remote_memo", () =>
-          handleClockOutAndAddRemoteMemo(client, channelId, freeCompanyId, employeeId, message)
+          handleClockOutAndAddRemoteMemo(client, freee, channelId, freeCompanyId, employeeId, message)
         )
         .exhaustive();
       return result
@@ -112,6 +113,7 @@ function execAction(
 
 function handleClockIn(
   client: SlackClient,
+  freee: Freee,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
@@ -126,7 +128,8 @@ function handleClockIn(
     datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  return setTimeClocks(employeeId, clockInParams)
+  return freee
+    .setTimeClocks(employeeId, clockInParams)
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
       return ok("ok");
@@ -157,6 +160,7 @@ function handleSwitchWorkStatusToRemote(client: SlackClient, channelId: string, 
 
 function handleClockOut(
   client: SlackClient,
+  freee: Freee,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
@@ -172,7 +176,8 @@ function handleClockOut(
     datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
   };
 
-  return setTimeClocks(employeeId, clockOutParams)
+  return freee
+    .setTimeClocks(employeeId, clockOutParams)
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_TIME_RECORD, timestamp: message.ts });
       return ok("ok");
@@ -189,6 +194,7 @@ function handleClockOut(
 
 function handleClockOutAndAddRemoteMemo(
   client: SlackClient,
+  freee: Freee,
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
@@ -196,9 +202,9 @@ function handleClockOutAndAddRemoteMemo(
 ) {
   const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
 
-  return handleClockOut(client, channelId, FREEE_COMPANY_ID, employeeId, message)
+  return handleClockOut(client, freee, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
-      return getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
+      return freee.getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
     })
     .andThen((workRecord) => {
       const remoteParams: EmployeesWorkRecordsController_update_body = {
@@ -215,7 +221,7 @@ function handleClockOutAndAddRemoteMemo(
           };
         }),
       };
-      return updateWorkRecord(employeeId, targetDate, remoteParams);
+      return freee.updateWorkRecord(employeeId, targetDate, remoteParams);
     })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });
@@ -227,12 +233,12 @@ function getBaseDate(date: Date) {
   return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
-function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, slackUserId: string, companyId: number) {
+function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, freee: Freee, slackUserId: string, companyId: number) {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({ user: slackUserId }).user?.profile?.email;
   if (!email) return err("email is undefined.");
 
-  return getCompanyEmployees({ company_id: companyId, limit: 100 }).andThen((employees) => {
+  return freee.getCompanyEmployees({ company_id: companyId, limit: 100 }).andThen((employees) => {
     const target = employees.find((employee) => employee.email === email);
     return target ? ok(target.id) : err("target is undefined.");
   });
