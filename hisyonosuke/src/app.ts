@@ -62,7 +62,7 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     }
   }
 
-  if (e.external_id === "shift-chaneger") {
+  if (e.external_id === "shift-changer") {
     const operationType = e.parameter.operationType;
     const userEmail = e.parameter.userEmail;
     const spreadsheetUrl = e.parameter.spreadsheetUrl;
@@ -86,7 +86,7 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
   workflowCustomStep(e);
 
-  // return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
 };
 
 // attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
