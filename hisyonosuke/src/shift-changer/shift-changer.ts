@@ -233,10 +233,10 @@ const getCalendar = () => {
   return calendar;
 };
 
-const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; email: string }[]) => {
-  const slackMember = slackMemberProfiles.filter((slackMemberProfile) => slackMemberProfile.email === email);
-  // 悩み: emailが一致するフィルターをかければ要素は一個になるはず [0]がマジックナンバーになっている
-  return slackMember[0].name;
+const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; email: string }[]): string => {
+  const slackMember = slackMemberProfiles.find((slackMemberProfile) => slackMemberProfile.email === email);
+  if (!slackMember) throw new Error("NON-SLACK MEMBER EMAIL");
+  return slackMember.name;
 };
 
 const getSlackMemberProfiles = (client: SlackClient): { name: string; email: string }[] => {
