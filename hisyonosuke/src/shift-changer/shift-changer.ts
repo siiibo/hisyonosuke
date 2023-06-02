@@ -36,6 +36,7 @@ export const insertRegistrationSheet = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const today = format(new Date(), "yyyy-MM-dd");
   const sheet = spreadsheet.insertSheet(`${today}-登録`, 0);
+  sheet.addDeveloperMetadata(`${today}-registration`);
 
   // 内容の設定
   const header = [["日付", "開始時刻", "終了時刻", "休憩開始時刻", "休憩終了時刻", "勤務形態"]];
@@ -68,6 +69,7 @@ export const insertModificationAndDeletionSheet = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   const today = format(new Date(), "yyyy-MM-dd");
   const sheet = spreadsheet.insertSheet(`${today}-変更・削除`, 0);
+  sheet.addDeveloperMetadata(`${today}-modificationAndDeletion`);
 
   // 内容の設定
   const discription1 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
@@ -207,16 +209,14 @@ export const registration = (operationType: OperationType, userEmail: string, sp
 const getShiftInfos = (operationType: OperationType, spreadsheetUrl: string) => {
   switch (operationType) {
     case "registration": {
-      const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
-      if (!sheet) throw new Error("SHEET is not defined");
+      const sheet = getSheet(operationType, spreadsheetUrl);
       const lastRowNum = sheet.getLastRow();
       const shiftInfos = sheet.getRange(2, 1, lastRowNum - 1, 6).getValues();
       return shiftInfos;
     }
 
     case "modificationAndDeletion": {
-      const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
-      if (!sheet) throw new Error("SHEET is not defined");
+      const sheet = getSheet(operationType, spreadsheetUrl);
       const lastRowNum = sheet.getLastRow();
       const shiftInfos = sheet.getRange(6, 5, lastRowNum - 5, 6).getValues();
       return shiftInfos;
@@ -277,6 +277,17 @@ const getJob = (name: string): string | undefined => {
 
   const job = jobInfo[0];
   return job;
+};
+
+const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl)
+    .getSheets()
+    .find((sheet) => sheet.getDeveloperMetadata()[0].getKey() === `${today}-${operationType}`);
+
+  if (!sheet) throw new Error("SHEET is not defined");
+
+  return sheet;
 };
 
 const getCalendarInfoFromShiftInfo = (
@@ -359,12 +370,11 @@ export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
 
 export const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   modification(operationType, userEmail, spreadsheetUrl);
-  deletion(userEmail, spreadsheetUrl);
+  deletion(operationType, userEmail, spreadsheetUrl);
 };
-const deletion = (userEmail: string, spreadsheetUrl: string) => {
+const deletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   // getShiftInfo
-  const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
-  if (!sheet) throw new Error("SHEET is not defined");
+  const sheet = getSheet(operationType, spreadsheetUrl);
   const lastRow = sheet.getLastRow();
   const dataRow = lastRow - 6 + 1;
   const dataColumn = sheet.getLastColumn();
@@ -392,8 +402,7 @@ const deleteEvent = (eventInfo: Date[], calendar: GoogleAppsScript.Calendar.Cale
 };
 
 const modification = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
-  const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
-  if (!sheet) throw new Error("SHEET is not defined");
+  const sheet = getSheet(operationType, spreadsheetUrl);
   const lastRowNum = sheet.getLastRow();
   const selectedEventInfos = sheet
     .getRange(6, 1, lastRowNum - 5, 12)
