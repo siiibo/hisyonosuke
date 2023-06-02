@@ -190,27 +190,7 @@ export const callShowEvents = () => {
   UrlFetchApp.fetch(url, options);
 };
 
-export const doPost = (e: GoogleAppsScript.Events.DoPost) => {
-  const operationType = e.parameter.operationType;
-  const userEmail = e.parameter.userEmail;
-  const spreadsheetUrl = e.parameter.spreadsheetUrl;
-  switch (operationType) {
-    case "registration": {
-      registration(operationType, userEmail, spreadsheetUrl);
-      break;
-    }
-    case "modificationAndDeletion": {
-      modificationAndDeletion(operationType, userEmail, spreadsheetUrl);
-      break;
-    }
-    case "showEvents": {
-      showEvents(userEmail, spreadsheetUrl);
-      break;
-    }
-  }
-};
-
-const registration = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+export const registration = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   const shiftInfos = getShiftInfos(operationType, spreadsheetUrl);
   if (shiftInfos === undefined) return;
 
@@ -350,9 +330,10 @@ const isEventGuest = (event: GoogleAppsScript.Calendar.CalendarEvent, email: str
   return guestEmails.indexOf(email) !== -1;
 };
 
-const showEvents = (userEmail: string, spreadsheetUrl: string) => {
-  const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl).getActiveSheet();
-  if (!sheet) throw new Error("SHEET is not defined");
+export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
+  const operationType = "modificationAndDeletion";
+  const sheet = getSheet(operationType, spreadsheetUrl);
+
   const startDate = sheet.getRange("A2").getValue();
   const endDate = addWeeks(startDate, 1);
   const calendar = getCalendar();
@@ -376,7 +357,7 @@ const showEvents = (userEmail: string, spreadsheetUrl: string) => {
   //   .uncheck();
 };
 
-const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+export const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   modification(operationType, userEmail, spreadsheetUrl);
   deletion(userEmail, spreadsheetUrl);
 };

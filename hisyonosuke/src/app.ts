@@ -62,7 +62,7 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     }
   }
 
-  if (e.external_id === "shift-changer") {
+  if (e.parameter.external_id === "shift-changer") {
     const operationType = e.parameter.operationType;
     const userEmail = e.parameter.userEmail;
     const spreadsheetUrl = e.parameter.spreadsheetUrl;
