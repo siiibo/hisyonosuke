@@ -267,14 +267,14 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getJob = (name: string): string | undefined => {
+const getJob = (nameRegex: RegExp): string | undefined => {
   // 人対職種データベース
   const spreadSheetUrl = "https://docs.google.com/spreadsheets/d/1g-n_RL7Rou8chG3n_GOyieBbtPTl6eTkDsGQLRWXKbI/edit";
   const sheet = SpreadsheetApp.openByUrl(spreadSheetUrl).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
   const lastRowNum = sheet.getLastRow();
   const jobInfos = sheet.getRange(1, 1, lastRowNum, 2).getValues();
-  const jobInfo = jobInfos.find((jobInfo) => jobInfo[1] === name);
+  const jobInfo = jobInfos.find((jobInfo) => jobInfo[1].match(nameRegex));
   if (jobInfo === undefined) return;
 
   const job = jobInfo[0];
@@ -301,7 +301,8 @@ const getCalendarInfoFromShiftInfo = (
   }[]
 ): { title: string; startDate: Date; endDate: Date } => {
   const name = getNameFromEmail(userEmail, slackMemberProfiles);
-  const job = getJob(name);
+  const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
+  const job = getJob(nameRegex);
 
   const date = format(shiftInfo[0], "yyyy-MM-dd");
   const startTime = format(shiftInfo[1], "HH:mm");
