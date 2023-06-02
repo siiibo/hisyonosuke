@@ -1,7 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, addWeeks } from "date-fns";
 import { calendarFormat } from "moment";
-// import { doPost } from "../app";
 
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 // export const init = () => {
