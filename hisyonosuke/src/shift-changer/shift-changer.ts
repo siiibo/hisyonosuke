@@ -136,6 +136,9 @@ export const insertModificationAndDeletionSheet = () => {
   //   .setHelpText("変更後の予定の記入と、削除対象の選択を同時に行うことはできません。")
   //   .build();
   // cells6.setDataValidation(rule6);
+
+  // 列幅の設定
+  sheet.setColumnWidth(1, 370);
 };
 export const callRegistration = () => {
   const userEmail = Session.getActiveUser().getEmail();
