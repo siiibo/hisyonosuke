@@ -237,7 +237,7 @@ const getCalendar = () => {
 
 const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; email: string }[]): string => {
   const slackMember = slackMemberProfiles.find((slackMemberProfile) => slackMemberProfile.email === email);
-  if (!slackMember) throw new Error("NON-SLACK MEMBER EMAIL");
+  if (!slackMember) throw new Error("The email is non-slack member");
   return slackMember.name;
 };
 
