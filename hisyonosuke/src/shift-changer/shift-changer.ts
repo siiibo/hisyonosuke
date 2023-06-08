@@ -345,7 +345,11 @@ export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
   if (events.length === 0) {
     return;
   }
+  const lastRow = sheet.getLastRow();
+  const dataRow = lastRow - 6 + 1;
+  const dataColumn = sheet.getLastColumn();
 
+  sheet.getRange(6, 1, dataRow, dataColumn).clearContent();
   const eventsInfo = events.map((event) => {
     const title = event.getTitle();
     const date = Utilities.formatDate(event.getStartTime(), "JST", "MM/dd");
@@ -527,7 +531,7 @@ const createModificationMessage = (
     const newEndTime = format(eventInfo.newEventInfo.endDate, "HH:mm");
     const newDate = format(eventInfo.newEventInfo.startDate, "MM/dd");
 
-    return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n
+    return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
     → ${eventInfo.newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
   });
   const messageTitle = "以下の予定が変更されました。\n";
