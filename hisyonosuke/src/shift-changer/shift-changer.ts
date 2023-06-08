@@ -206,6 +206,12 @@ export const registration = (operationType: OperationType, userEmail: string, sp
   shiftInfos.forEach((shiftInfo) => {
     registerEvent(shiftInfo, userEmail, slackMemberProfiles);
   });
+
+  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
+  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+
+  const messageToNotify = createRegistrationMessage(registrationInfos);
+  postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
 };
 
 const getShiftInfos = (operationType: OperationType, spreadsheetUrl: string) => {
@@ -449,4 +455,65 @@ const modifyEvent = (eventInfo: any[], calendar: GoogleAppsScript.Calendar.Calen
   event.setTime(newStartDate, newEndDate);
 
   event.setTitle(newTitle);
+};
+
+const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: string, messageToNotify: string) => {
+  console.log("slackChannelToPost", slackChannelToPost);
+  client.chat.postMessage({
+    channel: slackChannelToPost,
+    text: messageToNotify,
+  });
+};
+
+// 一個にまとめたい
+const createRegistrationMessage = (registrationInfos: { title: string; startDate: Date; endDate: Date }[]): string => {
+  const messages = registrationInfos.map((registrationInfo) => {
+    const startTime = format(registrationInfo.startDate, "HH:mm");
+    const endTime = format(registrationInfo.endDate, "HH:mm");
+    const date = format(registrationInfo.startDate, "MM/dd");
+    return `${registrationInfo.title}: ${date} ${startTime}~${endTime}`;
+  });
+  const messageTitle = "以下の予定が追加されました。\n";
+  return messageTitle + messages.join("\n");
+};
+
+const createDeletionMessage = (selectedEventInfos: { title: string; startDate: Date; endDate: Date }[]): string => {
+  const messages = selectedEventInfos.map((eventInfo) => {
+    const startTime = format(eventInfo.startDate, "HH:mm");
+    const endTime = format(eventInfo.endDate, "HH:mm");
+    const date = format(eventInfo.startDate, "MM/dd");
+    return `${eventInfo.title}: ${date} ${startTime}~${endTime}`;
+  });
+  const messageTitle = "以下の予定が削除されました。\n";
+  return messageTitle + messages.join("\n");
+};
+
+const createModificationMessage = (
+  selectedEventInfos: {
+    previousEventInfo: {
+      title: string;
+      startDate: Date;
+      endDate: Date;
+    };
+    newEventInfo: {
+      title: string;
+      startDate: Date;
+      endDate: Date;
+    };
+  }[]
+): string => {
+  const messages = selectedEventInfos.map((eventInfo) => {
+    const startTime = format(eventInfo.previousEventInfo.startDate, "HH:mm");
+    const endTime = format(eventInfo.previousEventInfo.endDate, "HH:mm");
+    const date = format(eventInfo.previousEventInfo.startDate, "MM/dd");
+
+    const newStartTime = format(eventInfo.newEventInfo.startDate, "HH:mm");
+    const newEndTime = format(eventInfo.newEventInfo.endDate, "HH:mm");
+    const newDate = format(eventInfo.newEventInfo.startDate, "MM/dd");
+
+    return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n
+    → ${eventInfo.newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
+  });
+  const messageTitle = "以下の予定が変更されました。\n";
+  return messageTitle + messages.join("\n");
 };
