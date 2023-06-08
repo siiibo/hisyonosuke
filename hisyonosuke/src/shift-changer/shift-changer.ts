@@ -105,7 +105,7 @@ export const insertModificationAndDeletionSheet = () => {
   const rule3 = SpreadsheetApp.newDataValidation()
     .requireFormulaSatisfied("=ISDATE(F6)")
     .setAllowInvalid(false)
-    .setHelpText('時刻を"◯◯:◯◯"の形式で入力してください。')
+    .setHelpText('時刻を"◯◯:◯◯"の形式で入力してください。\n【例】 9:00')
     .build();
   cells3.setDataValidation(rule3);
   const cells4 = sheet.getRange("J6:J1000");
