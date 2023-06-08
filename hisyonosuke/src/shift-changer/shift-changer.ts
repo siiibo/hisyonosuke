@@ -1,13 +1,7 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, addWeeks } from "date-fns";
-import { calendarFormat } from "moment";
 
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
-// export const init = () => {
-//   // const spreadsheet = getSpreadsheet();
-//   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-//   ScriptApp.newTrigger(onOpen.name).forSpreadsheet(spreadsheet).onOpen().create();
-// };
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -129,14 +123,6 @@ export const insertModificationAndDeletionSheet = () => {
     .build();
   cells5.setDataValidation(rule5);
 
-  // const cells6 = sheet.getRange("E6:J991");
-  // const rule6 = SpreadsheetApp.newDataValidation()
-  //   .requireFormulaSatisfied("=IF(COUNTA(E6:J6)>0, K6=FALSE )")
-  //   .setAllowInvalid(false)
-  //   .setHelpText("変更後の予定の記入と、削除対象の選択を同時に行うことはできません。")
-  //   .build();
-  // cells6.setDataValidation(rule6);
-
   // 列幅の設定
   sheet.setColumnWidth(1, 370);
 };
@@ -203,8 +189,18 @@ export const registration = (operationType: OperationType, userEmail: string, sp
   const client = getSlackClient(slackAccessToken);
   const slackMemberProfiles = getSlackMemberProfiles(client);
 
-  shiftInfos.forEach((shiftInfo) => {
-    registerEvent(shiftInfo, userEmail, slackMemberProfiles);
+  const registrationInfos = shiftInfos.map((shiftInfo) => {
+    const date = format(shiftInfo[0], "yyyy-MM-dd");
+    const startTime = format(shiftInfo[1], "HH:mm");
+    const endTime = format(shiftInfo[2], "HH:mm");
+    const startDate = new Date(`${date} ${startTime}`);
+    const endDate = new Date(`${date} ${endTime}`);
+    const title = createTitleFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
+    return { title: title, startDate: startDate, endDate: endDate };
+  });
+
+  registrationInfos.forEach((registrationInfo) => {
+    registerEvent(registrationInfo, userEmail);
   });
 
   const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
@@ -298,46 +294,33 @@ const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleA
   return sheet;
 };
 
-const getCalendarInfoFromShiftInfo = (
+const createTitleFromShiftInfo = (
   shiftInfo: any[],
   userEmail: string,
   slackMemberProfiles: {
     name: string;
     email: string;
   }[]
-): { title: string; startDate: Date; endDate: Date } => {
+): string => {
   const name = getNameFromEmail(userEmail, slackMemberProfiles);
   const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
   const job = getJob(nameRegex);
 
-  const date = format(shiftInfo[0], "yyyy-MM-dd");
-  const startTime = format(shiftInfo[1], "HH:mm");
-  const endTime = format(shiftInfo[2], "HH:mm");
   const workingStyle = shiftInfo[5];
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
 
   if (shiftInfo[3] === "" || shiftInfo[4] === "") {
     const title = `【${workingStyle}】${job}: ${name}さん`;
-    return { title: title, startDate: startDate, endDate: endDate };
+    return title;
   } else {
     const restStartTime = format(shiftInfo[3], "HH:mm");
 
     const restEndTime = format(shiftInfo[4], "HH:mm");
 
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
-    return { title: title, startDate: startDate, endDate: endDate };
+    return title;
   }
 };
-const registerEvent = (
-  shiftInfo: any[],
-  userEmail: string,
-  slackMemberProfiles: {
-    name: string;
-    email: string;
-  }[]
-) => {
-  const registrationInfo = getCalendarInfoFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
+const registerEvent = (registrationInfo: { title: string; startDate: Date; endDate: Date }, userEmail: string) => {
   const title = registrationInfo.title;
   const startDate = registrationInfo.startDate;
   const endDate = registrationInfo.endDate;
@@ -371,83 +354,116 @@ export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
     return [title, date, startTime, endTime];
   });
   sheet.getRange(6, 1, eventsInfo.length, eventsInfo[0].length).setValues(eventsInfo);
-  // sheet
-  //   .getRange(6, 1 + eventsInfo[0].length, eventsInfo.length, 1)
-  //   .insertCheckboxes()
-  //   .uncheck();
 };
 
 export const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
-  modification(operationType, userEmail, spreadsheetUrl);
-  deletion(operationType, userEmail, spreadsheetUrl);
+  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
+  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
+  const client = getSlackClient(slackAccessToken);
+
+  modification(operationType, userEmail, spreadsheetUrl, client);
+  deletion(operationType, userEmail, spreadsheetUrl, client);
 };
-const deletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+const deletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string, client: SlackClient) => {
   // getShiftInfo
   const sheet = getSheet(operationType, spreadsheetUrl);
   const lastRow = sheet.getLastRow();
   const dataRow = lastRow - 6 + 1;
   const dataColumn = sheet.getLastColumn();
-  // const lastColumn = sheet.getLastColumn();
 
-  const selectedEventsInfo = sheet
+  const selectedEventInfos = sheet
     .getRange(6, 1, dataRow, dataColumn)
     .getValues()
-    .filter((event) => event[10]);
-
+    .filter((event) => event[10])
+    .map((eventInfo) => {
+      const title = eventInfo[0];
+      const date = format(eventInfo[1], "yyyy-MM-dd");
+      const startTime = format(eventInfo[2], "HH:mm");
+      const endTime = format(eventInfo[3], "HH:mm");
+      const startDate = new Date(`${date} ${startTime}`);
+      const endDate = new Date(`${date} ${endTime}`);
+      return { title: title, startDate: startDate, endDate: endDate };
+    });
   const calendar = getCalendar();
-  selectedEventsInfo.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
+  selectedEventInfos.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
+
+  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
+  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+
+  const messageToNotify = createDeletionMessage(selectedEventInfos);
+  postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
 };
 
-const deleteEvent = (eventInfo: Date[], calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
-  const date = format(eventInfo[1], "yyyy-MM-dd");
-  const startTime = format(eventInfo[2], "HH:mm");
-  const endTime = format(eventInfo[3], "HH:mm");
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
-
-  const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
+const deleteEvent = (
+  eventInfo: { title: string; startDate: Date; endDate: Date },
+  calendar: GoogleAppsScript.Calendar.Calendar,
+  userEmail: string
+) => {
+  const event = calendar
+    .getEvents(eventInfo.startDate, eventInfo.endDate)
+    .find((event) => isEventGuest(event, userEmail));
   if (event === undefined) return;
   event.deleteEvent();
 };
 
-const modification = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+const modification = (operationType: OperationType, userEmail: string, spreadsheetUrl: string, client: SlackClient) => {
+  const slackMemberProfiles = getSlackMemberProfiles(client);
   const sheet = getSheet(operationType, spreadsheetUrl);
   const lastRowNum = sheet.getLastRow();
   const selectedEventInfos = sheet
     .getRange(6, 1, lastRowNum - 5, 12)
     .getValues()
-    .filter((event) => event[4]);
+    .filter((event) => event[4])
+    .map((eventInfo) => {
+      const previousEventInfo = eventInfo.slice(0, 4);
+      const title = previousEventInfo[0];
+      const date = format(previousEventInfo[1], "yyyy-MM-dd");
+      const startTime = format(previousEventInfo[2], "HH:mm");
+      const endTime = format(previousEventInfo[3], "HH:mm");
+      const startDate = new Date(`${date} ${startTime}`);
+      const endDate = new Date(`${date} ${endTime}`);
+      const newEventInfo = eventInfo.slice(4, 10);
+      const newTitle = createTitleFromShiftInfo(newEventInfo, userEmail, slackMemberProfiles);
+      const newDate = format(newEventInfo[0], "yyyy-MM-dd");
+      const newStartTime = format(newEventInfo[1], "HH:mm");
+      const newEndTime = format(newEventInfo[2], "HH:mm");
+      const newStartDate = new Date(`${newDate} ${newStartTime}`);
+      const newEndDate = new Date(`${newDate} ${newEndTime}`);
+      return {
+        previousEventInfo: { title: title, startDate: startDate, endDate: endDate },
+        newEventInfo: { title: newTitle, startDate: newStartDate, endDate: newEndDate },
+      };
+    });
 
-  const newEventInfos = getShiftInfos(operationType, spreadsheetUrl);
-  if (newEventInfos === undefined) return;
   const calendar = getCalendar();
 
   console.log("selectedEventInfos", selectedEventInfos);
   selectedEventInfos.forEach((eventInfo) => modifyEvent(eventInfo, calendar, userEmail));
+  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
+  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+
+  const messageToNotify = createModificationMessage(selectedEventInfos);
+  postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
 };
 
-const modifyEvent = (eventInfo: any[], calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
+const modifyEvent = (
+  eventInfo: {
+    previousEventInfo: { title: string; startDate: Date; endDate: Date };
+    newEventInfo: { title: string; startDate: Date; endDate: Date };
+  },
+  calendar: GoogleAppsScript.Calendar.Calendar,
+  userEmail: string
+) => {
   console.log("eventInfo", eventInfo);
-  // Emailから名前を取得
-  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
-  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
-  const client = getSlackClient(slackAccessToken);
-  const slackMemberProfiles = getSlackMemberProfiles(client);
 
   // getPreviousEventInfo
-  const previousEventInfo = eventInfo.slice(0, 4);
-  const date = format(previousEventInfo[1], "yyyy-MM-dd");
-  const startTime = format(previousEventInfo[2], "HH:mm");
-  const endTime = format(previousEventInfo[3], "HH:mm");
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
+  const startDate = eventInfo.previousEventInfo.startDate;
+  const endDate = eventInfo.previousEventInfo.endDate;
 
   // getNewEventInfo
-  const newEventInfo = eventInfo.slice(4, 10);
-  const newCalendarInfo = getCalendarInfoFromShiftInfo(newEventInfo, userEmail, slackMemberProfiles);
-  const newTitle = newCalendarInfo.title;
-  const newStartDate = newCalendarInfo.startDate;
-  const newEndDate = newCalendarInfo.endDate;
+  const newTitle = eventInfo.newEventInfo.title;
+  const newStartDate = eventInfo.newEventInfo.startDate;
+  const newEndDate = eventInfo.newEventInfo.endDate;
 
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
   console.log("event", event);
