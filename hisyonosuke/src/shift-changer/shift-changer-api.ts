@@ -2,7 +2,28 @@ import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, addWeeks } from "date-fns";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 
-export const registration = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+export const shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
+  const operationType = e.parameter.operationType;
+  const userEmail = e.parameter.userEmail;
+  const spreadsheetUrl = e.parameter.spreadsheetUrl;
+  switch (operationType) {
+    case "registration": {
+      registration(operationType, userEmail, spreadsheetUrl);
+      break;
+    }
+    case "modificationAndDeletion": {
+      modificationAndDeletion(operationType, userEmail, spreadsheetUrl);
+      break;
+    }
+    case "showEvents": {
+      showEvents(userEmail, spreadsheetUrl);
+      break;
+    }
+  }
+  return;
+};
+
+const registration = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   const shiftInfos = getShiftInfos(operationType, spreadsheetUrl);
   if (shiftInfos === undefined) return;
 
@@ -155,7 +176,7 @@ const isEventGuest = (event: GoogleAppsScript.Calendar.CalendarEvent, email: str
   return guestEmails.indexOf(email) !== -1;
 };
 
-export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
+const showEvents = (userEmail: string, spreadsheetUrl: string) => {
   const operationType = "modificationAndDeletion";
   const sheet = getSheet(operationType, spreadsheetUrl);
 
@@ -182,7 +203,7 @@ export const showEvents = (userEmail: string, spreadsheetUrl: string) => {
   sheet.getRange(6, 1, eventsInfo.length, eventsInfo[0].length).setValues(eventsInfo);
 };
 
-export const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
+const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
   const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
   if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
   const client = getSlackClient(slackAccessToken);
