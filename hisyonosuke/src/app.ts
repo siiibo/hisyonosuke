@@ -138,12 +138,6 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
   return false;
 };
 
-const isShiftChange = (e: GoogleAppsScript.Events.DoPost): boolean => {
-  if (e.parameter.command) return e.parameter.command === "/bot-test";
-  else if (isAction(e) || isViewAction(e)) return e.parameter.view.external_id === "shift-changer";
-  return false;
-};
-
 export const getTypeAndCallbackId = (e: GoogleAppsScript.Events.DoPost): { type: string; callback_id: string } => {
   // FIXME: この関数は使わない方向に修正していく
   // 詳細は https://github.com/siiibo/hisyonosuke/pull/1 参照
