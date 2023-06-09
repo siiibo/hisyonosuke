@@ -13,7 +13,7 @@ import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
 import { initAttendanceManager } from "./attendance-manager/attendanceManager";
 import { init as initPartTimerShift } from "./part-timer-shift/notify";
-import { registration, modificationAndDeletion, showEvents } from "./shift-changer/shift-changer";
+import { registration, modificationAndDeletion, showEvents } from "./shift-changer/shift-changer-api";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
