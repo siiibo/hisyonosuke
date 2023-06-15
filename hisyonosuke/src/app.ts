@@ -13,7 +13,7 @@ import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
 import { initAttendanceManager } from "./attendance-manager/attendanceManager";
 import { init as initPartTimerShift } from "./part-timer-shift/notify";
-import { shiftChanger } from "./shift-changer/shift-changer-api";
+import { _shiftChanger } from "./shift-changer/shift-changer-api";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -63,7 +63,8 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   }
 
   if (e.parameter.external_id === "shift-changer") {
-    shiftChanger(e);
+    const response = _shiftChanger(e);
+    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
 
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある

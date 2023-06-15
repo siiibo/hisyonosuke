@@ -1,4 +1,7 @@
 import { format } from "date-fns";
+import { GasWebClient as SlackClient } from "@hi-se/web-api";
+
+type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -126,11 +129,29 @@ export const insertModificationAndDeletionSheet = () => {
 export const callRegistration = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
+  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
+  const client = getSlackClient(slackAccessToken);
+  const slackMemberProfiles = getSlackMemberProfiles(client);
+  const operationType = "registration";
+
+  const shiftInfos = getShiftInfos(operationType, spreadsheetUrl);
+  if (shiftInfos === undefined) return;
+
+  const registrationInfos = shiftInfos.map((shiftInfo) => {
+    const date = format(shiftInfo[0], "yyyy-MM-dd");
+    const startTime = format(shiftInfo[1], "HH:mm");
+    const endTime = format(shiftInfo[2], "HH:mm");
+    const title = createTitleFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
+    return { title: title, date: date, startTime: startTime, endTime: endTime };
+  });
+
   const payload = {
     external_id: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
+    registrationInfos: JSON.stringify(registrationInfos),
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -139,6 +160,11 @@ export const callRegistration = () => {
   const url = PropertiesService.getScriptProperties().getProperty("API_URL");
   if (!url) throw new Error("API_URL is not defined");
   UrlFetchApp.fetch(url, options);
+
+  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
+  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+  const messageToNotify = createRegistrationMessage(registrationInfos);
+  postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
 };
 
 export const callModificationAndDeletion = () => {
@@ -175,4 +201,129 @@ export const callShowEvents = () => {
   const url = PropertiesService.getScriptProperties().getProperty("API_URL");
   if (!url) throw new Error("API_URL is not defined");
   UrlFetchApp.fetch(url, options);
+};
+
+const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
+  const today = format(new Date(), "yyyy-MM-dd");
+  const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl)
+    .getSheets()
+    .find((sheet) => sheet.getDeveloperMetadata()[0].getKey() === `${today}-${operationType}`);
+
+  if (!sheet) throw new Error("SHEET is not defined");
+
+  return sheet;
+};
+
+const getShiftInfos = (operationType: OperationType, spreadsheetUrl: string) => {
+  switch (operationType) {
+    case "registration": {
+      const sheet = getSheet(operationType, spreadsheetUrl);
+      const lastRowNum = sheet.getLastRow();
+      const shiftInfos = sheet.getRange(2, 1, lastRowNum - 1, 6).getValues();
+      return shiftInfos;
+    }
+
+    case "modificationAndDeletion": {
+      const sheet = getSheet(operationType, spreadsheetUrl);
+      const lastRowNum = sheet.getLastRow();
+      const shiftInfos = sheet.getRange(6, 5, lastRowNum - 5, 6).getValues();
+      return shiftInfos;
+    }
+  }
+};
+
+const createTitleFromShiftInfo = (
+  shiftInfo: any[],
+  userEmail: string,
+  slackMemberProfiles: {
+    name: string;
+    email: string;
+  }[]
+): string => {
+  const name = getNameFromEmail(userEmail, slackMemberProfiles);
+  const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
+  const job = getJob(nameRegex);
+
+  const workingStyle = shiftInfo[5];
+
+  if (shiftInfo[3] === "" || shiftInfo[4] === "") {
+    const title = `【${workingStyle}】${job}: ${name}さん`;
+    return title;
+  } else {
+    const restStartTime = format(shiftInfo[3], "HH:mm");
+
+    const restEndTime = format(shiftInfo[4], "HH:mm");
+
+    const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
+    return title;
+  }
+};
+
+const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; email: string }[]): string => {
+  const slackMember = slackMemberProfiles.find((slackMemberProfile) => slackMemberProfile.email === email);
+  if (!slackMember) throw new Error("The email is non-slack member");
+  return slackMember.name;
+};
+
+const getSlackMemberProfiles = (client: SlackClient): { name: string; email: string }[] => {
+  const response = client.users.list();
+  const slackMembers = response.members;
+  if (!slackMembers) throw new Error("SLACK_MEMBERS is not defined");
+
+  const siiiboSlackMembers = slackMembers.filter(
+    (slackMember) =>
+      !slackMember.deleted &&
+      !slackMember.is_bot &&
+      slackMember.id !== "USLACKBOT" &&
+      slackMember.profile?.email?.match("siiibo.com")
+  );
+
+  const slackMemberProfiles = siiiboSlackMembers
+    .map((slackMember) => {
+      return {
+        name: slackMember.profile?.real_name,
+        email: slackMember.profile?.email,
+      };
+    })
+    .filter((s): s is { name: string; email: string } => s.name !== "" || s.email !== "");
+  return slackMemberProfiles;
+};
+
+const getSlackClient = (slackToken: string): SlackClient => {
+  return new SlackClient(slackToken);
+};
+
+const getJob = (nameRegex: RegExp): string | undefined => {
+  // 人対職種データベース
+  const spreadSheetUrl = "https://docs.google.com/spreadsheets/d/1g-n_RL7Rou8chG3n_GOyieBbtPTl6eTkDsGQLRWXKbI/edit";
+  const sheet = SpreadsheetApp.openByUrl(spreadSheetUrl).getSheetByName("シート1");
+  if (!sheet) throw new Error("SHEET is not defined");
+  const lastRowNum = sheet.getLastRow();
+  const jobInfos = sheet.getRange(1, 1, lastRowNum, 2).getValues();
+  const jobInfo = jobInfos.find((jobInfo) => jobInfo[1].match(nameRegex));
+  if (jobInfo === undefined) return;
+
+  const job = jobInfo[0];
+  return job;
+};
+
+const createRegistrationMessage = (
+  registrationInfos: { title: string; date: string; startTime: string; endTime: string }[]
+): string => {
+  const messages = registrationInfos.map((registrationInfo) => {
+    const startTime = registrationInfo.startTime;
+    const endTime = registrationInfo.endTime;
+    const date = format(new Date(registrationInfo.date), "MM/dd");
+    return `${registrationInfo.title}: ${date} ${startTime}~${endTime}`;
+  });
+  const messageTitle = "以下の予定が追加されました。\n";
+  return messageTitle + messages.join("\n");
+};
+
+const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: string, messageToNotify: string) => {
+  console.log("slackChannelToPost", slackChannelToPost);
+  client.chat.postMessage({
+    channel: slackChannelToPost,
+    text: messageToNotify,
+  });
 };

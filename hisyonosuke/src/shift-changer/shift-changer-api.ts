@@ -380,3 +380,55 @@ const createModificationMessage = (
   const messageTitle = "以下の予定が変更されました。\n";
   return messageTitle + messages.join("\n");
 };
+
+export const _shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
+  const operationType = e.parameter.operationType;
+  const userEmail = e.parameter.userEmail;
+  const spreadsheetUrl = e.parameter.spreadsheetUrl;
+  const registrationInfos = JSON.parse(e.parameter.registrationInfos);
+  switch (operationType) {
+    case "registration": {
+      _registration(userEmail, registrationInfos);
+      break;
+    }
+    case "modificationAndDeletion": {
+      modificationAndDeletion(operationType, userEmail, spreadsheetUrl);
+      break;
+    }
+    case "showEvents": {
+      showEvents(userEmail, spreadsheetUrl);
+      break;
+    }
+  }
+  return;
+};
+
+const _registration = (
+  userEmail: string,
+  registrationInfos: {
+    title: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+  }[]
+) => {
+  registrationInfos.forEach((registrationInfo) => {
+    _registerEvent(registrationInfo, userEmail);
+  });
+};
+
+const _registerEvent = (
+  registrationInfo: { title: string; date: string; startTime: string; endTime: string },
+  userEmail: string
+) => {
+  const title = registrationInfo.title;
+  const date = registrationInfo.date;
+  const startTime = registrationInfo.startTime;
+  const endTime = registrationInfo.endTime;
+  const calendar = getCalendar();
+
+  const startDate = new Date(`${date} ${startTime}`);
+  const endDate = new Date(`${date} ${endTime}`);
+
+  calendar.createEvent(title, startDate, endDate, { guests: userEmail });
+};
