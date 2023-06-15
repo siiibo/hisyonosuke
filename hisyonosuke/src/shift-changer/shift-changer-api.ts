@@ -432,3 +432,24 @@ const _registerEvent = (
 
   calendar.createEvent(title, startDate, endDate, { guests: userEmail });
 };
+
+const _showEvents = (
+  userEmail: string,
+  startDate: Date
+): { title: string; date: string; startTime: string; endTime: string }[] | undefined => {
+  const endDate = addWeeks(startDate, 1);
+  const calendar = getCalendar();
+  const events = calendar.getEvents(startDate, endDate).filter((event) => isEventGuest(event, userEmail));
+  if (events.length === 0) {
+    return;
+  }
+  const eventInfos = events.map((event) => {
+    const title = event.getTitle();
+    const date = Utilities.formatDate(event.getStartTime(), "JST", "MM/dd");
+    const startTime = Utilities.formatDate(event.getStartTime(), "JST", "HH:mm");
+    const endTime = Utilities.formatDate(event.getEndTime(), "JST", "HH:mm");
+
+    return { title: title, date: date, startTime: startTime, endTime: endTime };
+  });
+  return eventInfos;
+};
