@@ -455,6 +455,67 @@ const _showEvents = (
   return eventInfos;
 };
 
+const _modification = (eventInfosToModify: {
+  previousEventInfo: {
+      title: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+  };
+  newEventInfo: {
+      title: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+  };
+}[], userEmail: string) => {
+  const calendar = getCalendar();
+  eventInfosToModify.forEach((eventInfo) => _modifyEvent(eventInfo, calendar, userEmail));
+
+}
+
+const _modifyEvent = (
+  eventInfo: {
+    previousEventInfo: {
+      title: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+  };
+  newEventInfo: {
+      title: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+  };  },
+  calendar: GoogleAppsScript.Calendar.Calendar,
+  userEmail: string
+) => {
+
+  // getPreviousEventInfo
+  const date = eventInfo.previousEventInfo.date;
+  const startTime = eventInfo.previousEventInfo.startTime;
+  const endTime = eventInfo.previousEventInfo.endTime;
+  const startDate = new Date(`${date} ${startTime}`);
+  const endDate = new Date(`${date} ${endTime}`);
+
+  // getNewEventInfo
+  const newTitle = eventInfo.newEventInfo.title;
+
+  const newDate = eventInfo.newEventInfo.date;
+  const newStartTime = eventInfo.newEventInfo.startTime;
+  const newEndTime = eventInfo.newEventInfo.endTime;
+  const newStartDate = new Date(`${newDate} ${newStartTime}`);
+  const newEndDate = new Date(`${newDate} ${newEndTime}`);
+
+
+  const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
+  if (event === undefined) return;
+  event.setTime(newStartDate, newEndDate);
+
+  event.setTitle(newTitle);
+};
+
 const _deletion = (eventInfosToDelete: {
   title: string;
   date: string; 
