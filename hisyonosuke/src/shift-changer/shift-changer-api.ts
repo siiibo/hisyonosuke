@@ -454,3 +454,32 @@ const _showEvents = (
   });
   return eventInfos;
 };
+
+const _deletion = (eventInfosToDelete: {
+  title: string;
+  date: string; 
+  startTime: string; 
+  endTime: string;
+}[], userEmail: string) => {
+  const calendar = getCalendar();
+  eventInfosToDelete.forEach((eventInfo) => _deleteEvent(eventInfo, calendar, userEmail));
+
+}
+
+const _deleteEvent = (
+  eventInfo: { title: string; date: string; startTime: string; endTime: string; },
+  calendar: GoogleAppsScript.Calendar.Calendar,
+  userEmail: string
+) => {
+  const date = eventInfo.date;
+  const startTime = eventInfo.startTime;
+  const endTime = eventInfo.endTime;
+  const startDate = new Date(`${date} ${startTime}`);
+  const endDate = new Date(`${date} ${endTime}`);
+
+  const event = calendar
+    .getEvents(startDate, endDate)
+    .find((event) => isEventGuest(event, userEmail));
+  if (event === undefined) return;
+  event.deleteEvent();
+};
