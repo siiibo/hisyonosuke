@@ -268,6 +268,11 @@ export const callShowEvents = () => {
   const sheet = getSheet(operationType, spreadsheetUrl);
   const startDate = sheet.getRange("A2").getValue();
 
+  const lastRow = sheet.getLastRow();
+  const dataRow = lastRow - 6 + 1;
+  const dataColumn = sheet.getLastColumn();
+  sheet.getRange(6, 1, dataRow, dataColumn).clearContent();
+
   const payload = {
     external_id: "shift-changer",
     operationType: "showEvents",
@@ -289,6 +294,7 @@ export const callShowEvents = () => {
   const moldedEventInfos = eventInfos.map((eventInfo) => {
     return [eventInfo.title, eventInfo.date, eventInfo.startTime, eventInfo.endTime];
   });
+  
   sheet.getRange(6, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
 };
 
