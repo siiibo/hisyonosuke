@@ -167,14 +167,82 @@ export const callRegistration = () => {
   postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
 };
 
+const getEventInfosToModify = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEmail: string, slackMemberProfiles: {
+  name: string;
+  email: string;
+}[]): {
+  previousEventInfo: { title: string, date: string, startTime: string, endTime: string },
+  newEventInfo: { title: string, date: string, startTime: string, endTime: string },
+}[] => {
+  const lastRowNum = sheet.getLastRow();
+  const eventInfosToModify = sheet
+    .getRange(6, 1, lastRowNum - 5, 12)
+    .getValues()
+    .filter((event) => event[4])
+    .map((eventInfo) => {
+      const previousEventInfo = eventInfo.slice(0, 4);
+      const title = previousEventInfo[0];
+      const date = format(previousEventInfo[1], "yyyy-MM-dd");
+      const startTime = format(previousEventInfo[2], "HH:mm");
+      const endTime = format(previousEventInfo[3], "HH:mm");
+      const newEventInfo = eventInfo.slice(4, 10);
+      const newTitle = createTitleFromShiftInfo(newEventInfo, userEmail, slackMemberProfiles);
+      const newDate = format(newEventInfo[0], "yyyy-MM-dd");
+      const newStartTime = format(newEventInfo[1], "HH:mm");
+      const newEndTime = format(newEventInfo[2], "HH:mm");
+      return {
+        previousEventInfo: { title: title, date: date, startTime: startTime, endTime: endTime },
+        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+      };
+    });
+  
+  return eventInfosToModify
+}
+
+const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}[] => {
+  const lastRow = sheet.getLastRow();
+  const dataRow = lastRow - 6 + 1;
+  const dataColumn = sheet.getLastColumn();
+  
+  const eventInfosToDelete = sheet
+    .getRange(6, 1, dataRow, dataColumn)
+    .getValues()
+    .filter((event) => event[10])
+    .map((eventInfo) => {
+      const title: string = eventInfo[0];
+      const date = format(eventInfo[1], "yyyy-MM-dd");
+      const startTime = format(eventInfo[2], "HH:mm");
+      const endTime = format(eventInfo[3], "HH:mm");
+      return { title: title, date: date, startTime: startTime, endTime: endTime };
+    });
+
+  return eventInfosToDelete;
+}
 export const callModificationAndDeletion = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
+  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
+  const client = getSlackClient(slackAccessToken);
+  const slackMemberProfiles = getSlackMemberProfiles(client);
+  const operationType = "modificationAndDeletion"
+  const sheet = getSheet(operationType, spreadsheetUrl);
+  const eventInfosToModify = getEventInfosToModify(sheet, userEmail, slackMemberProfiles)
+  const eventInfosToDelete = getEventInfosToDelete(sheet)
+
   const payload = {
     external_id: "shift-changer",
     operationType: "modificationAndDeletion",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
+    eventInfosToModify: JSON.stringify(eventInfosToModify),
+    eventInfosToDelete: JSON.stringify(eventInfosToDelete)
+
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -183,6 +251,16 @@ export const callModificationAndDeletion = () => {
   const url = PropertiesService.getScriptProperties().getProperty("API_URL");
   if (!url) throw new Error("API_URL is not defined");
   UrlFetchApp.fetch(url, options);
+
+  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
+  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+
+  const modificationMessageToNotify = createModificationMessage(eventInfosToModify);
+  postMessageToSlackChannel(client, slackChannelToPost, modificationMessageToNotify);
+
+  const deletionMessageToNotify = createDeletionMessage(eventInfosToDelete);
+  postMessageToSlackChannel(client, slackChannelToPost, deletionMessageToNotify);
+
 };
 
 export const callShowEvents = () => {
@@ -331,6 +409,39 @@ const createRegistrationMessage = (
     return `${registrationInfo.title}: ${date} ${startTime}~${endTime}`;
   });
   const messageTitle = "以下の予定が追加されました。\n";
+  return messageTitle + messages.join("\n");
+};
+
+const createDeletionMessage = (eventInfosToDelete: { title: string; date: string, startTime: string; endTime: string }[]): string => {
+  const messages = eventInfosToDelete.map((eventInfo) => {
+    const startTime = eventInfo.startTime;
+    const endTime = eventInfo.endTime;
+    const date = eventInfo.date;
+    return `${eventInfo.title}: ${date} ${startTime}~${endTime}`;
+  });
+  const messageTitle = "以下の予定が削除されました。\n";
+  return messageTitle + messages.join("\n");
+};
+
+const createModificationMessage = (
+  eventInfosToModify: {
+    previousEventInfo: { title: string, date: string, startTime: string, endTime: string },
+    newEventInfo: { title: string, date: string, startTime: string, endTime: string },
+  }[]
+): string => {
+  const messages = eventInfosToModify.map((eventInfo) => {
+    const startTime = eventInfo.previousEventInfo.startTime;
+    const endTime = eventInfo.previousEventInfo.endTime;
+    const date = eventInfo.previousEventInfo.date;
+
+    const newStartTime = eventInfo.newEventInfo.startTime;
+    const newEndTime = eventInfo.newEventInfo.endTime;
+    const newDate = eventInfo.newEventInfo.date;
+
+    return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
+    → ${eventInfo.newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
+  });
+  const messageTitle = "以下の予定が変更されました。\n";
   return messageTitle + messages.join("\n");
 };
 
