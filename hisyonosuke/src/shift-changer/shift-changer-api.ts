@@ -392,7 +392,10 @@ export const _shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
       break;
     }
     case "modificationAndDeletion": {
-      modificationAndDeletion(operationType, userEmail, spreadsheetUrl);
+      const eventInfosToModify = JSON.parse(e.parameter.eventInfosToModify)
+      const eventInfosToDelete = JSON.parse(e.parameter.eventInfosToDelete)      
+      _modification(eventInfosToModify, userEmail)
+      _deletion(eventInfosToDelete, userEmail)
       break;
     }
     case "showEvents": {
