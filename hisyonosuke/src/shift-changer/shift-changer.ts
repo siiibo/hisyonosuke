@@ -188,11 +188,16 @@ export const callModificationAndDeletion = () => {
 export const callShowEvents = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  const operationType = "modificationAndDeletion";
+  const sheet = getSheet(operationType, spreadsheetUrl);
+  const startDate = sheet.getRange("A2").getValue();
+
   const payload = {
     external_id: "shift-changer",
     operationType: "showEvents",
     userEmail: userEmail,
     spreadsheetUrl: spreadsheetUrl,
+    startDate: startDate,
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -200,7 +205,16 @@ export const callShowEvents = () => {
   };
   const url = PropertiesService.getScriptProperties().getProperty("API_URL");
   if (!url) throw new Error("API_URL is not defined");
-  UrlFetchApp.fetch(url, options);
+  const response = UrlFetchApp.fetch(url, options);
+  if (!response.getContentText()) return;
+
+  const eventInfos: { title: string; date: string; startTime: string; endTime: string }[] = JSON.parse(
+    response.getContentText()
+  );
+  const moldedEventInfos = eventInfos.map((eventInfo) => {
+    return [eventInfo.title, eventInfo.date, eventInfo.startTime, eventInfo.endTime];
+  });
+  sheet.getRange(6, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
 };
 
 const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
