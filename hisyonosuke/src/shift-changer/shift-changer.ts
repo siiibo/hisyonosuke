@@ -150,7 +150,6 @@ export const callRegistration = () => {
     external_id: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
-    spreadsheetUrl: spreadsheetUrl,
     registrationInfos: JSON.stringify(registrationInfos),
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
@@ -239,7 +238,6 @@ export const callModificationAndDeletion = () => {
     external_id: "shift-changer",
     operationType: "modificationAndDeletion",
     userEmail: userEmail,
-    spreadsheetUrl: spreadsheetUrl,
     eventInfosToModify: JSON.stringify(eventInfosToModify),
     eventInfosToDelete: JSON.stringify(eventInfosToDelete)
 
@@ -274,7 +272,6 @@ export const callShowEvents = () => {
     external_id: "shift-changer",
     operationType: "showEvents",
     userEmail: userEmail,
-    spreadsheetUrl: spreadsheetUrl,
     startDate: startDate,
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {

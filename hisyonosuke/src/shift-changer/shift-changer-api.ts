@@ -384,7 +384,6 @@ const createModificationMessage = (
 export const _shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
   const operationType = e.parameter.operationType;
   const userEmail = e.parameter.userEmail;
-  const spreadsheetUrl = e.parameter.spreadsheetUrl;
   switch (operationType) {
     case "registration": {
       const registrationInfos = JSON.parse(e.parameter.registrationInfos);
