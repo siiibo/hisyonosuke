@@ -396,8 +396,9 @@ export const _shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
       break;
     }
     case "showEvents": {
-      showEvents(userEmail, spreadsheetUrl);
-      break;
+      const startDate = new Date(e.parameter.startDate);
+      const eventInfos = _showEvents(userEmail, startDate);
+      return JSON.stringify(eventInfos);
     }
   }
   return;
