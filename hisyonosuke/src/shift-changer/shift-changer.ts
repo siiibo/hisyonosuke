@@ -254,10 +254,10 @@ export const callModificationAndDeletion = () => {
   if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
 
   const modificationMessageToNotify = createModificationMessage(eventInfosToModify);
-  postMessageToSlackChannel(client, slackChannelToPost, modificationMessageToNotify);
+  if (modificationMessageToNotify !== undefined) postMessageToSlackChannel(client, slackChannelToPost, modificationMessageToNotify);
 
   const deletionMessageToNotify = createDeletionMessage(eventInfosToDelete);
-  postMessageToSlackChannel(client, slackChannelToPost, deletionMessageToNotify);
+  if (deletionMessageToNotify !== undefined) postMessageToSlackChannel(client, slackChannelToPost, deletionMessageToNotify);
 
 };
 
@@ -415,13 +415,14 @@ const createRegistrationMessage = (
   return messageTitle + messages.join("\n");
 };
 
-const createDeletionMessage = (eventInfosToDelete: { title: string; date: string, startTime: string; endTime: string }[]): string => {
+const createDeletionMessage = (eventInfosToDelete: { title: string; date: string, startTime: string; endTime: string }[]): string | undefined => {
   const messages = eventInfosToDelete.map((eventInfo) => {
     const startTime = eventInfo.startTime;
     const endTime = eventInfo.endTime;
     const date = eventInfo.date;
     return `${eventInfo.title}: ${date} ${startTime}~${endTime}`;
   });
+  if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。\n";
   return messageTitle + messages.join("\n");
 };
@@ -431,7 +432,7 @@ const createModificationMessage = (
     previousEventInfo: { title: string, date: string, startTime: string, endTime: string },
     newEventInfo: { title: string, date: string, startTime: string, endTime: string },
   }[]
-): string => {
+): string | undefined=> {
   const messages = eventInfosToModify.map((eventInfo) => {
     const startTime = eventInfo.previousEventInfo.startTime;
     const endTime = eventInfo.previousEventInfo.endTime;
@@ -444,6 +445,7 @@ const createModificationMessage = (
     return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
     → ${eventInfo.newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
   });
+  if (messages.length == 0) return;
   const messageTitle = "以下の予定が変更されました。\n";
   return messageTitle + messages.join("\n");
 };
