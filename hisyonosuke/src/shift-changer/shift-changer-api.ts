@@ -193,14 +193,14 @@ const showEvents = (userEmail: string, spreadsheetUrl: string) => {
   const dataColumn = sheet.getLastColumn();
 
   sheet.getRange(6, 1, dataRow, dataColumn).clearContent();
-  const eventsInfo = events.map((event) => {
+  const eventInfos = events.map((event) => {
     const title = event.getTitle();
     const date = Utilities.formatDate(event.getStartTime(), "JST", "MM/dd");
     const startTime = Utilities.formatDate(event.getStartTime(), "JST", "HH:mm");
     const endTime = Utilities.formatDate(event.getEndTime(), "JST", "HH:mm");
     return [title, date, startTime, endTime];
   });
-  sheet.getRange(6, 1, eventsInfo.length, eventsInfo[0].length).setValues(eventsInfo);
+  sheet.getRange(6, 1, eventInfos.length, eventInfos[0].length).setValues(eventInfos);
 };
 
 const modificationAndDeletion = (operationType: OperationType, userEmail: string, spreadsheetUrl: string) => {
@@ -385,9 +385,9 @@ export const _shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
   const operationType = e.parameter.operationType;
   const userEmail = e.parameter.userEmail;
   const spreadsheetUrl = e.parameter.spreadsheetUrl;
-  const registrationInfos = JSON.parse(e.parameter.registrationInfos);
   switch (operationType) {
     case "registration": {
+      const registrationInfos = JSON.parse(e.parameter.registrationInfos);
       _registration(userEmail, registrationInfos);
       break;
     }
