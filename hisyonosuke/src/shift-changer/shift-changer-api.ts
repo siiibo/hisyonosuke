@@ -1,9 +1,9 @@
 import { addWeeks } from "date-fns";
+import { getConfig } from "./config"
 
 const getCalendar = () => {
-  const calendarId = PropertiesService.getScriptProperties().getProperty("CALENDAR_ID");
-  if (!calendarId) throw new Error("ID is not defined");
-  const calendar = CalendarApp.getCalendarById(calendarId);
+  const{ CALENDAR_ID } = getConfig()
+  const calendar = CalendarApp.getCalendarById(CALENDAR_ID);
   return calendar;
 };
 

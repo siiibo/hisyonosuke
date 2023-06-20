@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
+import { getConfig } from "./config"
 
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 
@@ -129,9 +130,8 @@ export const insertModificationAndDeletionSheet = () => {
 export const callRegistration = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
-  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
-  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
-  const client = getSlackClient(slackAccessToken);
+  const {SLACK_ACCESS_TOKEN} = getConfig()
+  const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
   const operationType = "registration";
 
@@ -156,14 +156,10 @@ export const callRegistration = () => {
     method: "post",
     payload: payload,
   };
-  const url = PropertiesService.getScriptProperties().getProperty("API_URL");
-  if (!url) throw new Error("API_URL is not defined");
-  UrlFetchApp.fetch(url, options);
-
-  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
-  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+  const {API_URL, SLACK_CHANNEL_TO_POST} = getConfig();
+  UrlFetchApp.fetch(API_URL, options);
   const messageToNotify = createRegistrationMessage(registrationInfos);
-  postMessageToSlackChannel(client, slackChannelToPost, messageToNotify);
+  postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify);
 };
 
 const getEventInfosToModify = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEmail: string, slackMemberProfiles: {
@@ -225,9 +221,8 @@ const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): {
 export const callModificationAndDeletion = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
-  const slackAccessToken = PropertiesService.getScriptProperties().getProperty("SLACK_ACCESS_TOKEN");
-  if (!slackAccessToken) throw new Error("SLACK_ACCESS_TOKEN is not defined");
-  const client = getSlackClient(slackAccessToken);
+  const {SLACK_ACCESS_TOKEN} = getConfig()
+  const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
   const operationType = "modificationAndDeletion"
   const sheet = getSheet(operationType, spreadsheetUrl);
@@ -246,18 +241,14 @@ export const callModificationAndDeletion = () => {
     method: "post",
     payload: payload,
   };
-  const url = PropertiesService.getScriptProperties().getProperty("API_URL");
-  if (!url) throw new Error("API_URL is not defined");
-  UrlFetchApp.fetch(url, options);
-
-  const slackChannelToPost = PropertiesService.getScriptProperties().getProperty("SLACK_CHANNEL_TO_POST");
-  if (!slackChannelToPost) throw new Error("SLACK_CHANNEL_TO_POST is not defined");
+  const {API_URL, SLACK_CHANNEL_TO_POST} = getConfig();
+  UrlFetchApp.fetch(API_URL, options);
 
   const modificationMessageToNotify = createModificationMessage(eventInfosToModify);
-  if (modificationMessageToNotify !== undefined) postMessageToSlackChannel(client, slackChannelToPost, modificationMessageToNotify);
+  if (modificationMessageToNotify !== undefined) postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify);
 
   const deletionMessageToNotify = createDeletionMessage(eventInfosToDelete);
-  if (deletionMessageToNotify !== undefined) postMessageToSlackChannel(client, slackChannelToPost, deletionMessageToNotify);
+  if (deletionMessageToNotify !== undefined) postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify);
 
 };
 
@@ -283,9 +274,8 @@ export const callShowEvents = () => {
     method: "post",
     payload: payload,
   };
-  const url = PropertiesService.getScriptProperties().getProperty("API_URL");
-  if (!url) throw new Error("API_URL is not defined");
-  const response = UrlFetchApp.fetch(url, options);
+  const {API_URL} = getConfig();
+  const response = UrlFetchApp.fetch(API_URL, options);
   if (!response.getContentText()) return;
 
   const eventInfos: { title: string; date: string; startTime: string; endTime: string }[] = JSON.parse(
