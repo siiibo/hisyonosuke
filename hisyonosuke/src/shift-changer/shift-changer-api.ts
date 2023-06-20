@@ -83,7 +83,7 @@ const showEvents = (
     const startTime = Utilities.formatDate(event.getStartTime(), "JST", "HH:mm");
     const endTime = Utilities.formatDate(event.getEndTime(), "JST", "HH:mm");
 
-    return { title: title, date: date, startTime: startTime, endTime: endTime };
+    return { title, date, startTime, endTime };
   });
   return eventInfos;
 };
