@@ -273,8 +273,8 @@ export const callShowEvents = () => {
   const eventInfos: { title: string; date: string; startTime: string; endTime: string }[] = JSON.parse(
     response.getContentText()
   );
-  const moldedEventInfos = eventInfos.map((eventInfo) => {
-    return [eventInfo.title, eventInfo.date, eventInfo.startTime, eventInfo.endTime];
+  const moldedEventInfos = eventInfos.map(({title, date, startTime, endTime}) => {
+    return [title, date, startTime, endTime];
   });
   
   sheet.getRange(6, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
@@ -386,22 +386,17 @@ const getJob = (nameRegex: RegExp): string | undefined => {
 const createRegistrationMessage = (
   registrationInfos: { title: string; date: string; startTime: string; endTime: string }[]
 ): string => {
-  const messages = registrationInfos.map((registrationInfo) => {
-    const startTime = registrationInfo.startTime;
-    const endTime = registrationInfo.endTime;
-    const date = format(new Date(registrationInfo.date), "MM/dd");
-    return `${registrationInfo.title}: ${date} ${startTime}~${endTime}`;
+  const messages = registrationInfos.map(({title, date, startTime, endTime}) => {
+    const formattedDate = format(new Date(date), "MM/dd");
+    return `${title}: ${formattedDate} ${startTime}~${endTime}`;
   });
   const messageTitle = "以下の予定が追加されました。\n";
   return messageTitle + messages.join("\n");
 };
 
 const createDeletionMessage = (eventInfosToDelete: { title: string; date: string, startTime: string; endTime: string }[]): string | undefined => {
-  const messages = eventInfosToDelete.map((eventInfo) => {
-    const startTime = eventInfo.startTime;
-    const endTime = eventInfo.endTime;
-    const date = eventInfo.date;
-    return `${eventInfo.title}: ${date} ${startTime}~${endTime}`;
+  const messages = eventInfosToDelete.map(({title, date, startTime, endTime}) => {
+    return `${title}: ${date} ${startTime}~${endTime}`;
   });
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。\n";
@@ -414,17 +409,17 @@ const createModificationMessage = (
     newEventInfo: { title: string, date: string, startTime: string, endTime: string },
   }[]
 ): string | undefined=> {
-  const messages = eventInfosToModify.map((eventInfo) => {
-    const startTime = eventInfo.previousEventInfo.startTime;
-    const endTime = eventInfo.previousEventInfo.endTime;
-    const date = eventInfo.previousEventInfo.date;
+  const messages = eventInfosToModify.map(({previousEventInfo, newEventInfo}) => {
+    const startTime = previousEventInfo.startTime;
+    const endTime = previousEventInfo.endTime;
+    const date = previousEventInfo.date;
 
-    const newStartTime = eventInfo.newEventInfo.startTime;
-    const newEndTime = eventInfo.newEventInfo.endTime;
-    const newDate = eventInfo.newEventInfo.date;
+    const newStartTime = newEventInfo.startTime;
+    const newEndTime = newEventInfo.endTime;
+    const newDate = newEventInfo.date;
 
-    return `${eventInfo.previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
-    → ${eventInfo.newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
+    return `${previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
+    → ${newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
   });
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が変更されました。\n";
