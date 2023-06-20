@@ -133,23 +133,16 @@ export const callRegistration = () => {
   const {SLACK_ACCESS_TOKEN} = getConfig()
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
-
-  const shiftInfos = getShiftInfos(spreadsheetUrl);
-  if (shiftInfos === undefined) return;
-
-  const registrationInfos = shiftInfos.map((shiftInfo) => {
-    const date = format(shiftInfo[0], "yyyy-MM-dd");
-    const startTime = format(shiftInfo[1], "HH:mm");
-    const endTime = format(shiftInfo[2], "HH:mm");
-    const title = createTitleFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
-    return { title: title, date: date, startTime: startTime, endTime: endTime };
-  });
+  
+  const operationType = "registration";
+  const sheet = getSheet(operationType, spreadsheetUrl);
+  const eventInfosToRegister = getEventInfosToRegister(sheet, userEmail, slackMemberProfiles)
 
   const payload = {
     external_id: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
-    registrationInfos: JSON.stringify(registrationInfos),
+    registrationInfos: JSON.stringify(eventInfosToRegister),
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -157,7 +150,7 @@ export const callRegistration = () => {
   };
   const {API_URL, SLACK_CHANNEL_TO_POST} = getConfig();
   UrlFetchApp.fetch(API_URL, options);
-  const messageToNotify = createRegistrationMessage(registrationInfos);
+  const messageToNotify = createRegistrationMessage(eventInfosToRegister);
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify);
 };
 
@@ -298,13 +291,22 @@ const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleA
   return sheet;
 };
 
-const getShiftInfos = (spreadsheetUrl: string) => {
-  const operationType = "registration";
-  const sheet = getSheet(operationType, spreadsheetUrl);
-  const lastRowNum = sheet.getLastRow();
-  const shiftInfos = sheet.getRange(2, 1, lastRowNum - 1, 6).getValues();
-  return shiftInfos;
-};
+const getEventInfosToRegister = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEmail: string, slackMemberProfiles: {
+  name: string;
+  email: string;
+}[]): {title: string, date: string, startTime: string, endTime: string}[] => {
+  const lastRow = sheet.getLastRow();
+  const dataRow = lastRow - 1
+  const dataColumn = sheet.getLastColumn();
+  const eventInfosToRegister = sheet.getRange(2, 1, dataRow, dataColumn).getValues().map((shiftInfo) => {
+    const date = format(shiftInfo[0], "yyyy-MM-dd");
+    const startTime = format(shiftInfo[1], "HH:mm");
+    const endTime = format(shiftInfo[2], "HH:mm");
+    const title = createTitleFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
+    return { title, date, startTime, endTime };
+  });
+  return eventInfosToRegister;
+}
 
 const createTitleFromShiftInfo = (
   shiftInfo: any[],
@@ -436,3 +438,4 @@ const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: stri
     text: messageToNotify,
   });
 };
+
