@@ -133,9 +133,8 @@ export const callRegistration = () => {
   const {SLACK_ACCESS_TOKEN} = getConfig()
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
-  const operationType = "registration";
 
-  const shiftInfos = getShiftInfos(operationType, spreadsheetUrl);
+  const shiftInfos = getShiftInfos(spreadsheetUrl);
   if (shiftInfos === undefined) return;
 
   const registrationInfos = shiftInfos.map((shiftInfo) => {
@@ -299,22 +298,12 @@ const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleA
   return sheet;
 };
 
-const getShiftInfos = (operationType: OperationType, spreadsheetUrl: string) => {
-  switch (operationType) {
-    case "registration": {
-      const sheet = getSheet(operationType, spreadsheetUrl);
-      const lastRowNum = sheet.getLastRow();
-      const shiftInfos = sheet.getRange(2, 1, lastRowNum - 1, 6).getValues();
-      return shiftInfos;
-    }
-
-    case "modificationAndDeletion": {
-      const sheet = getSheet(operationType, spreadsheetUrl);
-      const lastRowNum = sheet.getLastRow();
-      const shiftInfos = sheet.getRange(6, 5, lastRowNum - 5, 6).getValues();
-      return shiftInfos;
-    }
-  }
+const getShiftInfos = (spreadsheetUrl: string) => {
+  const operationType = "registration";
+  const sheet = getSheet(operationType, spreadsheetUrl);
+  const lastRowNum = sheet.getLastRow();
+  const shiftInfos = sheet.getRange(2, 1, lastRowNum - 1, 6).getValues();
+  return shiftInfos;
 };
 
 const createTitleFromShiftInfo = (
