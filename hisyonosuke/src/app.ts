@@ -193,28 +193,3 @@ const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) =
     text: `<#${event.channel.id}>が追加されました！`,
   });
 };
-
-const init = () => {
-  initProperties();
-  initAttendanceManager();
-};
-
-const initProperties = () => {
-  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
-  const rows = sheet.getDataRange().getValues();
-  const properties = {};
-  for (const row of rows.slice(1)) properties[row[0]] = row[1];
-
-  const scriptProperties = PropertiesService.getScriptProperties();
-
-  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
-  // scriptProperties.deleteAllProperties();
-
-  scriptProperties.setProperties(properties);
-};
-
-declare const global: any;
-global.doPost = doPost;
-global.init = init;
-global.notificator = notificator;
-global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
