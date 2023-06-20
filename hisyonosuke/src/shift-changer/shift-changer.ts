@@ -66,10 +66,10 @@ export const insertModificationAndDeletionSheet = () => {
   sheet.addDeveloperMetadata(`${today}-modificationAndDeletion`);
 
   // 内容の設定
-  const discription1 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
-  const discription2 = "【予定一覧】";
-  const discription3 = "【変更】変更後の予定を記入してください ";
-  const discription4 = "【削除】削除したい予定を選択してください";
+  const description1 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
+  const description2 = "【予定一覧】";
+  const description3 = "【変更】変更後の予定を記入してください ";
+  const description4 = "【削除】削除したい予定を選択してください";
 
   const header = [
     [
@@ -86,10 +86,10 @@ export const insertModificationAndDeletionSheet = () => {
       "削除対象",
     ],
   ];
-  sheet.getRange("A1").setValue(discription1).setFontWeight("bold");
-  sheet.getRange("A4").setValue(discription2).setFontWeight("bold");
-  sheet.getRange("E4").setValue(discription3).setFontWeight("bold");
-  sheet.getRange("K4").setValue(discription4).setFontWeight("bold");
+  sheet.getRange("A1").setValue(description1).setFontWeight("bold");
+  sheet.getRange("A4").setValue(description2).setFontWeight("bold");
+  sheet.getRange("E4").setValue(description3).setFontWeight("bold");
+  sheet.getRange("K4").setValue(description4).setFontWeight("bold");
   sheet.getRange(5, 1, 1, header[0].length).setValues(header).setFontWeight("bold");
 
   // 入力規則の設定
