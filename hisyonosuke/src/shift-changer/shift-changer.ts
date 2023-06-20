@@ -349,7 +349,7 @@ const getSlackMemberProfiles = (client: SlackClient): { name: string; email: str
       !slackMember.deleted &&
       !slackMember.is_bot &&
       slackMember.id !== "USLACKBOT" &&
-      slackMember.profile?.email?.match("siiibo.com")
+      slackMember.profile?.email?.includes("siiibo.com")
   );
 
   const slackMemberProfiles = siiiboSlackMembers
