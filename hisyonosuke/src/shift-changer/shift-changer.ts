@@ -178,7 +178,7 @@ const getEventInfosToModify = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEm
       const newStartTime = format(newEventInfo[1], "HH:mm");
       const newEndTime = format(newEventInfo[2], "HH:mm");
       return {
-        previousEventInfo: { title: title, date: date, startTime: startTime, endTime: endTime },
+        previousEventInfo: { title, date, startTime, endTime },
         newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
       };
     });
@@ -205,7 +205,7 @@ const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): {
       const date = format(eventInfo[1], "yyyy-MM-dd");
       const startTime = format(eventInfo[2], "HH:mm");
       const endTime = format(eventInfo[3], "HH:mm");
-      return { title: title, date: date, startTime: startTime, endTime: endTime };
+      return { title, date, startTime, endTime };
     });
 
   return eventInfosToDelete;
