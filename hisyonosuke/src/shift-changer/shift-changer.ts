@@ -342,9 +342,7 @@ const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; em
 };
 
 const getSlackMemberProfiles = (client: SlackClient): { name: string; email: string }[] => {
-  const response = client.users.list();
-  const slackMembers = response.members;
-  if (!slackMembers) throw new Error("SLACK_MEMBERS is not defined");
+  const slackMembers =  client.users.list().members ?? [];
 
   const siiiboSlackMembers = slackMembers.filter(
     (slackMember) =>
