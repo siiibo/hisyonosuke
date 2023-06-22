@@ -58,13 +58,10 @@ const registerEvent = (registrationInfo: EventInfo, userEmail: string) => {
   calendar.createEvent(title, startDate, endDate, { guests: userEmail });
 };
 
-const showEvents = (userEmail: string, startDate: Date): EventInfo[] | undefined => {
+const showEvents = (userEmail: string, startDate: Date): EventInfo[] => {
   const endDate = addWeeks(startDate, 1);
   const calendar = getCalendar();
   const events = calendar.getEvents(startDate, endDate).filter((event) => isEventGuest(event, userEmail));
-  if (events.length === 0) {
-    return;
-  }
   const eventInfos = events.map((event) => {
     const title = event.getTitle();
     const date = Utilities.formatDate(event.getStartTime(), "JST", "MM/dd");
