@@ -369,8 +369,8 @@ const getSlackClient = (slackToken: string): SlackClient => {
 
 const getJob = (nameRegex: RegExp): string | undefined => {
   // 人対職種データベース
-  const spreadSheetUrl = "https://docs.google.com/spreadsheets/d/1g-n_RL7Rou8chG3n_GOyieBbtPTl6eTkDsGQLRWXKbI/edit";
-  const sheet = SpreadsheetApp.openByUrl(spreadSheetUrl).getSheetByName("シート1");
+  const { JOB_SHEET_URL } = getConfig();
+  const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
   const lastRowNum = sheet.getLastRow();
   const jobInfos = sheet.getRange(1, 1, lastRowNum, 2).getValues();

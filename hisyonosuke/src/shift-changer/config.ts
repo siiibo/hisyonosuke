@@ -4,7 +4,7 @@ const ConfigSchema = z.object({
   API_URL: z.string(),
   CALENDAR_ID: z.string(), 
   SLACK_ACCESS_TOKEN: z.string(),
-  SLACK_CHANNEL_TO_POST: z.string()
+  JOB_SHEET_URL: z.string(),
 });
 
 export type Config = z.infer<typeof ConfigSchema>
