@@ -133,8 +133,8 @@ export const callRegistration = () => {
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
 
-  const operationType = "registration";
-  const sheet = getSheet(operationType, spreadsheetUrl);
+  const sheetType = "registration";
+  const sheet = getSheet(sheetType, spreadsheetUrl);
   const eventInfosToRegister = getEventInfosToRegister(sheet, userEmail, slackMemberProfiles);
 
   const payload = {
@@ -214,8 +214,8 @@ export const callModificationAndDeletion = () => {
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
-  const operationType = "modificationAndDeletion";
-  const sheet = getSheet(operationType, spreadsheetUrl);
+  const sheetType = "modificationAndDeletion";
+  const sheet = getSheet(sheetType, spreadsheetUrl);
   const eventInfosToModify = getEventInfosToModify(sheet, userEmail, slackMemberProfiles);
   const eventInfosToDelete = getEventInfosToDelete(sheet);
 
@@ -245,8 +245,8 @@ export const callModificationAndDeletion = () => {
 export const callShowEvents = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
-  const operationType = "modificationAndDeletion";
-  const sheet = getSheet(operationType, spreadsheetUrl);
+  const sheetType = "modificationAndDeletion";
+  const sheet = getSheet(sheetType, spreadsheetUrl);
   const startDate = sheet.getRange("A2").getValue();
 
   const lastRow = sheet.getLastRow();
@@ -276,11 +276,11 @@ export const callShowEvents = () => {
   sheet.getRange(6, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
 };
 
-const getSheet = (operationType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
+const getSheet = (sheetType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
   const today = format(new Date(), "yyyy-MM-dd");
   const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl)
     .getSheets()
-    .find((sheet) => sheet.getDeveloperMetadata()[0].getKey() === `${today}-${operationType}`);
+    .find((sheet) => sheet.getDeveloperMetadata()[0].getKey() === `${today}-${sheetType}`);
 
   if (!sheet) throw new Error("SHEET is not defined");
 
