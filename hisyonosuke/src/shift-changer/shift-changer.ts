@@ -38,26 +38,26 @@ export const insertRegistrationSheet = () => {
   sheet.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
   // 入力規則の設定
-  const cells1 = sheet.getRange("F2:F1000");
-  const rule1 = SpreadsheetApp.newDataValidation()
+  const workingStyleCells = sheet.getRange("F2:F1000");
+  const workingStyleRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["リモート", "出社"], true)
     .setAllowInvalid(false)
     .setHelpText("リモート/出社 を選択してください。")
     .build();
-  cells1.setDataValidation(rule1);
-  const cells2 = sheet.getRange("A2:A1000");
-  const rule2 = SpreadsheetApp.newDataValidation()
+  workingStyleCells.setDataValidation(workingStyleRule);
+  const dateCells = sheet.getRange("A2:A1000");
+  const dateRule = SpreadsheetApp.newDataValidation()
     .requireDateOnOrAfter(new Date())
     .setAllowInvalid(false)
     .setHelpText("本日以降の日付を入力してください。")
     .build();
-  cells2.setDataValidation(rule2);
-  const cells3 = sheet.getRange("B2:E1000");
-  const rule3 = SpreadsheetApp.newDataValidation()
+  dateCells.setDataValidation(dateRule);
+  const timeCells = sheet.getRange("B2:E1000");
+  const timeRule = SpreadsheetApp.newDataValidation()
     .requireFormulaSatisfied("=ISDATE(B2)")
     .setHelpText('時刻を"◯◯:◯◯"の形式で入力してください。')
     .build();
-  cells3.setDataValidation(rule3);
+  timeCells.setDataValidation(timeRule);
 };
 
 export const insertModificationAndDeletionSheet = () => {
@@ -92,36 +92,36 @@ export const insertModificationAndDeletionSheet = () => {
   sheet.getRange(5, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
   // 入力規則の設定
-  const cells1 = sheet.getRange("A2");
-  const cells2 = sheet.getRange("E6:E1000");
-  const rule1 = SpreadsheetApp.newDataValidation()
+  const dateCell = sheet.getRange("A2");
+  const dateCells = sheet.getRange("E6:E1000");
+  const dateRule = SpreadsheetApp.newDataValidation()
     .requireDateOnOrAfter(new Date())
     .setAllowInvalid(false)
     .setHelpText("本日以降の日付を入力してください。")
     .build();
-  cells1.setDataValidation(rule1);
-  cells2.setDataValidation(rule1);
-  const cells3 = sheet.getRange("F6:I1000");
-  const rule3 = SpreadsheetApp.newDataValidation()
+  dateCell.setDataValidation(dateRule);
+  dateCells.setDataValidation(dateRule);
+  const timeCells = sheet.getRange("F6:I1000");
+  const timeRule = SpreadsheetApp.newDataValidation()
     .requireFormulaSatisfied("=ISDATE(F6)")
     .setAllowInvalid(false)
     .setHelpText('時刻を"◯◯:◯◯"の形式で入力してください。\n【例】 9:00')
     .build();
-  cells3.setDataValidation(rule3);
-  const cells4 = sheet.getRange("J6:J1000");
-  const rule4 = SpreadsheetApp.newDataValidation()
+  timeCells.setDataValidation(timeRule);
+  const workingStyleCells = sheet.getRange("J6:J1000");
+  const workingStyleRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["リモート", "出社"], true)
     .setAllowInvalid(false)
     .setHelpText("リモート/出社 を選択してください。")
     .build();
-  cells4.setDataValidation(rule4);
-  const cells5 = sheet.getRange("K6:K1000");
-  const rule5 = SpreadsheetApp.newDataValidation()
+  workingStyleCells.setDataValidation(workingStyleRule);
+  const checkboxCells = sheet.getRange("K6:K1000");
+  const checkboxRule = SpreadsheetApp.newDataValidation()
     .requireCheckbox()
     .setAllowInvalid(false)
     .setHelpText("チェックボックス以外の入力形式は認められません。")
     .build();
-  cells5.setDataValidation(rule5);
+  checkboxCells.setDataValidation(checkboxRule);
 
   // 列幅の設定
   sheet.setColumnWidth(1, 370);
