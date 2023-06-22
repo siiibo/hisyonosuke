@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { getConfig } from "./config";
+import { EventInfo } from "./shift-changer-api";
 
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 
@@ -162,8 +163,8 @@ const getEventInfosToModify = (
     email: string;
   }[]
 ): {
-  previousEventInfo: { title: string; date: string; startTime: string; endTime: string };
-  newEventInfo: { title: string; date: string; startTime: string; endTime: string };
+  previousEventInfo: EventInfo;
+  newEventInfo: EventInfo;
 }[] => {
   const lastRowNum = sheet.getLastRow();
   const eventInfosToModify = sheet
@@ -190,14 +191,7 @@ const getEventInfosToModify = (
   return eventInfosToModify;
 };
 
-const getEventInfosToDelete = (
-  sheet: GoogleAppsScript.Spreadsheet.Sheet
-): {
-  title: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-}[] => {
+const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[] => {
   const lastRow = sheet.getLastRow();
   const dataRow = lastRow - 6 + 1;
   const dataColumn = sheet.getLastColumn();
@@ -276,9 +270,7 @@ export const callShowEvents = () => {
   const response = UrlFetchApp.fetch(API_URL, options);
   if (!response.getContentText()) return;
 
-  const eventInfos: { title: string; date: string; startTime: string; endTime: string }[] = JSON.parse(
-    response.getContentText()
-  );
+  const eventInfos: EventInfo[] = JSON.parse(response.getContentText());
   const moldedEventInfos = eventInfos.map(({ title, date, startTime, endTime }) => {
     return [title, date, startTime, endTime];
   });
@@ -301,7 +293,7 @@ const getEventInfosToRegister = (
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
   userEmail: string,
   slackMemberProfiles: { name: string; email: string }[]
-): { title: string; date: string; startTime: string; endTime: string }[] => {
+): EventInfo[] => {
   const lastRow = sheet.getLastRow();
   const dataRow = lastRow - 1;
   const dataColumn = sheet.getLastColumn();
@@ -391,9 +383,7 @@ const getJob = (nameRegex: RegExp): string | undefined => {
   return job;
 };
 
-const createRegistrationMessage = (
-  registrationInfos: { title: string; date: string; startTime: string; endTime: string }[]
-): string => {
+const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
   const messages = registrationInfos.map(({ title, date, startTime, endTime }) => {
     const formattedDate = format(new Date(date), "MM/dd");
     return `${title}: ${formattedDate} ${startTime}~${endTime}`;
@@ -402,9 +392,7 @@ const createRegistrationMessage = (
   return messageTitle + messages.join("\n");
 };
 
-const createDeletionMessage = (
-  eventInfosToDelete: { title: string; date: string; startTime: string; endTime: string }[]
-): string | undefined => {
+const createDeletionMessage = (eventInfosToDelete: EventInfo[]): string | undefined => {
   const messages = eventInfosToDelete.map(({ title, date, startTime, endTime }) => {
     return `${title}: ${date} ${startTime}~${endTime}`;
   });
@@ -415,8 +403,8 @@ const createDeletionMessage = (
 
 const createModificationMessage = (
   eventInfosToModify: {
-    previousEventInfo: { title: string; date: string; startTime: string; endTime: string };
-    newEventInfo: { title: string; date: string; startTime: string; endTime: string };
+    previousEventInfo: EventInfo;
+    newEventInfo: EventInfo;
   }[]
 ): string | undefined => {
   const messages = eventInfosToModify.map(({ previousEventInfo, newEventInfo }) => {

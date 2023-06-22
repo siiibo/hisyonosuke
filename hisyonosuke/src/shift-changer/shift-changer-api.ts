@@ -1,6 +1,8 @@
 import { addWeeks } from "date-fns";
 import { getConfig } from "./config";
 
+export type EventInfo = { title: string; date: string; startTime: string; endTime: string };
+
 const getCalendar = () => {
   const { CALENDAR_ID } = getConfig();
   const calendar = CalendarApp.getCalendarById(CALENDAR_ID);
@@ -37,24 +39,13 @@ export const shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
   return;
 };
 
-const registration = (
-  userEmail: string,
-  registrationInfos: {
-    title: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-  }[]
-) => {
+const registration = (userEmail: string, registrationInfos: EventInfo[]) => {
   registrationInfos.forEach((registrationInfo) => {
     registerEvent(registrationInfo, userEmail);
   });
 };
 
-const registerEvent = (
-  registrationInfo: { title: string; date: string; startTime: string; endTime: string },
-  userEmail: string
-) => {
+const registerEvent = (registrationInfo: EventInfo, userEmail: string) => {
   const title = registrationInfo.title;
   const date = registrationInfo.date;
   const startTime = registrationInfo.startTime;
@@ -67,10 +58,7 @@ const registerEvent = (
   calendar.createEvent(title, startDate, endDate, { guests: userEmail });
 };
 
-const showEvents = (
-  userEmail: string,
-  startDate: Date
-): { title: string; date: string; startTime: string; endTime: string }[] | undefined => {
+const showEvents = (userEmail: string, startDate: Date): EventInfo[] | undefined => {
   const endDate = addWeeks(startDate, 1);
   const calendar = getCalendar();
   const events = calendar.getEvents(startDate, endDate).filter((event) => isEventGuest(event, userEmail));
@@ -90,18 +78,8 @@ const showEvents = (
 
 const modification = (
   eventInfosToModify: {
-    previousEventInfo: {
-      title: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-    };
-    newEventInfo: {
-      title: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-    };
+    previousEventInfo: EventInfo;
+    newEventInfo: EventInfo;
   }[],
   userEmail: string
 ) => {
@@ -111,18 +89,8 @@ const modification = (
 
 const modifyEvent = (
   eventInfo: {
-    previousEventInfo: {
-      title: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-    };
-    newEventInfo: {
-      title: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-    };
+    previousEventInfo: EventInfo;
+    newEventInfo: EventInfo;
   },
   calendar: GoogleAppsScript.Calendar.Calendar,
   userEmail: string
@@ -150,24 +118,12 @@ const modifyEvent = (
   event.setTitle(newTitle);
 };
 
-const deletion = (
-  eventInfosToDelete: {
-    title: string;
-    date: string;
-    startTime: string;
-    endTime: string;
-  }[],
-  userEmail: string
-) => {
+const deletion = (eventInfosToDelete: EventInfo[], userEmail: string) => {
   const calendar = getCalendar();
   eventInfosToDelete.forEach((eventInfo) => _deleteEvent(eventInfo, calendar, userEmail));
 };
 
-const _deleteEvent = (
-  eventInfo: { title: string; date: string; startTime: string; endTime: string },
-  calendar: GoogleAppsScript.Calendar.Calendar,
-  userEmail: string
-) => {
+const _deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
   const date = eventInfo.date;
   const startTime = eventInfo.startTime;
   const endTime = eventInfo.endTime;
