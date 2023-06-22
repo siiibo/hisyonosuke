@@ -381,18 +381,21 @@ const getJob = (nameRegex: RegExp): string | undefined => {
   return job;
 };
 
+const createMessageFromEventInfo = (eventInfo: EventInfo) => {
+  return `${eventInfo.title}: ${eventInfo.date} ${eventInfo.startTime}~${eventInfo.endTime}`;
+};
+
 const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
-  const messages = registrationInfos.map(({ title, date, startTime, endTime }) => {
-    const formattedDate = format(new Date(date), "MM/dd");
-    return `${title}: ${formattedDate} ${startTime}~${endTime}`;
+  const messages = registrationInfos.map((registrationInfo) => {
+    return createMessageFromEventInfo(registrationInfo);
   });
   const messageTitle = "以下の予定が追加されました。\n";
   return messageTitle + messages.join("\n");
 };
 
 const createDeletionMessage = (eventInfosToDelete: EventInfo[]): string | undefined => {
-  const messages = eventInfosToDelete.map(({ title, date, startTime, endTime }) => {
-    return `${title}: ${date} ${startTime}~${endTime}`;
+  const messages = eventInfosToDelete.map((eventInfoToDelete) => {
+    return createMessageFromEventInfo(eventInfoToDelete);
   });
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。\n";
@@ -406,16 +409,8 @@ const createModificationMessage = (
   }[]
 ): string | undefined => {
   const messages = eventInfosToModify.map(({ previousEventInfo, newEventInfo }) => {
-    const startTime = previousEventInfo.startTime;
-    const endTime = previousEventInfo.endTime;
-    const date = previousEventInfo.date;
-
-    const newStartTime = newEventInfo.startTime;
-    const newEndTime = newEventInfo.endTime;
-    const newDate = newEventInfo.date;
-
-    return `${previousEventInfo.title}: ${date} ${startTime}~${endTime}\n\
-    → ${newEventInfo.title}: ${newDate} ${newStartTime}~${newEndTime}`;
+    return `${createMessageFromEventInfo(previousEventInfo)}\n\
+    → ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が変更されました。\n";
