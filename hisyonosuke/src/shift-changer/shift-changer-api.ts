@@ -9,7 +9,7 @@ const getCalendar = () => {
 
 const isEventGuest = (event: GoogleAppsScript.Calendar.CalendarEvent, email: string) => {
   const guestEmails = event.getGuestList().map((guest) => guest.getEmail());
-  return guestEmails.indexOf(email) !== -1;
+  return guestEmails.includes(email);
 };
 
 export const shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
