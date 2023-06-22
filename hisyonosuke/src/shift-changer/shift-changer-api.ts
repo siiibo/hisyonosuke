@@ -1,8 +1,8 @@
 import { addWeeks } from "date-fns";
-import { getConfig } from "./config"
+import { getConfig } from "./config";
 
 const getCalendar = () => {
-  const{ CALENDAR_ID } = getConfig()
+  const { CALENDAR_ID } = getConfig();
   const calendar = CalendarApp.getCalendarById(CALENDAR_ID);
   return calendar;
 };
@@ -22,10 +22,10 @@ export const shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
       break;
     }
     case "modificationAndDeletion": {
-      const eventInfosToModify = JSON.parse(e.parameter.eventInfosToModify)
-      const eventInfosToDelete = JSON.parse(e.parameter.eventInfosToDelete)      
-      modification(eventInfosToModify, userEmail)
-      deletion(eventInfosToDelete, userEmail)
+      const eventInfosToModify = JSON.parse(e.parameter.eventInfosToModify);
+      const eventInfosToDelete = JSON.parse(e.parameter.eventInfosToDelete);
+      modification(eventInfosToModify, userEmail);
+      deletion(eventInfosToDelete, userEmail);
       break;
     }
     case "showEvents": {
@@ -88,24 +88,26 @@ const showEvents = (
   return eventInfos;
 };
 
-const modification = (eventInfosToModify: {
-  previousEventInfo: {
+const modification = (
+  eventInfosToModify: {
+    previousEventInfo: {
       title: string;
       date: string;
       startTime: string;
       endTime: string;
-  };
-  newEventInfo: {
+    };
+    newEventInfo: {
       title: string;
       date: string;
       startTime: string;
       endTime: string;
-  };
-}[], userEmail: string) => {
+    };
+  }[],
+  userEmail: string
+) => {
   const calendar = getCalendar();
   eventInfosToModify.forEach((eventInfo) => modifyEvent(eventInfo, calendar, userEmail));
-
-}
+};
 
 const modifyEvent = (
   eventInfo: {
@@ -114,17 +116,17 @@ const modifyEvent = (
       date: string;
       startTime: string;
       endTime: string;
-  };
-  newEventInfo: {
+    };
+    newEventInfo: {
       title: string;
       date: string;
       startTime: string;
       endTime: string;
-  };  },
+    };
+  },
   calendar: GoogleAppsScript.Calendar.Calendar,
   userEmail: string
 ) => {
-
   // getPreviousEventInfo
   const date = eventInfo.previousEventInfo.date;
   const startTime = eventInfo.previousEventInfo.startTime;
@@ -141,7 +143,6 @@ const modifyEvent = (
   const newStartDate = new Date(`${newDate} ${newStartTime}`);
   const newEndDate = new Date(`${newDate} ${newEndTime}`);
 
-
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
   if (event === undefined) return;
   event.setTime(newStartDate, newEndDate);
@@ -149,19 +150,21 @@ const modifyEvent = (
   event.setTitle(newTitle);
 };
 
-const deletion = (eventInfosToDelete: {
-  title: string;
-  date: string; 
-  startTime: string; 
-  endTime: string;
-}[], userEmail: string) => {
+const deletion = (
+  eventInfosToDelete: {
+    title: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+  }[],
+  userEmail: string
+) => {
   const calendar = getCalendar();
   eventInfosToDelete.forEach((eventInfo) => _deleteEvent(eventInfo, calendar, userEmail));
-
-}
+};
 
 const _deleteEvent = (
-  eventInfo: { title: string; date: string; startTime: string; endTime: string; },
+  eventInfo: { title: string; date: string; startTime: string; endTime: string },
   calendar: GoogleAppsScript.Calendar.Calendar,
   userEmail: string
 ) => {
@@ -171,9 +174,7 @@ const _deleteEvent = (
   const startDate = new Date(`${date} ${startTime}`);
   const endDate = new Date(`${date} ${endTime}`);
 
-  const event = calendar
-    .getEvents(startDate, endDate)
-    .find((event) => isEventGuest(event, userEmail));
+  const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
   if (event === undefined) return;
   event.deleteEvent();
 };
