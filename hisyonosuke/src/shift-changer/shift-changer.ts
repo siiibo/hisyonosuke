@@ -34,8 +34,8 @@ export const insertRegistrationSheet = () => {
   sheet.addDeveloperMetadata(`${today}-registration`);
 
   // 内容の設定
-  const header = [["日付", "開始時刻", "終了時刻", "休憩開始時刻", "休憩終了時刻", "勤務形態"]];
-  sheet.getRange(1, 1, 1, header[0].length).setValues(header).setFontWeight("bold");
+  const header = ["日付", "開始時刻", "終了時刻", "休憩開始時刻", "休憩終了時刻", "勤務形態"];
+  sheet.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
   // 入力規則の設定
   const cells1 = sheet.getRange("F2:F1000");
@@ -73,25 +73,23 @@ export const insertModificationAndDeletionSheet = () => {
   const description4 = "【削除】削除したい予定を選択してください";
 
   const header = [
-    [
-      "イベント名",
-      "日付",
-      "開始時刻",
-      "終了時刻",
-      "日付",
-      "開始時刻",
-      "終了時刻",
-      "休憩開始時刻",
-      "休憩終了時刻",
-      "勤務形態",
-      "削除対象",
-    ],
+    "イベント名",
+    "日付",
+    "開始時刻",
+    "終了時刻",
+    "日付",
+    "開始時刻",
+    "終了時刻",
+    "休憩開始時刻",
+    "休憩終了時刻",
+    "勤務形態",
+    "削除対象",
   ];
   sheet.getRange("A1").setValue(description1).setFontWeight("bold");
   sheet.getRange("A4").setValue(description2).setFontWeight("bold");
   sheet.getRange("E4").setValue(description3).setFontWeight("bold");
   sheet.getRange("K4").setValue(description4).setFontWeight("bold");
-  sheet.getRange(5, 1, 1, header[0].length).setValues(header).setFontWeight("bold");
+  sheet.getRange(5, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
   // 入力規則の設定
   const cells1 = sheet.getRange("A2");
