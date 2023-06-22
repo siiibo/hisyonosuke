@@ -382,7 +382,8 @@ const getJob = (nameRegex: RegExp): string | undefined => {
 };
 
 const createMessageFromEventInfo = (eventInfo: EventInfo) => {
-  return `${eventInfo.title}: ${eventInfo.date} ${eventInfo.startTime}~${eventInfo.endTime}`;
+  const formattedDate = format(new Date(eventInfo.date), "MM/dd");
+  return `${eventInfo.title}: ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
 };
 
 const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
