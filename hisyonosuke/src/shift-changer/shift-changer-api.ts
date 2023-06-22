@@ -117,10 +117,10 @@ const modifyEvent = (
 
 const deletion = (eventInfosToDelete: EventInfo[], userEmail: string) => {
   const calendar = getCalendar();
-  eventInfosToDelete.forEach((eventInfo) => _deleteEvent(eventInfo, calendar, userEmail));
+  eventInfosToDelete.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
 };
 
-const _deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
+const deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
   const date = eventInfo.date;
   const startTime = eventInfo.startTime;
   const endTime = eventInfo.endTime;
