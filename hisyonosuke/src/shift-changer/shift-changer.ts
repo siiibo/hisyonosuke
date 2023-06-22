@@ -309,7 +309,7 @@ const getEventInfosToRegister = (
 };
 
 const createTitleFromShiftInfo = (
-  shiftInfo: any[],
+  shiftInfo: (string | Date)[],
   userEmail: string,
   slackMemberProfiles: {
     name: string;
@@ -320,15 +320,15 @@ const createTitleFromShiftInfo = (
   const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
   const job = getJob(nameRegex);
 
-  const workingStyle = shiftInfo[5];
+  const workingStyle = shiftInfo[5] as string;
 
   if (shiftInfo[3] === "" || shiftInfo[4] === "") {
     const title = `【${workingStyle}】${job}: ${name}さん`;
     return title;
   } else {
-    const restStartTime = format(shiftInfo[3], "HH:mm");
+    const restStartTime = format(shiftInfo[3] as Date, "HH:mm");
 
-    const restEndTime = format(shiftInfo[4], "HH:mm");
+    const restEndTime = format(shiftInfo[4] as Date, "HH:mm");
 
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
