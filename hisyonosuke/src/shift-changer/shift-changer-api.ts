@@ -45,11 +45,10 @@ const registration = (userEmail: string, registrationInfos: EventInfo[]) => {
   });
 };
 
-const registerEvent = ({ title, date, startTime, endTime }: EventInfo, userEmail: string) => {
+const registerEvent = (eventInfo: EventInfo, userEmail: string) => {
   const calendar = getCalendar();
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
-  calendar.createEvent(title, startDate, endDate, { guests: userEmail });
+  const [startDate, endDate] = getStartEndDate(eventInfo);
+  calendar.createEvent(eventInfo.title, startDate, endDate, { guests: userEmail });
 };
 
 const showEvents = (userEmail: string, startDate: Date): EventInfo[] => {
@@ -87,41 +86,31 @@ const modifyEvent = (
   userEmail: string
 ) => {
   // getPreviousEventInfo
-  const date = eventInfo.previousEventInfo.date;
-  const startTime = eventInfo.previousEventInfo.startTime;
-  const endTime = eventInfo.previousEventInfo.endTime;
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
+  const [startDate, endDate] = getStartEndDate(eventInfo.previousEventInfo);
 
   // getNewEventInfo
   const newTitle = eventInfo.newEventInfo.title;
 
-  const newDate = eventInfo.newEventInfo.date;
-  const newStartTime = eventInfo.newEventInfo.startTime;
-  const newEndTime = eventInfo.newEventInfo.endTime;
-  const newStartDate = new Date(`${newDate} ${newStartTime}`);
-  const newEndDate = new Date(`${newDate} ${newEndTime}`);
+  const [newStartDate, newEndDate] = getStartEndDate(eventInfo.newEventInfo);
 
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
   if (!event) return;
   event.setTime(newStartDate, newEndDate);
-
   event.setTitle(newTitle);
 };
 
+const getStartEndDate = ({ date, startTime, endTime }: EventInfo) => {
+  const startDate = new Date(`${date}${startTime}`);
+  const endDate = new Date(`${date}${endTime}`);
+  return [startDate, endDate];
+};
 const deletion = (eventInfosToDelete: EventInfo[], userEmail: string) => {
   const calendar = getCalendar();
   eventInfosToDelete.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
 };
 
-const deleteEvent = (
-  { date, startTime, endTime }: EventInfo,
-  calendar: GoogleAppsScript.Calendar.Calendar,
-  userEmail: string
-) => {
-  const startDate = new Date(`${date} ${startTime}`);
-  const endDate = new Date(`${date} ${endTime}`);
-
+const deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
+  const [startDate, endDate] = getStartEndDate(eventInfo);
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
   if (!event) return;
   event.deleteEvent();
