@@ -45,16 +45,10 @@ const registration = (userEmail: string, registrationInfos: EventInfo[]) => {
   });
 };
 
-const registerEvent = (registrationInfo: EventInfo, userEmail: string) => {
-  const title = registrationInfo.title;
-  const date = registrationInfo.date;
-  const startTime = registrationInfo.startTime;
-  const endTime = registrationInfo.endTime;
+const registerEvent = ({ title, date, startTime, endTime }: EventInfo, userEmail: string) => {
   const calendar = getCalendar();
-
   const startDate = new Date(`${date} ${startTime}`);
   const endDate = new Date(`${date} ${endTime}`);
-
   calendar.createEvent(title, startDate, endDate, { guests: userEmail });
 };
 
@@ -120,10 +114,11 @@ const deletion = (eventInfosToDelete: EventInfo[], userEmail: string) => {
   eventInfosToDelete.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
 };
 
-const deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {
-  const date = eventInfo.date;
-  const startTime = eventInfo.startTime;
-  const endTime = eventInfo.endTime;
+const deleteEvent = (
+  { date, startTime, endTime }: EventInfo,
+  calendar: GoogleAppsScript.Calendar.Calendar,
+  userEmail: string
+) => {
   const startDate = new Date(`${date} ${startTime}`);
   const endDate = new Date(`${date} ${endTime}`);
 
