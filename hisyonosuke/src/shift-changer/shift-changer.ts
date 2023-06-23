@@ -367,8 +367,7 @@ const getJob = (nameRegex: RegExp): string | undefined => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
-  const lastRowNum = sheet.getLastRow();
-  const jobInfos = sheet.getRange(1, 1, lastRowNum, 2).getValues();
+  const jobInfos = sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues();
   const jobInfo = jobInfos.find((jobInfo) => jobInfo[1].match(nameRegex));
   if (jobInfo === undefined) return;
 
