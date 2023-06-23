@@ -420,8 +420,9 @@ const createModificationMessage = (
 
 const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: string, messageToNotify: string) => {
   console.log("slackChannelToPost", slackChannelToPost);
+  const { MEMBER_ID } = getConfig();
   client.chat.postMessage({
     channel: slackChannelToPost,
-    text: messageToNotify,
+    text: `<@${MEMBER_ID}>\n${messageToNotify}`,
   });
 };
