@@ -33,11 +33,9 @@ export const insertRegistrationSheet = () => {
   const sheet = spreadsheet.insertSheet(`${today}-登録`, 0);
   sheet.addDeveloperMetadata(`${today}-registration`);
 
-  // 内容の設定
   const header = ["日付", "開始時刻", "終了時刻", "休憩開始時刻", "休憩終了時刻", "勤務形態"];
   sheet.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
-  // 入力規則の設定
   const workingStyleCells = sheet.getRange("F2:F1000");
   const workingStyleRule = SpreadsheetApp.newDataValidation()
     .requireValueInList(["リモート", "出社"], true)
@@ -66,7 +64,6 @@ export const insertModificationAndDeletionSheet = () => {
   const sheet = spreadsheet.insertSheet(`${today}-変更・削除`, 0);
   sheet.addDeveloperMetadata(`${today}-modificationAndDeletion`);
 
-  // 内容の設定
   const description1 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
   const description2 = "【予定一覧】";
   const description3 = "【変更】変更後の予定を記入してください ";
@@ -91,7 +88,6 @@ export const insertModificationAndDeletionSheet = () => {
   sheet.getRange("K4").setValue(description4).setFontWeight("bold");
   sheet.getRange(5, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
-  // 入力規則の設定
   const dateCell = sheet.getRange("A2");
   const dateCells = sheet.getRange("E6:E1000");
   const dateRule = SpreadsheetApp.newDataValidation()
@@ -123,7 +119,6 @@ export const insertModificationAndDeletionSheet = () => {
     .build();
   checkboxCells.setDataValidation(checkboxRule);
 
-  // 列幅の設定
   sheet.setColumnWidth(1, 370);
 };
 export const callRegistration = () => {
@@ -356,7 +351,6 @@ const getSlackClient = (slackToken: string): SlackClient => {
 };
 
 const getJob = (nameRegex: RegExp): string | undefined => {
-  // 人対職種データベース
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
@@ -402,7 +396,6 @@ const createModificationMessage = (
 };
 
 const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: string, messageToNotify: string) => {
-  console.log("slackChannelToPost", slackChannelToPost);
   const { MEMBER_ID } = getConfig();
   client.chat.postMessage({
     channel: slackChannelToPost,

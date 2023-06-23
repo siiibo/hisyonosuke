@@ -85,10 +85,8 @@ const modifyEvent = (
   calendar: GoogleAppsScript.Calendar.Calendar,
   userEmail: string
 ) => {
-  // getPreviousEventInfo
   const [startDate, endDate] = getStartEndDate(eventInfo.previousEventInfo);
 
-  // getNewEventInfo
   const newTitle = eventInfo.newEventInfo.title;
 
   const [newStartDate, newEndDate] = getStartEndDate(eventInfo.newEventInfo);
