@@ -24,10 +24,10 @@ export const shiftChanger = (e: GoogleAppsScript.Events.DoPost) => {
       break;
     }
     case "modificationAndDeletion": {
-      const eventInfosToModify = JSON.parse(e.parameter.eventInfosToModify);
-      const eventInfosToDelete = JSON.parse(e.parameter.eventInfosToDelete);
-      modification(eventInfosToModify, userEmail);
-      deletion(eventInfosToDelete, userEmail);
+      const modificationInfos = JSON.parse(e.parameter.modificationInfos);
+      const deletionInfos = JSON.parse(e.parameter.deletionInfos);
+      modification(modificationInfos, userEmail);
+      deletion(deletionInfos, userEmail);
       break;
     }
     case "showEvents": {
@@ -67,14 +67,14 @@ const showEvents = (userEmail: string, startDate: Date): EventInfo[] => {
 };
 
 const modification = (
-  eventInfosToModify: {
+  modificationInfos: {
     previousEventInfo: EventInfo;
     newEventInfo: EventInfo;
   }[],
   userEmail: string
 ) => {
   const calendar = getCalendar();
-  eventInfosToModify.forEach((eventInfo) => modifyEvent(eventInfo, calendar, userEmail));
+  modificationInfos.forEach((eventInfo) => modifyEvent(eventInfo, calendar, userEmail));
 };
 
 const modifyEvent = (
@@ -102,9 +102,9 @@ const getStartEndDate = ({ date, startTime, endTime }: EventInfo) => {
   const endDate = new Date(`${date}${endTime}`);
   return [startDate, endDate];
 };
-const deletion = (eventInfosToDelete: EventInfo[], userEmail: string) => {
+const deletion = (deletionInfos: EventInfo[], userEmail: string) => {
   const calendar = getCalendar();
-  eventInfosToDelete.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
+  deletionInfos.forEach((eventInfo) => deleteEvent(eventInfo, calendar, userEmail));
 };
 
 const deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.Calendar, userEmail: string) => {

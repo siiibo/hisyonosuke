@@ -130,13 +130,13 @@ export const callRegistration = () => {
 
   const sheetType = "registration";
   const sheet = getSheet(sheetType, spreadsheetUrl);
-  const eventInfosToRegister = getEventInfosToRegister(sheet, userEmail, slackMemberProfiles);
+  const registrationInfos = getRegistrationInfos(sheet, userEmail, slackMemberProfiles);
 
   const payload = {
     apiId: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
-    registrationInfos: JSON.stringify(eventInfosToRegister),
+    registrationInfos: JSON.stringify(registrationInfos),
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -144,11 +144,11 @@ export const callRegistration = () => {
   };
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
-  const messageToNotify = createRegistrationMessage(eventInfosToRegister);
+  const messageToNotify = createRegistrationMessage(registrationInfos);
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify);
 };
 
-const getEventInfosToModify = (
+const getModificationInfos = (
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
   userEmail: string,
   slackMemberProfiles: {
@@ -159,7 +159,7 @@ const getEventInfosToModify = (
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
 }[] => {
-  const eventInfosToModify = sheet
+  const modificationInfos = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
     .filter((event) => event[4])
@@ -180,11 +180,11 @@ const getEventInfosToModify = (
       };
     });
 
-  return eventInfosToModify;
+  return modificationInfos;
 };
 
-const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[] => {
-  const eventInfosToDelete = sheet
+const getDeletionInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[] => {
+  const deletionInfos = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
     .filter((event) => event[10])
@@ -196,7 +196,7 @@ const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): Event
       return { title, date, startTime, endTime };
     });
 
-  return eventInfosToDelete;
+  return deletionInfos;
 };
 export const callModificationAndDeletion = () => {
   const userEmail = Session.getActiveUser().getEmail();
@@ -206,15 +206,15 @@ export const callModificationAndDeletion = () => {
   const slackMemberProfiles = getSlackMemberProfiles(client);
   const sheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
-  const eventInfosToModify = getEventInfosToModify(sheet, userEmail, slackMemberProfiles);
-  const eventInfosToDelete = getEventInfosToDelete(sheet);
+  const modificationInfos = getModificationInfos(sheet, userEmail, slackMemberProfiles);
+  const deletionInfos = getDeletionInfos(sheet);
 
   const payload = {
     apiId: "shift-changer",
     operationType: "modificationAndDeletion",
     userEmail: userEmail,
-    eventInfosToModify: JSON.stringify(eventInfosToModify),
-    eventInfosToDelete: JSON.stringify(eventInfosToDelete),
+    modificationInfos: JSON.stringify(modificationInfos),
+    deletionInfos: JSON.stringify(deletionInfos),
   };
   const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     method: "post",
@@ -223,11 +223,11 @@ export const callModificationAndDeletion = () => {
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
 
-  const modificationMessageToNotify = createModificationMessage(eventInfosToModify);
+  const modificationMessageToNotify = createModificationMessage(modificationInfos);
   if (modificationMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify);
 
-  const deletionMessageToNotify = createDeletionMessage(eventInfosToDelete);
+  const deletionMessageToNotify = createDeletionMessage(deletionInfos);
   if (deletionMessageToNotify) postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify);
 };
 
@@ -273,12 +273,12 @@ const getSheet = (sheetType: OperationType, spreadsheetUrl: string): GoogleAppsS
   return sheet;
 };
 
-const getEventInfosToRegister = (
+const getRegistrationInfos = (
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
   userEmail: string,
   slackMemberProfiles: { name: string; email: string }[]
 ): EventInfo[] => {
-  const eventInfosToRegister = sheet
+  const registrationInfos = sheet
     .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
     .getValues()
     .map((eventInfo) => {
@@ -288,7 +288,7 @@ const getEventInfosToRegister = (
       const title = createTitleFromEventInfo(eventInfo, userEmail, slackMemberProfiles);
       return { title, date, startTime, endTime };
     });
-  return eventInfosToRegister;
+  return registrationInfos;
 };
 
 const createTitleFromEventInfo = (
@@ -373,20 +373,20 @@ const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
   return `${messageTitle}\n${messages.join("\n")}`;
 };
 
-const createDeletionMessage = (eventInfosToDelete: EventInfo[]): string | undefined => {
-  const messages = eventInfosToDelete.map(createMessageFromEventInfo);
+const createDeletionMessage = (deletionInfos: EventInfo[]): string | undefined => {
+  const messages = deletionInfos.map(createMessageFromEventInfo);
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。";
   return `${messageTitle}\n${messages.join("\n")}`;
 };
 
 const createModificationMessage = (
-  eventInfosToModify: {
+  modificationInfos: {
     previousEventInfo: EventInfo;
     newEventInfo: EventInfo;
   }[]
 ): string | undefined => {
-  const messages = eventInfosToModify.map(({ previousEventInfo, newEventInfo }) => {
+  const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
     return `${createMessageFromEventInfo(previousEventInfo)}\n\
     → ${createMessageFromEventInfo(newEventInfo)}`;
   });
