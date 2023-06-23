@@ -138,7 +138,7 @@ export const callRegistration = () => {
   const eventInfosToRegister = getEventInfosToRegister(sheet, userEmail, slackMemberProfiles);
 
   const payload = {
-    api_id: "shift-changer",
+    apiId: "shift-changer",
     operationType: "registration",
     userEmail: userEmail,
     registrationInfos: JSON.stringify(eventInfosToRegister),
@@ -220,7 +220,7 @@ export const callModificationAndDeletion = () => {
   const eventInfosToDelete = getEventInfosToDelete(sheet);
 
   const payload = {
-    api_id: "shift-changer",
+    apiId: "shift-changer",
     operationType: "modificationAndDeletion",
     userEmail: userEmail,
     eventInfosToModify: JSON.stringify(eventInfosToModify),
@@ -255,7 +255,7 @@ export const callShowEvents = () => {
   sheet.getRange(6, 1, dataRow, dataColumn).clearContent();
 
   const payload = {
-    api_id: "shift-changer",
+    apiId: "shift-changer",
     operationType: "showEvents",
     userEmail: userEmail,
     startDate: startDate,
