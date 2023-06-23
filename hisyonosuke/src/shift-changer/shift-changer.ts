@@ -175,7 +175,7 @@ const getEventInfosToModify = (
       const startTime = format(previousEventInfo[2], "HH:mm");
       const endTime = format(previousEventInfo[3], "HH:mm");
       const newEventInfo = eventInfo.slice(4, 10);
-      const newTitle = createTitleFromShiftInfo(newEventInfo, userEmail, slackMemberProfiles);
+      const newTitle = createTitleFromEventInfo(newEventInfo, userEmail, slackMemberProfiles);
       const newDate = format(newEventInfo[0], "yyyy-MM-dd");
       const newStartTime = format(newEventInfo[1], "HH:mm");
       const newEndTime = format(newEventInfo[2], "HH:mm");
@@ -292,18 +292,18 @@ const getEventInfosToRegister = (
   const eventInfosToRegister = sheet
     .getRange(2, 1, dataRow, dataColumn)
     .getValues()
-    .map((shiftInfo) => {
-      const date = format(shiftInfo[0], "yyyy-MM-dd");
-      const startTime = format(shiftInfo[1], "HH:mm");
-      const endTime = format(shiftInfo[2], "HH:mm");
-      const title = createTitleFromShiftInfo(shiftInfo, userEmail, slackMemberProfiles);
+    .map((eventInfo) => {
+      const date = format(eventInfo[0], "yyyy-MM-dd");
+      const startTime = format(eventInfo[1], "HH:mm");
+      const endTime = format(eventInfo[2], "HH:mm");
+      const title = createTitleFromEventInfo(eventInfo, userEmail, slackMemberProfiles);
       return { title, date, startTime, endTime };
     });
   return eventInfosToRegister;
 };
 
-const createTitleFromShiftInfo = (
-  shiftInfo: (string | Date)[],
+const createTitleFromEventInfo = (
+  eventInfo: (string | Date)[],
   userEmail: string,
   slackMemberProfiles: {
     name: string;
@@ -314,15 +314,15 @@ const createTitleFromShiftInfo = (
   const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
   const job = getJob(nameRegex);
 
-  const workingStyle = shiftInfo[5] as string;
+  const workingStyle = eventInfo[5] as string;
 
-  if (shiftInfo[3] === "" || shiftInfo[4] === "") {
+  if (eventInfo[3] === "" || eventInfo[4] === "") {
     const title = `【${workingStyle}】${job}: ${name}さん`;
     return title;
   } else {
-    const restStartTime = format(shiftInfo[3] as Date, "HH:mm");
+    const restStartTime = format(eventInfo[3] as Date, "HH:mm");
 
-    const restEndTime = format(shiftInfo[4] as Date, "HH:mm");
+    const restEndTime = format(eventInfo[4] as Date, "HH:mm");
 
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
