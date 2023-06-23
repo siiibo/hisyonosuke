@@ -3,6 +3,7 @@ import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { getConfig } from "./config";
 import { EventInfo } from "./shift-changer-api";
 
+type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
 
 export const onOpen = () => {
@@ -128,13 +129,14 @@ export const callRegistration = () => {
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
 
-  const sheetType = "registration";
+  const sheetType: SheetType = "registration";
   const sheet = getSheet(sheetType, spreadsheetUrl);
+  const operationType: OperationType = "registration";
   const registrationInfos = getRegistrationInfos(sheet, userEmail, slackMemberProfiles);
 
   const payload = {
     apiId: "shift-changer",
-    operationType: "registration",
+    operationType: operationType,
     userEmail: userEmail,
     registrationInfos: JSON.stringify(registrationInfos),
   };
@@ -204,14 +206,15 @@ export const callModificationAndDeletion = () => {
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
   const slackMemberProfiles = getSlackMemberProfiles(client);
-  const sheetType = "modificationAndDeletion";
+  const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
+  const operationType: OperationType = "modificationAndDeletion";
   const modificationInfos = getModificationInfos(sheet, userEmail, slackMemberProfiles);
   const deletionInfos = getDeletionInfos(sheet);
 
   const payload = {
     apiId: "shift-changer",
-    operationType: "modificationAndDeletion",
+    operationType: operationType,
     userEmail: userEmail,
     modificationInfos: JSON.stringify(modificationInfos),
     deletionInfos: JSON.stringify(deletionInfos),
@@ -234,15 +237,16 @@ export const callModificationAndDeletion = () => {
 export const callShowEvents = () => {
   const userEmail = Session.getActiveUser().getEmail();
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
-  const sheetType = "modificationAndDeletion";
+  const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
+  const operationType: OperationType = "showEvents";
   const startDate = sheet.getRange("A2").getValue();
 
   sheet.getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn()).clearContent();
 
   const payload = {
     apiId: "shift-changer",
-    operationType: "showEvents",
+    operationType: operationType,
     userEmail: userEmail,
     startDate: startDate,
   };
@@ -262,7 +266,7 @@ export const callShowEvents = () => {
   sheet.getRange(6, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
 };
 
-const getSheet = (sheetType: OperationType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
+const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScript.Spreadsheet.Sheet => {
   const today = format(new Date(), "yyyy-MM-dd");
   const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl)
     .getSheets()
