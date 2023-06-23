@@ -164,9 +164,8 @@ const getEventInfosToModify = (
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
 }[] => {
-  const lastRowNum = sheet.getLastRow();
   const eventInfosToModify = sheet
-    .getRange(6, 1, lastRowNum - 5, 12)
+    .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
     .filter((event) => event[4])
     .map((eventInfo) => {
@@ -190,12 +189,8 @@ const getEventInfosToModify = (
 };
 
 const getEventInfosToDelete = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[] => {
-  const lastRow = sheet.getLastRow();
-  const dataRow = lastRow - 6 + 1;
-  const dataColumn = sheet.getLastColumn();
-
   const eventInfosToDelete = sheet
-    .getRange(6, 1, dataRow, dataColumn)
+    .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
     .filter((event) => event[10])
     .map((eventInfo) => {
