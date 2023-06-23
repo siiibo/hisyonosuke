@@ -109,7 +109,7 @@ const modifyEvent = (
   const newEndDate = new Date(`${newDate} ${newEndTime}`);
 
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
-  if (event === undefined) return;
+  if (!event) return;
   event.setTime(newStartDate, newEndDate);
 
   event.setTitle(newTitle);
@@ -128,6 +128,6 @@ const deleteEvent = (eventInfo: EventInfo, calendar: GoogleAppsScript.Calendar.C
   const endDate = new Date(`${date} ${endTime}`);
 
   const event = calendar.getEvents(startDate, endDate).find((event) => isEventGuest(event, userEmail));
-  if (event === undefined) return;
+  if (!event) return;
   event.deleteEvent();
 };
