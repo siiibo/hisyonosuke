@@ -62,7 +62,7 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     }
   }
 
-  if (e.parameter.api_id === "shift-changer") {
+  if (e.parameter.apiId === "shift-changer") {
     const response = shiftChanger(e);
     return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
