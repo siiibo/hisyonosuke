@@ -387,17 +387,13 @@ const createMessageFromEventInfo = (eventInfo: EventInfo) => {
 };
 
 const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
-  const messages = registrationInfos.map((registrationInfo) => {
-    return createMessageFromEventInfo(registrationInfo);
-  });
+  const messages = registrationInfos.map(createMessageFromEventInfo);
   const messageTitle = "以下の予定が追加されました。\n";
   return messageTitle + messages.join("\n");
 };
 
 const createDeletionMessage = (eventInfosToDelete: EventInfo[]): string | undefined => {
-  const messages = eventInfosToDelete.map((eventInfoToDelete) => {
-    return createMessageFromEventInfo(eventInfoToDelete);
-  });
+  const messages = eventInfosToDelete.map(createMessageFromEventInfo);
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。\n";
   return messageTitle + messages.join("\n");
