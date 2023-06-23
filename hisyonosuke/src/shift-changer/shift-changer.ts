@@ -243,10 +243,7 @@ export const callShowEvents = () => {
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const startDate = sheet.getRange("A2").getValue();
 
-  const lastRow = sheet.getLastRow();
-  const dataRow = lastRow - 6 + 1;
-  const dataColumn = sheet.getLastColumn();
-  sheet.getRange(6, 1, dataRow, dataColumn).clearContent();
+  sheet.getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn()).clearContent();
 
   const payload = {
     apiId: "shift-changer",
@@ -286,11 +283,8 @@ const getEventInfosToRegister = (
   userEmail: string,
   slackMemberProfiles: { name: string; email: string }[]
 ): EventInfo[] => {
-  const lastRow = sheet.getLastRow();
-  const dataRow = lastRow - 1;
-  const dataColumn = sheet.getLastColumn();
   const eventInfosToRegister = sheet
-    .getRange(2, 1, dataRow, dataColumn)
+    .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
     .getValues()
     .map((eventInfo) => {
       const date = format(eventInfo[0], "yyyy-MM-dd");
