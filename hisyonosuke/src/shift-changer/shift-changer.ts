@@ -229,12 +229,11 @@ export const callModificationAndDeletion = () => {
   UrlFetchApp.fetch(API_URL, options);
 
   const modificationMessageToNotify = createModificationMessage(eventInfosToModify);
-  if (modificationMessageToNotify !== undefined)
+  if (modificationMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify);
 
   const deletionMessageToNotify = createDeletionMessage(eventInfosToDelete);
-  if (deletionMessageToNotify !== undefined)
-    postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify);
+  if (deletionMessageToNotify) postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify);
 };
 
 export const callShowEvents = () => {
