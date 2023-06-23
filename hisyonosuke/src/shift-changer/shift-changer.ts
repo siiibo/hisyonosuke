@@ -381,15 +381,15 @@ const createMessageFromEventInfo = (eventInfo: EventInfo) => {
 
 const createRegistrationMessage = (registrationInfos: EventInfo[]): string => {
   const messages = registrationInfos.map(createMessageFromEventInfo);
-  const messageTitle = "以下の予定が追加されました。\n";
-  return messageTitle + messages.join("\n");
+  const messageTitle = "以下の予定が追加されました。";
+  return `${messageTitle}\n${messages.join("\n")}`;
 };
 
 const createDeletionMessage = (eventInfosToDelete: EventInfo[]): string | undefined => {
   const messages = eventInfosToDelete.map(createMessageFromEventInfo);
   if (messages.length == 0) return;
-  const messageTitle = "以下の予定が削除されました。\n";
-  return messageTitle + messages.join("\n");
+  const messageTitle = "以下の予定が削除されました。";
+  return `${messageTitle}\n${messages.join("\n")}`;
 };
 
 const createModificationMessage = (
@@ -403,8 +403,8 @@ const createModificationMessage = (
     → ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
-  const messageTitle = "以下の予定が変更されました。\n";
-  return messageTitle + messages.join("\n");
+  const messageTitle = "以下の予定が変更されました。";
+  return `${messageTitle}\n${messages.join("\n")}`;
 };
 
 const postMessageToSlackChannel = (client: SlackClient, slackChannelToPost: string, messageToNotify: string) => {
