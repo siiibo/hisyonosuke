@@ -164,7 +164,10 @@ const getModificationInfos = (
   const modificationInfos = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
-    .filter((event) => event[4])
+    .filter((event) => {
+      const existsModificationInfo = event[4];
+      return existsModificationInfo;
+    })
     .map((eventInfo) => {
       const title = eventInfo[0] as string;
       const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
