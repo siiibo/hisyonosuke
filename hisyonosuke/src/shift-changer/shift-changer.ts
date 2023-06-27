@@ -194,7 +194,10 @@ const getDeletionInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[
   const deletionInfos = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
-    .filter((event) => event[10])
+    .filter((event) => {
+      const deletionFlag = event[10] as boolean;
+      return deletionFlag;
+    })
     .map((eventInfo) => {
       const title = eventInfo[0] as string;
       const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
