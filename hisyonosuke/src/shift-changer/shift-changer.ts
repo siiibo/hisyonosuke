@@ -286,17 +286,28 @@ const getRegistrationInfos = (
     .getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn())
     .getValues()
     .map((eventInfo) => {
-      const date = format(eventInfo[0], "yyyy-MM-dd");
-      const startTime = format(eventInfo[1], "HH:mm");
-      const endTime = format(eventInfo[2], "HH:mm");
-      const title = createTitleFromEventInfo(eventInfo, userEmail, slackMemberProfiles);
+      const date = format(eventInfo[0] as Date, "yyyy-MM-dd");
+      const startTime = format(eventInfo[1] as Date, "HH:mm");
+      const endTime = format(eventInfo[2] as Date, "HH:mm");
+      const restStartTime = format(eventInfo[3] as Date, "HH:mm");
+      const restEndTime = format(eventInfo[4] as Date, "HH:mm");
+      const workingStyle = eventInfo[5] as string;
+      const title = createTitleFromEventInfo(
+        { restStartTime, restEndTime, workingStyle },
+        userEmail,
+        slackMemberProfiles
+      );
       return { title, date, startTime, endTime };
     });
   return registrationInfos;
 };
 
 const createTitleFromEventInfo = (
-  eventInfo: (string | Date)[],
+  eventInfo: {
+    restStartTime: string;
+    restEndTime: string;
+    workingStyle: string;
+  },
   userEmail: string,
   slackMemberProfiles: {
     name: string;
@@ -307,16 +318,14 @@ const createTitleFromEventInfo = (
   const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
   const job = getJob(nameRegex);
 
-  const workingStyle = eventInfo[5] as string;
+  const restStartTime = eventInfo.restStartTime;
+  const restEndTime = eventInfo.restEndTime;
+  const workingStyle = eventInfo.workingStyle;
 
-  if (eventInfo[3] === "" || eventInfo[4] === "") {
+  if (restStartTime === "" || restEndTime === "") {
     const title = `【${workingStyle}】${job}: ${name}さん`;
     return title;
   } else {
-    const restStartTime = format(eventInfo[3] as Date, "HH:mm");
-
-    const restEndTime = format(eventInfo[4] as Date, "HH:mm");
-
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
   }
