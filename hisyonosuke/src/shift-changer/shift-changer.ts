@@ -172,10 +172,17 @@ const getModificationInfos = (
       const startTime = format(previousEventInfo[2], "HH:mm");
       const endTime = format(previousEventInfo[3], "HH:mm");
       const newEventInfo = eventInfo.slice(4, 10);
-      const newTitle = createTitleFromEventInfo(newEventInfo, userEmail, slackMemberProfiles);
       const newDate = format(newEventInfo[0], "yyyy-MM-dd");
       const newStartTime = format(newEventInfo[1], "HH:mm");
       const newEndTime = format(newEventInfo[2], "HH:mm");
+      const newRestStartTime = format(newEventInfo[3], "HH:mm");
+      const newRestEndTime = format(newEventInfo[4], "HH:mm");
+      const newWorkingStyle = newEventInfo[5];
+      const newTitle = createTitleFromEventInfo(
+        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+        userEmail,
+        slackMemberProfiles
+      );
       return {
         previousEventInfo: { title, date, startTime, endTime },
         newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
