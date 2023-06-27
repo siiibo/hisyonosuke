@@ -323,8 +323,7 @@ const createTitleFromEventInfo = (
   }[]
 ): string => {
   const name = getNameFromEmail(userEmail, slackMemberProfiles);
-  const nameRegex = new RegExp(name.replace(/ |\u3000/g, "( |\u3000|)?"));
-  const job = getJob(nameRegex);
+  const job = getJob(name);
 
   const restStartTime = eventInfo.restStartTime;
   const restEndTime = eventInfo.restEndTime;
@@ -371,7 +370,8 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getJob = (nameRegex: RegExp): string | undefined => {
+const getJob = (nameToCheck: string): string | undefined => {
+  const nameRegex = new RegExp(nameToCheck.replace(/ |\u3000/g, "( |\u3000|)?"));
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
