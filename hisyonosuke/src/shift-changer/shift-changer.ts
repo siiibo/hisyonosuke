@@ -166,18 +166,16 @@ const getModificationInfos = (
     .getValues()
     .filter((event) => event[4])
     .map((eventInfo) => {
-      const previousEventInfo = eventInfo.slice(0, 4);
-      const title = previousEventInfo[0];
-      const date = format(previousEventInfo[1], "yyyy-MM-dd");
-      const startTime = format(previousEventInfo[2], "HH:mm");
-      const endTime = format(previousEventInfo[3], "HH:mm");
-      const newEventInfo = eventInfo.slice(4, 10);
-      const newDate = format(newEventInfo[0], "yyyy-MM-dd");
-      const newStartTime = format(newEventInfo[1], "HH:mm");
-      const newEndTime = format(newEventInfo[2], "HH:mm");
-      const newRestStartTime = format(newEventInfo[3], "HH:mm");
-      const newRestEndTime = format(newEventInfo[4], "HH:mm");
-      const newWorkingStyle = newEventInfo[5];
+      const title = eventInfo[0];
+      const date = format(eventInfo[1], "yyyy-MM-dd");
+      const startTime = format(eventInfo[2], "HH:mm");
+      const endTime = format(eventInfo[3], "HH:mm");
+      const newDate = format(eventInfo[4], "yyyy-MM-dd");
+      const newStartTime = format(eventInfo[5], "HH:mm");
+      const newEndTime = format(eventInfo[6], "HH:mm");
+      const newRestStartTime = format(eventInfo[7], "HH:mm");
+      const newRestEndTime = format(eventInfo[8], "HH:mm");
+      const newWorkingStyle = eventInfo[9];
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
         userEmail,
