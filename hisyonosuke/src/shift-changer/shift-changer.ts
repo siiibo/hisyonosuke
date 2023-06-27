@@ -166,16 +166,16 @@ const getModificationInfos = (
     .getValues()
     .filter((event) => event[4])
     .map((eventInfo) => {
-      const title = eventInfo[0];
-      const date = format(eventInfo[1], "yyyy-MM-dd");
-      const startTime = format(eventInfo[2], "HH:mm");
-      const endTime = format(eventInfo[3], "HH:mm");
-      const newDate = format(eventInfo[4], "yyyy-MM-dd");
-      const newStartTime = format(eventInfo[5], "HH:mm");
-      const newEndTime = format(eventInfo[6], "HH:mm");
-      const newRestStartTime = format(eventInfo[7], "HH:mm");
-      const newRestEndTime = format(eventInfo[8], "HH:mm");
-      const newWorkingStyle = eventInfo[9];
+      const title = eventInfo[0] as string;
+      const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
+      const startTime = format(eventInfo[2] as Date, "HH:mm");
+      const endTime = format(eventInfo[3] as Date, "HH:mm");
+      const newDate = format(eventInfo[4] as Date, "yyyy-MM-dd");
+      const newStartTime = format(eventInfo[5] as Date, "HH:mm");
+      const newEndTime = format(eventInfo[6] as Date, "HH:mm");
+      const newRestStartTime = format(eventInfo[7] as Date, "HH:mm");
+      const newRestEndTime = format(eventInfo[8] as Date, "HH:mm");
+      const newWorkingStyle = eventInfo[9] as string;
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
         userEmail,
@@ -196,10 +196,10 @@ const getDeletionInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[
     .getValues()
     .filter((event) => event[10])
     .map((eventInfo) => {
-      const title: string = eventInfo[0];
-      const date = format(eventInfo[1], "yyyy-MM-dd");
-      const startTime = format(eventInfo[2], "HH:mm");
-      const endTime = format(eventInfo[3], "HH:mm");
+      const title = eventInfo[0] as string;
+      const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
+      const startTime = format(eventInfo[2] as Date, "HH:mm");
+      const endTime = format(eventInfo[3] as Date, "HH:mm");
       return { title, date, startTime, endTime };
     });
 
@@ -245,7 +245,7 @@ export const callShowEvents = () => {
   const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "showEvents";
-  const startDate = sheet.getRange("A2").getValue();
+  const startDate: Date = sheet.getRange("A2").getValue();
 
   sheet.getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn()).clearContent();
 
@@ -376,7 +376,7 @@ const getJob = (nameRegex: RegExp): string | undefined => {
   const jobInfo = jobInfos.find((jobInfo) => jobInfo[1].match(nameRegex));
   if (jobInfo === undefined) return;
 
-  const job = jobInfo[0];
+  const job = jobInfo[0] as string;
   return job;
 };
 
