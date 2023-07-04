@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { getConfig } from "./config";
 import { EventInfo } from "./shift-changer-api";
+import { string } from "zod";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
@@ -161,24 +162,39 @@ const getModificationInfos = (
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
 }[] => {
-  const modificationInfos = sheet
+  const sheetValues = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
+    .map((row) => {
+      return {
+        title: row[0] as string,
+        date: row[1] as Date,
+        startTime: row[2] as Date,
+        endTime: row[3] as Date,
+        newDate: row[4] as Date,
+        newStartTime: row[5] as Date,
+        newEndTime: row[6] as Date,
+        newRestStartTime: row[7] as Date,
+        newRestEndTime: row[8] as Date,
+        newWorkingStyle: row[9] as string,
+      };
+    });
+  const modificationInfos = sheetValues
     .filter((event) => {
-      const existsModificationInfo = event[4];
+      const existsModificationInfo = event.newDate;
       return existsModificationInfo;
     })
     .map((eventInfo) => {
-      const title = eventInfo[0] as string;
-      const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
-      const startTime = format(eventInfo[2] as Date, "HH:mm");
-      const endTime = format(eventInfo[3] as Date, "HH:mm");
-      const newDate = format(eventInfo[4] as Date, "yyyy-MM-dd");
-      const newStartTime = format(eventInfo[5] as Date, "HH:mm");
-      const newEndTime = format(eventInfo[6] as Date, "HH:mm");
-      const newRestStartTime = format(eventInfo[7] as Date, "HH:mm");
-      const newRestEndTime = format(eventInfo[8] as Date, "HH:mm");
-      const newWorkingStyle = eventInfo[9] as string;
+      const title = eventInfo.title;
+      const date = format(eventInfo.date, "yyyy-MM-dd");
+      const startTime = format(eventInfo.startTime, "HH:mm");
+      const endTime = format(eventInfo.endTime, "HH:mm");
+      const newDate = format(eventInfo.newDate, "yyyy-MM-dd");
+      const newStartTime = format(eventInfo.newStartTime, "HH:mm");
+      const newEndTime = format(eventInfo.newEndTime, "HH:mm");
+      const newRestStartTime = format(eventInfo.newRestStartTime, "HH:mm");
+      const newRestEndTime = format(eventInfo.newRestEndTime, "HH:mm");
+      const newWorkingStyle = eventInfo.newWorkingStyle;
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
         userEmail,
