@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { getConfig } from "./config";
 import { EventInfo } from "./shift-changer-api";
-import { string } from "zod";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
