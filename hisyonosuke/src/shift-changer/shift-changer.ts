@@ -150,16 +150,20 @@ export const callRegistration = () => {
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify);
 };
 
-const getModificationInfos = (
-  sheet: GoogleAppsScript.Spreadsheet.Sheet,
-  userEmail: string,
-  slackMemberProfiles: {
-    name: string;
-    email: string;
-  }[]
+const getModificationAndDeletionSheetValues = (
+  sheet: GoogleAppsScript.Spreadsheet.Sheet
 ): {
-  previousEventInfo: EventInfo;
-  newEventInfo: EventInfo;
+  title: string;
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  newDate: Date;
+  newStartTime: Date;
+  newEndTime: Date;
+  newRestStartTime: Date;
+  newRestEndTime: Date;
+  newWorkingStyle: string;
+  deletionFlag: boolean;
 }[] => {
   const sheetValues = sheet
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
@@ -176,24 +180,51 @@ const getModificationInfos = (
         newRestStartTime: row[7] as Date,
         newRestEndTime: row[8] as Date,
         newWorkingStyle: row[9] as string,
+        deletionFlag: row[10] as boolean,
       };
     });
+
+  return sheetValues;
+};
+
+const getModificationInfos = (
+  sheetValues: {
+    title: string;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    newDate: Date;
+    newStartTime: Date;
+    newEndTime: Date;
+    newRestStartTime: Date;
+    newRestEndTime: Date;
+    newWorkingStyle: string;
+    deletionFlag: boolean;
+  }[],
+  userEmail: string,
+  slackMemberProfiles: {
+    name: string;
+    email: string;
+  }[]
+): {
+  previousEventInfo: EventInfo;
+  newEventInfo: EventInfo;
+}[] => {
   const modificationInfos = sheetValues
-    .filter((event) => {
-      const existsModificationInfo = event.newDate;
-      return existsModificationInfo;
+    .filter((row) => {
+      !row.deletionFlag;
     })
-    .map((eventInfo) => {
-      const title = eventInfo.title;
-      const date = format(eventInfo.date, "yyyy-MM-dd");
-      const startTime = format(eventInfo.startTime, "HH:mm");
-      const endTime = format(eventInfo.endTime, "HH:mm");
-      const newDate = format(eventInfo.newDate, "yyyy-MM-dd");
-      const newStartTime = format(eventInfo.newStartTime, "HH:mm");
-      const newEndTime = format(eventInfo.newEndTime, "HH:mm");
-      const newRestStartTime = format(eventInfo.newRestStartTime, "HH:mm");
-      const newRestEndTime = format(eventInfo.newRestEndTime, "HH:mm");
-      const newWorkingStyle = eventInfo.newWorkingStyle;
+    .map((row) => {
+      const title = row.title;
+      const date = format(row.date, "yyyy-MM-dd");
+      const startTime = format(row.startTime, "HH:mm");
+      const endTime = format(row.endTime, "HH:mm");
+      const newDate = format(row.newDate, "yyyy-MM-dd");
+      const newStartTime = format(row.newStartTime, "HH:mm");
+      const newEndTime = format(row.newEndTime, "HH:mm");
+      const newRestStartTime = format(row.newRestStartTime, "HH:mm");
+      const newRestEndTime = format(row.newRestEndTime, "HH:mm");
+      const newWorkingStyle = row.newWorkingStyle;
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
         userEmail,
@@ -208,19 +239,30 @@ const getModificationInfos = (
   return modificationInfos;
 };
 
-const getDeletionInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet): EventInfo[] => {
-  const deletionInfos = sheet
-    .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
-    .getValues()
-    .filter((event) => {
-      const deletionFlag = event[10] as boolean;
-      return deletionFlag;
+const getDeletionInfos = (
+  sheetValues: {
+    title: string;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    newDate: Date;
+    newStartTime: Date;
+    newEndTime: Date;
+    newRestStartTime: Date;
+    newRestEndTime: Date;
+    newWorkingStyle: string;
+    deletionFlag: boolean;
+  }[]
+): EventInfo[] => {
+  const deletionInfos = sheetValues
+    .filter((row) => {
+      row.deletionFlag;
     })
-    .map((eventInfo) => {
-      const title = eventInfo[0] as string;
-      const date = format(eventInfo[1] as Date, "yyyy-MM-dd");
-      const startTime = format(eventInfo[2] as Date, "HH:mm");
-      const endTime = format(eventInfo[3] as Date, "HH:mm");
+    .map((row) => {
+      const title = row.title;
+      const date = format(row.date, "yyyy-MM-dd");
+      const startTime = format(row.startTime, "HH:mm");
+      const endTime = format(row.endTime, "HH:mm");
       return { title, date, startTime, endTime };
     });
 
@@ -235,8 +277,10 @@ export const callModificationAndDeletion = () => {
   const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "modificationAndDeletion";
-  const modificationInfos = getModificationInfos(sheet, userEmail, slackMemberProfiles);
-  const deletionInfos = getDeletionInfos(sheet);
+  const sheetValues = getModificationAndDeletionSheetValues(sheet);
+  const valuesForOperation = sheetValues.filter((row) => row.deletionFlag || row.newDate);
+  const modificationInfos = getModificationInfos(valuesForOperation, userEmail, slackMemberProfiles);
+  const deletionInfos = getDeletionInfos(valuesForOperation);
 
   const payload = {
     apiId: "shift-changer",
