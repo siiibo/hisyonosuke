@@ -359,15 +359,26 @@ const getRegistrationInfos = (
       const date = format(eventInfo[0] as Date, "yyyy-MM-dd");
       const startTime = format(eventInfo[1] as Date, "HH:mm");
       const endTime = format(eventInfo[2] as Date, "HH:mm");
-      const restStartTime = format(eventInfo[3] as Date, "HH:mm");
-      const restEndTime = format(eventInfo[4] as Date, "HH:mm");
       const workingStyle = eventInfo[5] as string;
-      const title = createTitleFromEventInfo(
-        { restStartTime, restEndTime, workingStyle },
-        userEmail,
-        slackMemberProfiles
-      );
-      return { title, date, startTime, endTime };
+      if (eventInfo[3] === "" || eventInfo[4] === "") {
+        const restStartTime = eventInfo[3] as string;
+        const restEndTime = eventInfo[4] as string;
+        const title = createTitleFromEventInfo(
+          { restStartTime, restEndTime, workingStyle },
+          userEmail,
+          slackMemberProfiles
+        );
+        return { title, date, startTime, endTime };
+      } else {
+        const restStartTime = format(eventInfo[3] as Date, "HH:mm");
+        const restEndTime = format(eventInfo[4] as Date, "HH:mm");
+        const title = createTitleFromEventInfo(
+          { restStartTime, restEndTime, workingStyle },
+          userEmail,
+          slackMemberProfiles
+        );
+        return { title, date, startTime, endTime };
+      }
     });
   return registrationInfos;
 };
