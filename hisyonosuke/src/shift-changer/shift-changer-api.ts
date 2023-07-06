@@ -97,9 +97,9 @@ const modifyEvent = (
   event.setTitle(newTitle);
 };
 
-const getStartEndDate = ({ date, startTime, endTime }: EventInfo) => {
-  const startDate = new Date(`${date}${startTime}`);
-  const endDate = new Date(`${date}${endTime}`);
+const getStartEndDate = ({ date, startTime, endTime }: EventInfo): [Date, Date] => {
+  const startDate = new Date(`${date} ${startTime}`);
+  const endDate = new Date(`${date} ${endTime}`);
   return [startDate, endDate];
 };
 const deletion = (deletionInfos: EventInfo[], userEmail: string) => {
