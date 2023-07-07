@@ -227,9 +227,7 @@ const getModificationInfos = (
   newEventInfo: EventInfo;
 }[] => {
   const modificationInfos = sheetValues
-    .filter((row) => {
-      !row.deletionFlag;
-    })
+    .filter((row) => !row.deletionFlag)
     .map((row) => {
       const title = row.title;
       const date = format(row.date, "yyyy-MM-dd");
@@ -286,9 +284,7 @@ const getDeletionInfos = (
   }[]
 ): EventInfo[] => {
   const deletionInfos = sheetValues
-    .filter((row) => {
-      row.deletionFlag;
-    })
+    .filter((row) => row.deletionFlag)
     .map((row) => {
       const title = row.title;
       const date = format(row.date, "yyyy-MM-dd");
