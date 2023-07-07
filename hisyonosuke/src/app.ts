@@ -13,6 +13,7 @@ import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
 import { initAttendanceManager } from "./attendance-manager/attendanceManager";
 import { init as initPartTimerShift } from "./part-timer-shift/notify";
+import { shiftChanger } from "./shift-changer/shift-changer-api";
 
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
@@ -45,7 +46,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     appName: "hisyonoske",
     ...e,
   });
-
   if (isUrlVerification(e)) {
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)["challenge"]);
   }
@@ -60,6 +60,11 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     if (event.type === "channel_created") {
       handleChannelCreated(client, event as ChannelCreatedEvent);
     }
+  }
+
+  if (e.parameter.apiId === "shift-changer") {
+    const response = shiftChanger(e);
+    return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
 
   const response = birthdayRegistrator(e); // FIXME: レスポンスの書き換えが生じないようにとりあえずconstで定義してある
