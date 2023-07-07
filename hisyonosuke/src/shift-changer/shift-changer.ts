@@ -160,8 +160,8 @@ const getModificationAndDeletionSheetValues = (
   newDate: Date;
   newStartTime: Date;
   newEndTime: Date;
-  newRestStartTime: Date;
-  newRestEndTime: Date;
+  newRestStartTime: Date | string;
+  newRestEndTime: Date | string;
   newWorkingStyle: string;
   deletionFlag: boolean;
 }[] => {
@@ -169,19 +169,35 @@ const getModificationAndDeletionSheetValues = (
     .getRange(6, 1, sheet.getLastRow() - 5, sheet.getLastColumn())
     .getValues()
     .map((row) => {
-      return {
-        title: row[0] as string,
-        date: row[1] as Date,
-        startTime: row[2] as Date,
-        endTime: row[3] as Date,
-        newDate: row[4] as Date,
-        newStartTime: row[5] as Date,
-        newEndTime: row[6] as Date,
-        newRestStartTime: row[7] as Date,
-        newRestEndTime: row[8] as Date,
-        newWorkingStyle: row[9] as string,
-        deletionFlag: row[10] as boolean,
-      };
+      if (row[7] === "" || row[8] === "") {
+        return {
+          title: row[0] as string,
+          date: row[1] as Date,
+          startTime: row[2] as Date,
+          endTime: row[3] as Date,
+          newDate: row[4] as Date,
+          newStartTime: row[5] as Date,
+          newEndTime: row[6] as Date,
+          newRestStartTime: row[7] as string,
+          newRestEndTime: row[8] as string,
+          newWorkingStyle: row[9] as string,
+          deletionFlag: row[10] as boolean,
+        };
+      } else {
+        return {
+          title: row[0] as string,
+          date: row[1] as Date,
+          startTime: row[2] as Date,
+          endTime: row[3] as Date,
+          newDate: row[4] as Date,
+          newStartTime: row[5] as Date,
+          newEndTime: row[6] as Date,
+          newRestStartTime: row[7] as Date,
+          newRestEndTime: row[8] as Date,
+          newWorkingStyle: row[9] as string,
+          deletionFlag: row[10] as boolean,
+        };
+      }
     });
 
   return sheetValues;
@@ -196,8 +212,8 @@ const getModificationInfos = (
     newDate: Date;
     newStartTime: Date;
     newEndTime: Date;
-    newRestStartTime: Date;
-    newRestEndTime: Date;
+    newRestStartTime: Date | string;
+    newRestEndTime: Date | string;
     newWorkingStyle: string;
     deletionFlag: boolean;
   }[],
@@ -222,18 +238,33 @@ const getModificationInfos = (
       const newDate = format(row.newDate, "yyyy-MM-dd");
       const newStartTime = format(row.newStartTime, "HH:mm");
       const newEndTime = format(row.newEndTime, "HH:mm");
-      const newRestStartTime = format(row.newRestStartTime, "HH:mm");
-      const newRestEndTime = format(row.newRestEndTime, "HH:mm");
-      const newWorkingStyle = row.newWorkingStyle;
-      const newTitle = createTitleFromEventInfo(
-        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-        userEmail,
-        slackMemberProfiles
-      );
-      return {
-        previousEventInfo: { title, date, startTime, endTime },
-        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
-      };
+      if (row.newRestStartTime === "" || row.newRestEndTime === "") {
+        const newRestStartTime = row.newRestStartTime as string;
+        const newRestEndTime = row.newRestEndTime as string;
+        const newWorkingStyle = row.newWorkingStyle;
+        const newTitle = createTitleFromEventInfo(
+          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+          userEmail,
+          slackMemberProfiles
+        );
+        return {
+          previousEventInfo: { title, date, startTime, endTime },
+          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+        };
+      } else {
+        const newRestStartTime = format(row.newRestStartTime as Date, "HH:mm");
+        const newRestEndTime = format(row.newRestEndTime as Date, "HH:mm");
+        const newWorkingStyle = row.newWorkingStyle;
+        const newTitle = createTitleFromEventInfo(
+          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+          userEmail,
+          slackMemberProfiles
+        );
+        return {
+          previousEventInfo: { title, date, startTime, endTime },
+          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+        };
+      }
     });
 
   return modificationInfos;
@@ -248,8 +279,8 @@ const getDeletionInfos = (
     newDate: Date;
     newStartTime: Date;
     newEndTime: Date;
-    newRestStartTime: Date;
-    newRestEndTime: Date;
+    newRestStartTime: Date | string;
+    newRestEndTime: Date | string;
     newWorkingStyle: string;
     deletionFlag: boolean;
   }[]
