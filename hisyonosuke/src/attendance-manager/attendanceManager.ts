@@ -61,22 +61,25 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
       return;
     }
     const userWorkStatus = userWorkStatuses[message.user];
-    const actionType = getActionType(commandType, userWorkStatus);
-    execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
-      message,
-      userWorkStatus,
-      actionType,
-    }).match(
-      (data) => {
-        userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
-        console.info(JSON.stringify({ actionType, userWorkStatus, ...data }, null, 2));
-      },
-      (error) => {
-        console.error(JSON.stringify({ actionType, userWorkStatus, ...error }, null, 2));
-        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
-        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-      }
-    );
+    getActionType(commandType, userWorkStatus)
+      .andThen((actionType) => {
+        return execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
+          message,
+          userWorkStatus,
+          actionType,
+        });
+      })
+      .match(
+        (data) => {
+          userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
+          console.info(JSON.stringify({ userWorkStatus, ...data }, null, 2));
+        },
+        (error) => {
+          console.error(JSON.stringify({ userWorkStatus, ...error }, null, 2));
+          client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
+          client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
+        }
+      );
   });
 }
 
@@ -91,7 +94,7 @@ function execAction(
     userWorkStatus: UserWorkStatus | undefined;
   }
 ) {
-  const { message, actionType, userWorkStatus } = action;
+  const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, freee, message.user, freeCompanyId)
     .orElse((e) => err({ message: e }))
     .andThen((employeeId) => {
@@ -105,8 +108,8 @@ function execAction(
         )
         .exhaustive();
       return result
-        .andThen((r) => ok({ result: r, employeeId }))
-        .orElse((error) => err({ message: error, employeeId }));
+        .andThen((r) => ok({ result: r, employeeId, actionType }))
+        .orElse((error) => err({ message: error, employeeId, actionType }));
     });
 }
 
