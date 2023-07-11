@@ -8,6 +8,7 @@ import type {
 } from "./freee.schema";
 import { getService } from "./auth";
 import { buildUrl } from "./utilities";
+import { format } from "date-fns";
 
 export class Freee {
   private fetch;
@@ -122,4 +123,15 @@ function withRetry<TReturn>(
     if (backoff) Utilities.sleep(backoff(i));
   }
   return err("Error: Unreachable code path");
+}
+
+export function formatDate(date: Date | string, type: "date" | "timeConcise" | "datetime") {
+  // NOTE: freee APIのresponseでは「yyyy-MM-ddTHH:mm:ss.SSSZ」の形式で返ってくるが、requestでは「yyyy-MM-dd HH:mm:ss」の形式にする必要がある
+  const formatString = match(type)
+    .with("date", () => "yyyy-MM-dd")
+    .with("datetime", () => "yyyy-MM-dd HH:mm")
+    .with("timeConcise", () => "HH:mm")
+    .exhaustive();
+  const _format = (_date: Date) => format(_date, formatString);
+  return typeof date === "string" ? _format(new Date(date)) : _format(date);
 }

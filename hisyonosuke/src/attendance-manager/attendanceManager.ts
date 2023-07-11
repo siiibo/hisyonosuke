@@ -1,6 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import { Freee } from "./freee";
+import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
 import { REACTION } from "./reaction";
@@ -200,24 +200,25 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
+  const targetDate = formatDate(getBaseDate(message.date), "date");
 
   return handleClockOut(client, freee, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
       return freee.getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
     })
     .andThen((workRecord) => {
+      if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
+        return err(`出勤時間か退勤時間が不正な値です.`);
+      }
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
-        ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
-        ...(workRecord.clock_out_at && {
-          clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
-        }),
+        clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+        clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         break_records: workRecord.break_records.map((record) => {
           return {
-            clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-            clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+            clock_in_at: formatDate(record.clock_in_at, "datetime"),
+            clock_out_at: formatDate(record.clock_out_at, "datetime"),
           };
         }),
       };
