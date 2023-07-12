@@ -1,6 +1,6 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, subDays, toDate } from "date-fns";
-import { Freee } from "./freee";
+import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
 import { REACTION } from "./reaction";
@@ -61,13 +61,25 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
       return;
     }
     const userWorkStatus = userWorkStatuses[message.user];
-    const actionType = getActionType(commandType, userWorkStatus);
-    execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
-      message,
-      userWorkStatus,
-      actionType,
-    });
-    userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
+    getActionType(commandType, userWorkStatus)
+      .andThen((actionType) => {
+        return execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
+          message,
+          userWorkStatus,
+          actionType,
+        });
+      })
+      .match(
+        (data) => {
+          userWorkStatuses[message.user] = getUpdatedUserWorkStatus(userWorkStatus, commandType);
+          console.info(JSON.stringify({ userWorkStatus, ...data }, null, 2));
+        },
+        (error) => {
+          console.error(JSON.stringify({ userWorkStatus, ...error }, null, 2));
+          client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
+          client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
+        }
+      );
   });
 }
 
@@ -82,7 +94,7 @@ function execAction(
     userWorkStatus: UserWorkStatus | undefined;
   }
 ) {
-  const { message, actionType, userWorkStatus } = action;
+  const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, freee, message.user, freeCompanyId)
     .orElse((e) => err({ message: e }))
     .andThen((employeeId) => {
@@ -96,19 +108,9 @@ function execAction(
         )
         .exhaustive();
       return result
-        .andThen((r) => ok({ result: r, employeeId }))
-        .orElse((error) => err({ message: error, employeeId }));
-    })
-    .match(
-      (data) => {
-        console.info(JSON.stringify({ actionType, userWorkStatus, ...data }, null, 2));
-      },
-      (error) => {
-        console.error(JSON.stringify({ actionType, userWorkStatus, ...error }, null, 2));
-        client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
-        client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-      }
-    );
+        .andThen((r) => ok({ result: r, employeeId, actionType }))
+        .orElse((error) => err({ message: error, employeeId, actionType }));
+    });
 }
 
 function handleClockIn(
@@ -200,28 +202,29 @@ function handleClockOutAndAddRemoteMemo(
   employeeId: number,
   message: Message
 ) {
-  const targetDate = format(getBaseDate(message.date), "yyyy-MM-dd");
+  const targetDate = formatDate(getBaseDate(message.date), "date");
 
   return handleClockOut(client, freee, channelId, FREEE_COMPANY_ID, employeeId, message)
     .andThen(() => {
       return freee.getWorkRecord(employeeId, targetDate, FREEE_COMPANY_ID);
     })
     .andThen((workRecord) => {
-      const remoteParams: EmployeesWorkRecordsController_update_body = {
+      if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
+        return err(`出勤時間か退勤時間が不正な値です.`);
+      }
+      const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
-        ...(workRecord.clock_in_at && { clock_in_at: format(new Date(workRecord.clock_in_at), "yyyy-MM-dd HH:mm:ss") }),
-        ...(workRecord.clock_out_at && {
-          clock_out_at: format(new Date(workRecord.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
-        }),
+        clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+        clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         break_records: workRecord.break_records.map((record) => {
           return {
-            clock_in_at: format(new Date(record.clock_in_at), "yyyy-MM-dd HH:mm:ss"),
-            clock_out_at: format(new Date(record.clock_out_at), "yyyy-MM-dd HH:mm:ss"),
+            clock_in_at: formatDate(record.clock_in_at, "datetime"),
+            clock_out_at: formatDate(record.clock_out_at, "datetime"),
           };
         }),
       };
-      return freee.updateWorkRecord(employeeId, targetDate, remoteParams);
+      return freee.updateWorkRecord(employeeId, targetDate, newWorkRecord);
     })
     .andThen(() => {
       client.reactions.add({ channel: channelId, name: REACTION.DONE_FOR_REMOTE_MEMO, timestamp: message.ts });

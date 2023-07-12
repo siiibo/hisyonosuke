@@ -7,7 +7,6 @@ import { getUnixTimeStampString } from "./utilities";
 
 export const MessageSchema = z
   .object({
-    type: z.literal("message"),
     user: z.string(),
     text: z.string(),
     ts: z.string(),
@@ -28,7 +27,14 @@ export function getCategorizedDailyMessages(
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
 
   // NOTE: エラーリアクションがついているメッセージは返り値に含めない
-  return messagesWithoutError.reduce(
+  return categorizeMessage(messagesWithoutError, botUserId);
+}
+
+function categorizeMessage(
+  messages: Message[],
+  botUserId: string
+): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
+  return messages.reduce(
     (acc, message) => {
       return isProcessedMessage(message, botUserId)
         ? {
@@ -48,15 +54,7 @@ export function getCategorizedDailyMessages(
 }
 
 function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
-  const now = new Date();
-  const oldest = set(now, {
-    hours: dateStartHour,
-    minutes: 0,
-    seconds: 0,
-    milliseconds: 0,
-    ...(now.getHours() <= dateStartHour && { date: getDate(subDays(now, 1)) }),
-  });
-
+  const oldest = getDayStartAsDate(new Date(), dateStartHour);
   const _messages =
     client.conversations.history({
       channel: channelId,
@@ -75,7 +73,17 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
   );
 }
 
-function isErrorMessage(message: Message, botUserId: string): boolean {
+export function getDayStartAsDate(date: Date, dateStartHour: number): Date {
+  return set(date, {
+    hours: dateStartHour,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+    ...(date.getHours() < dateStartHour && { date: getDate(subDays(date, 1)) }),
+  });
+}
+
+export function isErrorMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
@@ -91,12 +99,9 @@ function isProcessedMessage(message: Message, botUserId: string): boolean {
   if (!message.reactions) {
     return false;
   }
-  return message.reactions?.some((reaction) => {
-    if (!reaction.name) {
-      return false;
-    }
+  return message.reactions.some((reaction) => {
     return (
-      reaction.users?.includes(botUserId) &&
+      reaction.users.includes(botUserId) &&
       [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
         reaction.name
       )

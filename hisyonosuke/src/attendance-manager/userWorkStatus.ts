@@ -1,8 +1,18 @@
+import { match } from "ts-pattern";
+import * as R from "remeda";
 import { CommandType, getCommandType } from "./command";
 import { ProcessedMessage } from "./message";
+import { valueOf } from "./utilities";
+
+// 未出勤は現状利用していない
+export const WORK_STATUS = {
+  WORKING_AT_OFFICE: "勤務中（出社）",
+  WORKING_REMOTELY: "勤務中（リモート）",
+  CLOCKED_OUT: "退勤済み",
+} as const;
 
 export type UserWorkStatus = {
-  workStatus: "勤務中（出社）" | "勤務中（リモート）" | "退勤済み"; // 未出勤は現状利用していない
+  workStatus: valueOf<typeof WORK_STATUS>;
   needTrafficExpense: boolean;
   processedCommands: CommandType[];
 };
@@ -49,23 +59,18 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
   return Object.fromEntries(clockedInUserWorkStatuses);
 }
 
-function getUserWorkStatusByCommands(commands: CommandType[]): UserWorkStatus["workStatus"] {
-  const lastCommand = commands[commands.length - 1];
-  // 最後のuserMessageからworkStatusを算出できるはず
-  // 休憩を打刻できるように変更する場合は、休憩打刻を除いた最後のメッセージを確認
-  // TODO: ↑の検証
-  switch (lastCommand) {
-    case "CLOCK_OUT":
-      return "退勤済み";
-    case "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE":
-      return "勤務中（リモート）";
-    case "SWITCH_TO_REMOTE":
-      return "勤務中（リモート）";
-    case "CLOCK_IN":
-      return "勤務中（出社）";
-    case "CLOCK_IN_OR_SWITCH_TO_OFFICE":
-      return "勤務中（出社）";
-  }
+export function getUserWorkStatusByCommands(commands: CommandType[]): UserWorkStatus["workStatus"] {
+  const lastCommand = R.last(commands);
+  const status = match(lastCommand)
+    .with("CLOCK_IN", () => WORK_STATUS.WORKING_AT_OFFICE)
+    .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => WORK_STATUS.WORKING_AT_OFFICE)
+    .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () => WORK_STATUS.WORKING_REMOTELY)
+    .with("SWITCH_TO_REMOTE", () => WORK_STATUS.WORKING_REMOTELY)
+    .with("CLOCK_OUT", () => WORK_STATUS.CLOCKED_OUT)
+    .otherwise(() => {
+      throw new Error(`Unexpected command: ${lastCommand}`);
+    });
+  return status;
 }
 
 function checkTrafficExpense(userCommands: CommandType[]) {
