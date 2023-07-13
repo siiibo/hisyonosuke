@@ -1,4 +1,4 @@
-import { set } from "date-fns";
+import { set, isWeekend } from "date-fns";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 
 const ANNOUNCE_HOUR = 9;
@@ -33,6 +33,9 @@ export function notifyPartTimerShift() {
   const announceTime = set(targetDate, { hours: ANNOUNCE_HOUR, minutes: 0, seconds: 0, milliseconds: 0 });
   const dailyShifts = calendar.getEventsForDay(targetDate);
   const notificationString = getNotificationString(dailyShifts);
+
+  const today = new Date();
+  if (isWeekend(today) || isHoliday(today)) return;
 
   client.chat.scheduleMessage({
     channel: announceChannel,
@@ -69,3 +72,10 @@ function getSlackClient() {
   if (!token) throw new Error("SLACK_TOKEN is not set");
   return new SlackClient(token);
 }
+
+const isHoliday = (day: Date): boolean => {
+  const calendarId = "ja.japanese#holiday@group.v.calendar.google.com";
+  const calendar = CalendarApp.getCalendarById(calendarId);
+  const holidayEvents = calendar.getEventsForDay(day);
+  return holidayEvents.length > 0;
+};
