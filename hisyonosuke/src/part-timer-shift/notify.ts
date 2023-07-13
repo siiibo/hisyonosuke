@@ -27,15 +27,13 @@ export function notifyPartTimerShift() {
   const calendar = CalendarApp.getCalendarById(calendarId);
 
   const now = new Date();
+  if (isWeekend(now) || isHoliday(now)) return;
   if (!checkTime(now)) throw new Error(`設定時刻に誤りがあります.\nANNOUNCE_HOUR: ${ANNOUNCE_HOUR}\nnow: ${now}`);
 
   const targetDate = new Date();
   const announceTime = set(targetDate, { hours: ANNOUNCE_HOUR, minutes: 0, seconds: 0, milliseconds: 0 });
   const dailyShifts = calendar.getEventsForDay(targetDate);
   const notificationString = getNotificationString(dailyShifts);
-
-  const today = new Date();
-  if (isWeekend(today) || isHoliday(today)) return;
 
   client.chat.scheduleMessage({
     channel: announceChannel,
