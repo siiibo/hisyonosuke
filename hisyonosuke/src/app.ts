@@ -1,13 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
-import {
-  ChannelCreatedEvent,
-  EmojiChangedEvent,
-  SlackAction,
-  SlackEvent,
-  SlackShortcut,
-  SlackViewAction,
-} from "@slack/bolt";
+import { ChannelCreatedEvent, SlackAction, SlackEvent, SlackShortcut, SlackViewAction } from "@slack/bolt";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { birthdayRegistrator } from "./birthday-registrator/birthday-registrator";
 import { workflowCustomStep } from "./workflow-customstep/workflow-customstep";
@@ -18,7 +11,6 @@ import { shiftChanger } from "./shift-changer/shift-changer-api";
 const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
 
 // Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
-const EMOJI_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
 
 export const init = () => {
@@ -54,9 +46,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   if (isEvent(e)) {
     const event = JSON.parse(e.postData.contents)["event"] as SlackEvent;
     const client = getSlackClient();
-    if (event.type === "emoji_changed") {
-      handleEmojiChange(client, event as EmojiChangedEvent);
-    }
     if (event.type === "channel_created") {
       handleChannelCreated(client, event as ChannelCreatedEvent);
     }
@@ -177,14 +166,6 @@ const isOriginalCommand = (target: string, commandRegExpString: string) => {
       regExpString.commandEnd
   );
   return target.match(commandRegExp);
-};
-const handleEmojiChange = (client: SlackClient, event: EmojiChangedEvent) => {
-  if (event.subtype === "add") {
-    client.chat.postMessage({
-      channel: EMOJI_EVENT_POST_CHANNEL,
-      text: `:${event.name}:  (\`:${event.name}:\`)が追加されました！`,
-    });
-  }
 };
 
 const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) => {
