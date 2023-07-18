@@ -474,7 +474,7 @@ const getJob = (userEmail: string): string => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
-  const jobInfos = sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues();
+  const jobInfos = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
   const jobInfo = jobInfos.find((jobInfo) => {
     const email = jobInfo[2] as string;
     return email === userEmail;
