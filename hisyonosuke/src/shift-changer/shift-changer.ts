@@ -474,14 +474,14 @@ const getJob = (userEmail: string): string => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
-  const jobInfos = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
-  const jobInfo = jobInfos.find((jobInfo) => {
-    const email = jobInfo[2] as string;
+  const partTimerInfos = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
+  const partTimerInfo = partTimerInfos.find((partTimerInfo) => {
+    const email = partTimerInfo[2] as string;
     return email === userEmail;
   });
-  if (jobInfo === undefined) throw new Error("no part timer information for the email");
+  if (partTimerInfo === undefined) throw new Error("no part timer information for the email");
 
-  const job = jobInfo[0] as string;
+  const job = partTimerInfo[0] as string;
   return job;
 };
 
