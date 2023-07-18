@@ -470,7 +470,7 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getJob = (userEmail: string): string | undefined => {
+const getJob = (userEmail: string): string => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
@@ -479,7 +479,7 @@ const getJob = (userEmail: string): string | undefined => {
     const email = jobInfo[2] as string;
     return email === userEmail;
   });
-  if (jobInfo === undefined) return;
+  if (jobInfo === undefined) throw new Error("no part timer information for the email");
 
   const job = jobInfo[0] as string;
   return job;
