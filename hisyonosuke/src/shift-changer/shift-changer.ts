@@ -477,7 +477,7 @@ const getJob = (userEmail: string): string | undefined => {
   const jobInfos = sheet.getRange(1, 1, sheet.getLastRow(), 2).getValues();
   const jobInfo = jobInfos.find((jobInfo) => {
     const email = jobInfo[2] as string;
-    return email.match(userEmail);
+    return email === userEmail;
   });
   if (jobInfo === undefined) return;
 
