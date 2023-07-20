@@ -534,7 +534,7 @@ const getManagerEmails = (userEmail: string): string[] => {
   return managerEmails;
 };
 
-const getManagerIds = (managerEmails: string[], client: SlackClient): string[] => {
+const getManagerSlackIds = (managerEmails: string[], client: SlackClient): string[] => {
   const slackMembers = client.users.list().members ?? [];
 
   const siiiboSlackMembers = slackMembers.filter(
@@ -544,7 +544,7 @@ const getManagerIds = (managerEmails: string[], client: SlackClient): string[] =
       slackMember.id !== "USLACKBOT" &&
       slackMember.profile?.email?.includes("siiibo.com")
   );
-  const managerIds = managerEmails
+  const managerSlackIds = managerEmails
     .map((email) => {
       const member = siiiboSlackMembers.find((slackMember) => {
         return slackMember.profile?.email === email;
@@ -554,12 +554,12 @@ const getManagerIds = (managerEmails: string[], client: SlackClient): string[] =
     })
     .filter((id): id is string => id !== undefined);
 
-  return managerIds;
+  return managerSlackIds;
 };
 
-const getMentionMessage = (managerIds: string[]): string => {
-  const mentionMessages = managerIds.map((managerId) => {
-    return `<@${managerId}>\n`;
+const getMentionMessage = (managerSlackIds: string[]): string => {
+  const mentionMessages = managerSlackIds.map((managerSlackId) => {
+    return `<@${managerSlackId}>\n`;
   });
   const mentionMessage = mentionMessages.join("");
   return mentionMessage;
@@ -573,8 +573,8 @@ const postMessageToSlackChannel = (
 ) => {
   const { HR_MANAGER_SLACK_ID } = getConfig();
   const managerEmails = getManagerEmails(userEmail);
-  const managerIds = getManagerIds(managerEmails, client);
-  const mentionMessageToManagers = getMentionMessage(managerIds);
+  const managerSlackIds = getManagerSlackIds(managerEmails, client);
+  const mentionMessageToManagers = getMentionMessage(managerSlackIds);
   client.chat.postMessage({
     channel: slackChannelToPost,
     text: `<@${HR_MANAGER_SLACK_ID}>\n${mentionMessageToManagers}${messageToNotify}`,
