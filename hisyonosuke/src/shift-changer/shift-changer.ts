@@ -571,12 +571,12 @@ const postMessageToSlackChannel = (
   messageToNotify: string,
   userEmail: string
 ) => {
-  const { MEMBER_ID } = getConfig();
+  const { HR_MANAGER_SLACK_ID } = getConfig();
   const managerEmails = getManagerEmails(userEmail);
   const managerIds = getManagerIds(managerEmails, client);
   const mentionMessageToManagers = getMentionMessage(managerIds);
   client.chat.postMessage({
     channel: slackChannelToPost,
-    text: `<@${MEMBER_ID}>\n${mentionMessageToManagers}${messageToNotify}`,
+    text: `<@${HR_MANAGER_SLACK_ID}>\n${mentionMessageToManagers}${messageToNotify}`,
   });
 };
