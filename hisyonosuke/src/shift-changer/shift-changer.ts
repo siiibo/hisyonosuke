@@ -557,13 +557,7 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
   return managerSlackIds;
 };
 
-const getMentionMessage = (managerSlackIds: string[]): string => {
-  const mentionMessages = managerSlackIds.map((managerSlackId) => {
-    return `<@${managerSlackId}>\n`;
-  });
-  const mentionMessage = mentionMessages.join("");
-  return mentionMessage;
-};
+const slackIdToMention = (slackId: string) => `<@${slackId}>`;
 
 const postMessageToSlackChannel = (
   client: SlackClient,
@@ -574,9 +568,9 @@ const postMessageToSlackChannel = (
   const { HR_MANAGER_SLACK_ID } = getConfig();
   const managerEmails = getManagerEmails(userEmail);
   const managerSlackIds = getManagerSlackIds(managerEmails, client);
-  const mentionMessageToManagers = getMentionMessage(managerSlackIds);
+  const mentionMessageToManagers = [HR_MANAGER_SLACK_ID, ...managerSlackIds].map(slackIdToMention).join(" ");
   client.chat.postMessage({
     channel: slackChannelToPost,
-    text: `<@${HR_MANAGER_SLACK_ID}>\n${mentionMessageToManagers}${messageToNotify}`,
+    text: `${mentionMessageToManagers}\n${messageToNotify}`,
   });
 };
