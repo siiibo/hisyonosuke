@@ -530,7 +530,7 @@ const getManagerEmails = (userEmail: string): string[] => {
   });
   if (partTimerInfo === undefined) throw new Error("no part timer information for the email");
   const managerEmail = partTimerInfo[3] as string;
-  const managerEmails = managerEmail.split(/[\s,]+/);
+  const managerEmails = managerEmail.replace(/\s*,\s*/, ",").split(",");
   return managerEmails;
 };
 
