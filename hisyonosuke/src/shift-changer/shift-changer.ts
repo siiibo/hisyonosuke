@@ -537,16 +537,9 @@ const getManagerEmails = (userEmail: string): string[] => {
 const getManagerSlackIds = (managerEmails: string[], client: SlackClient): string[] => {
   const slackMembers = client.users.list().members ?? [];
 
-  const siiiboSlackMembers = slackMembers.filter(
-    (slackMember) =>
-      !slackMember.deleted &&
-      !slackMember.is_bot &&
-      slackMember.id !== "USLACKBOT" &&
-      slackMember.profile?.email?.includes("siiibo.com")
-  );
   const managerSlackIds = managerEmails
     .map((email) => {
-      const member = siiiboSlackMembers.find((slackMember) => {
+      const member = slackMembers.find((slackMember) => {
         return slackMember.profile?.email === email;
       });
       if (member === undefined) throw new Error("The email is not in the slack members");
