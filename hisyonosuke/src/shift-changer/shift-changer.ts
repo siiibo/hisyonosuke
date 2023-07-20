@@ -559,7 +559,7 @@ const getManagerIds = (managerEmails: string[], client: SlackClient): string[] =
 
 const getMentionMessage = (managerIds: string[]): string => {
   const mentionMessages = managerIds.map((managerId) => {
-    `<@${managerId}>\n`;
+    return `<@${managerId}>\n`;
   });
   const mentionMessage = mentionMessages.join("");
   return mentionMessage;
