@@ -71,10 +71,21 @@ export const insertModificationAndDeletionSheet = () => {
   sheet.addDeveloperMetadata(`${today}-modificationAndDeletion`);
 
   const description1 = "コメント欄 (下の色付きセルに記入してください)";
+  sheet.getRange("A1").setValue(description1).setFontWeight("bold");
+  const commentCell = sheet.getRange("A2");
+  commentCell.setBackground("#f0f8ff");
+
   const description2 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
+  sheet.getRange("A4").setValue(description2).setFontWeight("bold");
+
   const description3 = "【予定一覧】";
+  sheet.getRange("A7").setValue(description3).setFontWeight("bold");
+
   const description4 = "【変更】変更後の予定を記入してください ";
+  sheet.getRange("E7").setValue(description4).setFontWeight("bold");
+
   const description5 = "【削除】削除したい予定を選択してください";
+  sheet.getRange("K7").setValue(description5).setFontWeight("bold");
 
   const header = [
     "イベント名",
@@ -89,13 +100,6 @@ export const insertModificationAndDeletionSheet = () => {
     "勤務形態",
     "削除対象",
   ];
-  sheet.getRange("A1").setValue(description1).setFontWeight("bold");
-  const commentCell = sheet.getRange("A2");
-  commentCell.setBackground("#f0f8ff");
-  sheet.getRange("A4").setValue(description2).setFontWeight("bold");
-  sheet.getRange("A7").setValue(description3).setFontWeight("bold");
-  sheet.getRange("E7").setValue(description4).setFontWeight("bold");
-  sheet.getRange("K7").setValue(description5).setFontWeight("bold");
   sheet.getRange(8, 1, 1, header.length).setValues([header]).setFontWeight("bold");
 
   const dateCell = sheet.getRange("A5");
