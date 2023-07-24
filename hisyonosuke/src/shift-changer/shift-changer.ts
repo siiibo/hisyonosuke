@@ -372,10 +372,11 @@ export const callShowEvents = () => {
   if (!response.getContentText()) return;
 
   const eventInfos: EventInfo[] = JSON.parse(response.getContentText());
+  if (eventInfos.length === 0) return;
+
   const moldedEventInfos = eventInfos.map(({ title, date, startTime, endTime }) => {
     return [title, date, startTime, endTime];
   });
-  if (moldedEventInfos.length === 0) return;
 
   sheet.getRange(9, 1, moldedEventInfos.length, moldedEventInfos[0].length).setValues(moldedEventInfos);
 };
