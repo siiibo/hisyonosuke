@@ -368,6 +368,7 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   const today = format(new Date(), "yyyy-MM-dd");
   const sheet = SpreadsheetApp.openByUrl(spreadsheetUrl)
     .getSheets()
+    .filter((sheet) => sheet.getDeveloperMetadata()[0])
     .find((sheet) => sheet.getDeveloperMetadata()[0].getKey() === `${today}-${sheetType}`);
 
   if (!sheet) throw new Error("SHEET is not defined");
