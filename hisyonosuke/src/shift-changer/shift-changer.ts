@@ -507,7 +507,7 @@ const createRegistrationMessage = (registrationInfos: EventInfo[], comment: stri
   const messages = registrationInfos.map(createMessageFromEventInfo);
   const messageTitle = "以下の予定が追加されました。";
   return comment
-    ? `${messageTitle}\n${messages.join("\n")}\nコメント: ${comment}`
+    ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
 };
 
@@ -516,7 +516,7 @@ const createDeletionMessage = (deletionInfos: EventInfo[], comment: string): str
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が削除されました。";
   return comment
-    ? `${messageTitle}\n${messages.join("\n")}\nコメント: ${comment}`
+    ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
 };
 
@@ -534,7 +534,7 @@ const createModificationMessage = (
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が変更されました。";
   return comment
-    ? `${messageTitle}\n${messages.join("\n")}\nコメント: ${comment}`
+    ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
 };
 
