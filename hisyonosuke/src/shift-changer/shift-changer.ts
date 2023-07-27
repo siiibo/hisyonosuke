@@ -372,7 +372,7 @@ export const callShowEvents = () => {
   if (!response.getContentText()) return;
 
   const eventInfos: EventInfo[] = JSON.parse(response.getContentText());
-  if (eventInfos.length === 0) return;
+  if (eventInfos.length === 0) throw new Error("no events");
 
   const moldedEventInfos = eventInfos.map(({ title, date, startTime, endTime }) => {
     return [title, date, startTime, endTime];
