@@ -6,8 +6,7 @@ on:
             - "main"
         paths:
             - hisyonosuke
-        paths-ignore:
-            - "**.md"
+            - "!**.md"
     workflow_dispatch:
 
 jobs:
