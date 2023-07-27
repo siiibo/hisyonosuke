@@ -1,0 +1,14 @@
+# Hisyonosuke
+
+秘書之介の Slack App を管理
+
+## Requirements
+
+- `SCRIPT_ID`を Repository Secret として登録
+- デプロイユーザが`yarn clasp login`し、以下の情報を`~/.clasprc.json`から取得して Repository Secret として登録
+  - `ACCESS_TOKEN`
+  - `CLIENT_ID`
+  - `CLIENT_SECRET`
+  - `ID_TOKEN`
+  - `REFRESH_TOKEN`
+- スクリプトを予め一度「ウェブアプリ」としてデプロイし、Deployment ID を取得して Repository Secret `DEPLOY_ID` として登録
