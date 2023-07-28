@@ -501,8 +501,10 @@ const createModificationMessage = (
   comment: string
 ): string | undefined => {
   const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
-    return `${createMessageFromEventInfo(previousEventInfo)}\n\
-    → ${createMessageFromEventInfo(newEventInfo)}`;
+    return `---
+    ${createMessageFromEventInfo(previousEventInfo)}\n\
+    ↓\n\
+    ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
   const messageTitle = "以下の予定が変更されました。";
