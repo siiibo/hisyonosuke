@@ -416,7 +416,7 @@ const createTitleFromEventInfo = (
   },
   userEmail: string
 ): string => {
-  const [job, name] = getJobSheetProfile(userEmail);
+  const [job, name] = getPartTimerProfile(userEmail);
 
   const restStartTime = eventInfo.restStartTime;
   const restEndTime = eventInfo.restEndTime;
@@ -435,7 +435,7 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getJobSheetProfile = (userEmail: string): [string, string] => {
+const getPartTimerProfile = (userEmail: string): [string, string] => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
