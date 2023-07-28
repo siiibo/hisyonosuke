@@ -140,13 +140,12 @@ export const callRegistration = () => {
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
-  const slackMemberProfiles = getSlackMemberProfiles(client);
 
   const sheetType: SheetType = "registration";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "registration";
   const comment = sheet.getRange("A2").getValue();
-  const registrationInfos = getRegistrationInfos(sheet, userEmail, slackMemberProfiles);
+  const registrationInfos = getRegistrationInfos(sheet, userEmail);
 
   const payload = {
     apiId: "shift-changer",
@@ -231,11 +230,7 @@ const getModificationInfos = (
     newWorkingStyle: string;
     deletionFlag: boolean;
   }[],
-  userEmail: string,
-  slackMemberProfiles: {
-    name: string;
-    email: string;
-  }[]
+  userEmail: string
 ): {
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
@@ -312,14 +307,13 @@ export const callModificationAndDeletion = () => {
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
-  const slackMemberProfiles = getSlackMemberProfiles(client);
   const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const comment = sheet.getRange("A2").getValue();
   const operationType: OperationType = "modificationAndDeletion";
   const sheetValues = getModificationAndDeletionSheetValues(sheet);
   const valuesForOperation = sheetValues.filter((row) => row.deletionFlag || row.newDate);
-  const modificationInfos = getModificationInfos(valuesForOperation, userEmail, slackMemberProfiles);
+  const modificationInfos = getModificationInfos(valuesForOperation, userEmail);
   const deletionInfos = getDeletionInfos(valuesForOperation);
 
   const payload = {
@@ -390,11 +384,7 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   return sheet;
 };
 
-const getRegistrationInfos = (
-  sheet: GoogleAppsScript.Spreadsheet.Sheet,
-  userEmail: string,
-  slackMemberProfiles: { name: string; email: string }[]
-): EventInfo[] => {
+const getRegistrationInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEmail: string): EventInfo[] => {
   const registrationInfos = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
     .getValues()
@@ -439,28 +429,6 @@ const createTitleFromEventInfo = (
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
   }
-};
-
-const getSlackMemberProfiles = (client: SlackClient): { name: string; email: string }[] => {
-  const slackMembers = client.users.list().members ?? [];
-
-  const siiiboSlackMembers = slackMembers.filter(
-    (slackMember) =>
-      !slackMember.deleted &&
-      !slackMember.is_bot &&
-      slackMember.id !== "USLACKBOT" &&
-      slackMember.profile?.email?.includes("siiibo.com")
-  );
-
-  const slackMemberProfiles = siiiboSlackMembers
-    .map((slackMember) => {
-      return {
-        name: slackMember.profile?.real_name,
-        email: slackMember.profile?.email,
-      };
-    })
-    .filter((s): s is { name: string; email: string } => s.name !== "" || s.email !== "");
-  return slackMemberProfiles;
 };
 
 const getSlackClient = (slackToken: string): SlackClient => {
