@@ -256,8 +256,7 @@ const getModificationInfos = (
         const newWorkingStyle = row.newWorkingStyle;
         const newTitle = createTitleFromEventInfo(
           { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-          userEmail,
-          slackMemberProfiles
+          userEmail
         );
         return {
           previousEventInfo: { title, date, startTime, endTime },
@@ -269,8 +268,7 @@ const getModificationInfos = (
         const newWorkingStyle = row.newWorkingStyle;
         const newTitle = createTitleFromEventInfo(
           { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-          userEmail,
-          slackMemberProfiles
+          userEmail
         );
         return {
           previousEventInfo: { title, date, startTime, endTime },
@@ -408,20 +406,12 @@ const getRegistrationInfos = (
       if (eventInfo[3] === "" || eventInfo[4] === "") {
         const restStartTime = eventInfo[3] as string;
         const restEndTime = eventInfo[4] as string;
-        const title = createTitleFromEventInfo(
-          { restStartTime, restEndTime, workingStyle },
-          userEmail,
-          slackMemberProfiles
-        );
+        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, userEmail);
         return { title, date, startTime, endTime };
       } else {
         const restStartTime = format(eventInfo[3] as Date, "HH:mm");
         const restEndTime = format(eventInfo[4] as Date, "HH:mm");
-        const title = createTitleFromEventInfo(
-          { restStartTime, restEndTime, workingStyle },
-          userEmail,
-          slackMemberProfiles
-        );
+        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, userEmail);
         return { title, date, startTime, endTime };
       }
     });
@@ -434,14 +424,9 @@ const createTitleFromEventInfo = (
     restEndTime: string;
     workingStyle: string;
   },
-  userEmail: string,
-  slackMemberProfiles: {
-    name: string;
-    email: string;
-  }[]
+  userEmail: string
 ): string => {
-  const name = getNameFromEmail(userEmail, slackMemberProfiles);
-  const job = getJob(userEmail);
+  const [job, name] = getJobSheetProfile(userEmail);
 
   const restStartTime = eventInfo.restStartTime;
   const restEndTime = eventInfo.restEndTime;
@@ -454,12 +439,6 @@ const createTitleFromEventInfo = (
     const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
   }
-};
-
-const getNameFromEmail = (email: string, slackMemberProfiles: { name: string; email: string }[]): string => {
-  const slackMember = slackMemberProfiles.find((slackMemberProfile) => slackMemberProfile.email === email);
-  if (!slackMember) throw new Error("The email is non-slack member");
-  return slackMember.name;
 };
 
 const getSlackMemberProfiles = (client: SlackClient): { name: string; email: string }[] => {
@@ -488,7 +467,7 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getJob = (userEmail: string): string => {
+const getJobSheetProfile = (userEmail: string): [string, string] => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
@@ -500,7 +479,8 @@ const getJob = (userEmail: string): string => {
   if (partTimerInfo === undefined) throw new Error("no part timer information for the email");
 
   const job = partTimerInfo[0] as string;
-  return job;
+  const name = partTimerInfo[1] as string;
+  return [job, name];
 };
 
 const createMessageFromEventInfo = (eventInfo: EventInfo) => {
