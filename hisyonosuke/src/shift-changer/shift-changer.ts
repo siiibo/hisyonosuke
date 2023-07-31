@@ -5,6 +5,12 @@ import { EventInfo } from "./shift-changer-api";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
+type PartTimerInfo = {
+  job: string;
+  name: string;
+  email: string;
+  managerEmails: string[];
+};
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -435,30 +441,26 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getPartTimerProfile = (
-  userEmail: string
-): {
-  job: string;
-  name: string;
-  email: string;
-  managerEmails: string[];
-} => {
+const getPartTimerProfile = (userEmail: string): PartTimerInfo => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
-  const partTimerProfiles = sheet.getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn()).getValues();
-  const partTimerProfile = partTimerProfiles.find((partTimerProfile) => {
-    const email = partTimerProfile[2] as string;
+  const partTimerProfiles = sheet
+    .getRange(1, 1, sheet.getLastRow(), sheet.getLastColumn())
+    .getValues()
+    .map((row) => ({
+      job: row[0] as string,
+      name: row[1] as string,
+      email: row[2] as string,
+      managerEmails: (row[3] as string).replaceAll(/\s/g, "").split(","),
+    }));
+
+  const partTimerProfile = partTimerProfiles.find(({ email }) => {
     return email === userEmail;
   });
   if (partTimerProfile === undefined) throw new Error("no part timer information for the email");
 
-  const job = partTimerProfile[0] as string;
-  const name = partTimerProfile[1] as string;
-  const email = partTimerProfile[2] as string;
-  const managerEmail = partTimerProfile[3] as string;
-  const managerEmails = managerEmail.replaceAll(/\s/g, "").split(",");
-  return { job, name, email, managerEmails };
+  return partTimerProfile as PartTimerInfo;
 };
 
 const createMessageFromEventInfo = (eventInfo: EventInfo) => {
