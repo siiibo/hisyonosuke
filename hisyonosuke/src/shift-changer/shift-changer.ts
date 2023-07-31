@@ -5,12 +5,6 @@ import { EventInfo } from "./shift-changer-api";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
-type PartTimerInfo = {
-  job: string;
-  name: string;
-  email: string;
-  managerEmails: string[];
-};
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -441,7 +435,14 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getPartTimerProfile = (userEmail: string): PartTimerInfo => {
+const getPartTimerProfile = (
+  userEmail: string
+): {
+  job: string;
+  name: string;
+  email: string;
+  managerEmails: string[];
+} => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
@@ -460,7 +461,7 @@ const getPartTimerProfile = (userEmail: string): PartTimerInfo => {
   });
   if (partTimerProfile === undefined) throw new Error("no part timer information for the email");
 
-  return partTimerProfile as PartTimerInfo;
+  return partTimerProfile;
 };
 
 const createMessageFromEventInfo = (eventInfo: EventInfo) => {
