@@ -455,7 +455,7 @@ const getPartTimerProfile = (
       job: row[0] as string,
       name: row[1] as string,
       email: row[2] as string,
-      managerEmails: (row[3] as string).replaceAll(/\s/g, "").split(","),
+      managerEmails: row[3] === "" ? [] : (row[3] as string).replaceAll(/\s/g, "").split(","),
     }));
 
   const partTimerProfile = partTimerProfiles.find(({ email }) => {
