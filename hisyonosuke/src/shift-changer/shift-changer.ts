@@ -348,7 +348,9 @@ export const callShowEvents = () => {
   const operationType: OperationType = "showEvents";
   const startDate: Date = sheet.getRange("A5").getValue();
 
-  sheet.getRange(9, 1, sheet.getLastRow() - 8, sheet.getLastColumn()).clearContent();
+  if (sheet.getLastRow() > 8) {
+    sheet.getRange(9, 1, sheet.getLastRow() - 8, sheet.getLastColumn()).clearContent();
+  }
 
   const payload = {
     apiId: "shift-changer",
