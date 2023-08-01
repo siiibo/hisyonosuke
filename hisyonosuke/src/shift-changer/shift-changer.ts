@@ -514,7 +514,7 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
       const member = slackMembers.find((slackMember) => {
         return slackMember.profile?.email === email;
       });
-      if (member === undefined) throw new Error("The email is not in the slack members");
+      if (member === undefined) throw new Error("The manager email is not in the slack members");
       return member.id;
     })
     .filter((id): id is string => id !== undefined);
