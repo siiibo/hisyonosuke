@@ -423,17 +423,17 @@ const createTitleFromEventInfo = (
   },
   userEmail: string
 ): string => {
-  const { job, name } = getPartTimerProfile(userEmail);
+  const { job, lastName } = getPartTimerProfile(userEmail);
 
   const restStartTime = eventInfo.restStartTime;
   const restEndTime = eventInfo.restEndTime;
   const workingStyle = eventInfo.workingStyle;
 
   if (restStartTime === "" || restEndTime === "") {
-    const title = `【${workingStyle}】${job}${name}さん`;
+    const title = `【${workingStyle}】${job}${lastName}さん`;
     return title;
   } else {
-    const title = `【${workingStyle}】${job}${name}さん (休憩: ${restStartTime}~${restEndTime})`;
+    const title = `【${workingStyle}】${job}${lastName}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
   }
 };
@@ -446,7 +446,7 @@ const getPartTimerProfile = (
   userEmail: string
 ): {
   job: string;
-  name: string;
+  lastName: string;
   email: string;
   managerEmails: string[];
 } => {
@@ -458,7 +458,8 @@ const getPartTimerProfile = (
     .getValues()
     .map((row) => ({
       job: row[0] as string,
-      name: row[1] as string,
+      // \u3000は全角空白
+      lastName: row[1].split(/(\s|\u3000)+/)[0] as string,
       email: row[2] as string,
       managerEmails: row[3] === "" ? [] : (row[3] as string).replaceAll(/\s/g, "").split(","),
     }));
@@ -482,8 +483,8 @@ const createMessageFromEventInfo = (eventInfo: EventInfo) => {
 
 const createRegistrationMessage = (registrationInfos: EventInfo[], comment: string, userEmail: string): string => {
   const messages = registrationInfos.map(createMessageFromEventInfo);
-  const { job, name } = getPartTimerProfile(userEmail);
-  const messageTitle = `${job}${name}さんの以下の予定が追加されました。`;
+  const { job, lastName } = getPartTimerProfile(userEmail);
+  const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
@@ -492,8 +493,8 @@ const createRegistrationMessage = (registrationInfos: EventInfo[], comment: stri
 const createDeletionMessage = (deletionInfos: EventInfo[], comment: string, userEmail: string): string | undefined => {
   const messages = deletionInfos.map(createMessageFromEventInfo);
   if (messages.length == 0) return;
-  const { job, name } = getPartTimerProfile(userEmail);
-  const messageTitle = `${job}${name}さんの以下の予定が削除されました。`;
+  const { job, lastName } = getPartTimerProfile(userEmail);
+  const messageTitle = `${job}${lastName}さんの以下の予定が削除されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
@@ -514,8 +515,8 @@ const createModificationMessage = (
     ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
-  const { job, name } = getPartTimerProfile(userEmail);
-  const messageTitle = `${job}${name}さんの以下の予定が変更されました。`;
+  const { job, lastName } = getPartTimerProfile(userEmail);
+  const messageTitle = `${job}${lastName}さんの以下の予定が変更されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
     : `${messageTitle}\n${messages.join("\n")}`;
