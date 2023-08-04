@@ -430,10 +430,10 @@ const createTitleFromEventInfo = (
   const workingStyle = eventInfo.workingStyle;
 
   if (restStartTime === "" || restEndTime === "") {
-    const title = `【${workingStyle}】${job}: ${name}さん`;
+    const title = `【${workingStyle}】${job}${name}さん`;
     return title;
   } else {
-    const title = `【${workingStyle}】${job}: ${name}さん (休憩: ${restStartTime}~${restEndTime})`;
+    const title = `【${workingStyle}】${job}${name}さん (休憩: ${restStartTime}~${restEndTime})`;
     return title;
   }
 };
@@ -473,7 +473,11 @@ const getPartTimerProfile = (
 
 const createMessageFromEventInfo = (eventInfo: EventInfo) => {
   const formattedDate = format(new Date(eventInfo.date), "MM/dd");
-  return `${eventInfo.title}: ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
+  const workingStyleRegex = /【(.*?)】/;
+  const matchResult = eventInfo.title.match(workingStyleRegex);
+  if (!matchResult) throw new Error("no workingStyle matching workingStyleRegex found");
+  const workingStyle = matchResult[0];
+  return `${workingStyle}: ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
 };
 
 const createRegistrationMessage = (registrationInfos: EventInfo[], comment: string): string => {
