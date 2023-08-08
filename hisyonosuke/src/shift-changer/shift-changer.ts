@@ -78,6 +78,8 @@ export const insertModificationAndDeletionSheet = () => {
   const description2 = "本日以降の日付を入力してください。指定した日付から一週間後までの予定が表示されます。";
   sheet.getRange("A4").setValue(description2).setFontWeight("bold");
 
+  sheet.getRange("A5").setValue(today);
+
   const description3 = "【予定一覧】";
   sheet.getRange("A7").setValue(description3).setFontWeight("bold");
 
