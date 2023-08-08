@@ -478,7 +478,7 @@ const createMessageFromEventInfo = (eventInfo: EventInfo) => {
   const matchResult = eventInfo.title.match(workingStyleRegex);
   if (!matchResult) throw new Error("no workingStyle matching workingStyleRegex found");
   const workingStyle = matchResult[0];
-  return `${workingStyle}: ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
+  return `${workingStyle} ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
 };
 
 const createRegistrationMessage = (registrationInfos: EventInfo[], comment: string, userEmail: string): string => {
@@ -510,8 +510,8 @@ const createModificationMessage = (
 ): string | undefined => {
   const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
     return `---
-    ${createMessageFromEventInfo(previousEventInfo)}\n\
-    ↓\n\
+    ${createMessageFromEventInfo(previousEventInfo)}\n
+    ↓\n
     ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
