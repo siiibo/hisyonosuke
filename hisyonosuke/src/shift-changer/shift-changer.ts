@@ -349,6 +349,7 @@ export const callShowEvents = () => {
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "showEvents";
   const startDate: Date = sheet.getRange("A5").getValue();
+  if (!startDate) throw new Error("specify date");
 
   const payload = {
     apiId: "shift-changer",
