@@ -147,7 +147,8 @@ export const callRegistration = () => {
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "registration";
   const comment = sheet.getRange("A2").getValue();
-  const registrationInfos = getRegistrationInfos(sheet, userEmail);
+  const sheetValues = getRegistrationSheetValues(sheet);
+  const registrationInfos = getRegistrationInfos(sheetValues, userEmail);
 
   const payload = {
     apiId: "shift-changer",
@@ -161,7 +162,7 @@ export const callRegistration = () => {
   };
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
-  const messageToNotify = createRegistrationMessage(registrationInfos, comment, userEmail);
+  const messageToNotify = createRegistrationMessage(sheetValues, comment, userEmail);
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify, userEmail);
 };
 
@@ -390,28 +391,79 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   return sheet;
 };
 
-const getRegistrationInfos = (sheet: GoogleAppsScript.Spreadsheet.Sheet, userEmail: string): EventInfo[] => {
-  const registrationInfos = sheet
+const getRegistrationSheetValues = (
+  sheet: GoogleAppsScript.Spreadsheet.Sheet
+): {
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  restStartTime: Date | string;
+  restEndTime: Date | string;
+  workingStyle: string;
+}[] => {
+  const sheetValues = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
     .getValues()
-    .map((eventInfo) => {
-      const date = format(eventInfo[0] as Date, "yyyy-MM-dd");
-      const startTime = format(eventInfo[1] as Date, "HH:mm");
-      const endTime = format(eventInfo[2] as Date, "HH:mm");
-      const workingStyle = eventInfo[5] as string;
-      if (workingStyle === "") throw new Error("working style is not defined");
-      if (eventInfo[3] === "" || eventInfo[4] === "") {
-        const restStartTime = eventInfo[3] as string;
-        const restEndTime = eventInfo[4] as string;
-        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, userEmail);
-        return { title, date, startTime, endTime };
+    .map((row) => {
+      if (row[3] === "" || row[4] === "") {
+        return {
+          date: row[0] as Date,
+          startTime: row[1] as Date,
+          endTime: row[2] as Date,
+          restStartTime: row[3] as string,
+          restEndTime: row[4] as string,
+          workingStyle: row[5] as string,
+        };
       } else {
-        const restStartTime = format(eventInfo[3] as Date, "HH:mm");
-        const restEndTime = format(eventInfo[4] as Date, "HH:mm");
-        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, userEmail);
-        return { title, date, startTime, endTime };
+        return {
+          date: row[0] as Date,
+          startTime: row[1] as Date,
+          endTime: row[2] as Date,
+          restStartTime: row[3] as Date,
+          restEndTime: row[4] as Date,
+          workingStyle: row[5] as string,
+        };
       }
     });
+
+  return sheetValues;
+};
+
+const getRegistrationInfos = (
+  sheetValues: {
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    restStartTime: Date | string;
+    restEndTime: Date | string;
+    workingStyle: string;
+  }[],
+  userEmail: string
+): EventInfo[] => {
+  const registrationInfos = sheetValues.map((row) => {
+    const date = format(row.date, "yyyy-MM-dd");
+    const startTime = format(row.startTime, "HH:mm");
+    const endTime = format(row.endTime, "HH:mm");
+    const workingStyle = row.workingStyle;
+    if (workingStyle === "") throw new Error("working style is not defined");
+    if (row.restStartTime === "" || row.restEndTime === "") {
+      const restStartTime = row.restStartTime as string;
+      const restEndTime = row.restEndTime as string;
+      const title = createTitleFromEventInfo(
+        { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
+        userEmail
+      );
+      return { title, date, startTime, endTime };
+    } else {
+      const restStartTime = format(row.restStartTime as Date, "HH:mm");
+      const restEndTime = format(row.restEndTime as Date, "HH:mm");
+      const title = createTitleFromEventInfo(
+        { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
+        userEmail
+      );
+      return { title, date, startTime, endTime };
+    }
+  });
   return registrationInfos;
 };
 
@@ -481,8 +533,32 @@ const createMessageFromEventInfo = (eventInfo: EventInfo) => {
   return `${workingStyle} ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
 };
 
-const createRegistrationMessage = (registrationInfos: EventInfo[], comment: string, userEmail: string): string => {
-  const messages = registrationInfos.map(createMessageFromEventInfo);
+const createMessageFromEventInfo2 = (sheetValue: {
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  restStartTime: Date | string;
+  restEndTime: Date | string;
+  workingStyle: string;
+}) => {
+  const formattedDate = format(new Date(sheetValue.date), "MM/dd");
+  const workingStyle = sheetValue.workingStyle;
+  return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
+};
+
+const createRegistrationMessage = (
+  sheetValues: {
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    restStartTime: Date | string;
+    restEndTime: Date | string;
+    workingStyle: string;
+  }[],
+  comment: string,
+  userEmail: string
+): string => {
+  const messages = sheetValues.map(createMessageFromEventInfo2);
   const { job, lastName } = getPartTimerProfile(userEmail);
   const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
   return comment
