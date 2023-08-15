@@ -13,6 +13,12 @@ type SheetValue = {
   restEndTime: Date | string;
   workingStyle: string;
 };
+type PartTimerProfile = {
+  job: string;
+  lastName: string;
+  email: string;
+  managerEmails: string[];
+};
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -242,12 +248,7 @@ const getModificationInfos = (
     newWorkingStyle: string;
     deletionFlag: boolean;
   }[],
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): {
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
@@ -433,15 +434,7 @@ const getRegistrationSheetValues = (sheet: GoogleAppsScript.Spreadsheet.Sheet): 
   return sheetValues;
 };
 
-const getRegistrationInfos = (
-  sheetValues: SheetValue[],
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
-): EventInfo[] => {
+const getRegistrationInfos = (sheetValues: SheetValue[], partTimerProfile: PartTimerProfile): EventInfo[] => {
   const registrationInfos = sheetValues.map((row) => {
     const date = format(row.date, "yyyy-MM-dd");
     const startTime = format(row.startTime, "HH:mm");
@@ -475,12 +468,7 @@ const createTitleFromEventInfo = (
     restEndTime: string;
     workingStyle: string;
   },
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): string => {
   const { job, lastName } = partTimerProfile;
 
@@ -540,12 +528,7 @@ const createMessageFromEventInfo = (sheetValue: SheetValue) => {
 const createRegistrationMessage = (
   sheetValues: SheetValue[],
   comment: string,
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): string => {
   const messages = sheetValues.map(createMessageFromEventInfo);
   const { job, lastName } = partTimerProfile;
@@ -570,12 +553,7 @@ const createDeletionMessage = (
     deletionFlag: boolean;
   }[],
   comment: string,
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): string | undefined => {
   const messages = deletionSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
@@ -611,12 +589,7 @@ const createModificationMessage = (
     deletionFlag: boolean;
   }[],
   comment: string,
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): string | undefined => {
   const modificationSheetInfos = modificationSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
@@ -688,12 +661,7 @@ const postMessageToSlackChannel = (
   client: SlackClient,
   slackChannelToPost: string,
   messageToNotify: string,
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ) => {
   const { HR_MANAGER_SLACK_ID } = getConfig();
   const { managerEmails } = partTimerProfile;
