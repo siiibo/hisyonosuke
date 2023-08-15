@@ -522,7 +522,12 @@ const getPartTimerProfile = (
 const createMessageFromEventInfo = (sheetValue: SheetValue) => {
   const formattedDate = format(new Date(sheetValue.date), "MM/dd");
   const workingStyle = sheetValue.workingStyle;
-  return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
+  const restStartTime = sheetValue.restStartTime;
+  const restEndTime = sheetValue.restEndTime;
+  if (restStartTime === "" || restEndTime === "")
+    return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
+  else
+    return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime} (休憩: ${restStartTime}~${restEndTime})`;
 };
 
 const createRegistrationMessage = (
