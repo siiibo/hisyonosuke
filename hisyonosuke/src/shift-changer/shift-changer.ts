@@ -634,15 +634,12 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
 const getInfoFromTitle = (title: string): { workingStyle: string; restStartTime: string; restEndTime: string } => {
   const workingStyleRegex = /【(.*?)】/;
   const matchResult = title.match(workingStyleRegex);
-  if (!matchResult) throw new Error("no workingStyle matching workingStyleRegex found");
-  const workingStyle = matchResult[0];
+  const workingStyle = matchResult ? matchResult[0] : "未設定";
 
   const restTimeRegex = /\(休憩: (.*?)\)/;
   const restTimeResult = title.match(restTimeRegex);
-  if (!restTimeResult) throw new Error("no restStartTime matching restStartTimeRegex found");
-  const restTime = restTimeResult[0];
-  const restStartTime = restTime.split("~")[0];
-  const restEndTime = restTime.split("~")[1];
+  const restStartTime = restTimeResult ? restTimeResult[0].split("~")[0] : "";
+  const restEndTime = restTimeResult ? restTimeResult[1].split("~")[0] : "";
 
   return { workingStyle, restStartTime, restEndTime };
 };
