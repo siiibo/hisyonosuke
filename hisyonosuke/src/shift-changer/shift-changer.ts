@@ -150,13 +150,14 @@ export const callRegistration = () => {
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
+  const partTimerProfile = getPartTimerProfile(userEmail);
 
   const sheetType: SheetType = "registration";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "registration";
   const comment = sheet.getRange("A2").getValue();
   const sheetValues = getRegistrationSheetValues(sheet);
-  const registrationInfos = getRegistrationInfos(sheetValues, userEmail);
+  const registrationInfos = getRegistrationInfos(sheetValues, partTimerProfile);
 
   const payload = {
     apiId: "shift-changer",
@@ -170,8 +171,8 @@ export const callRegistration = () => {
   };
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
-  const messageToNotify = createRegistrationMessage(sheetValues, comment, userEmail);
-  postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify, userEmail);
+  const messageToNotify = createRegistrationMessage(sheetValues, comment, partTimerProfile);
+  postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify, partTimerProfile);
 };
 
 const getModificationAndDeletionSheetValues = (
@@ -241,7 +242,12 @@ const getModificationInfos = (
     newWorkingStyle: string;
     deletionFlag: boolean;
   }[],
-  userEmail: string
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
 ): {
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
@@ -261,7 +267,7 @@ const getModificationInfos = (
       if (newWorkingStyle === "") throw new Error("new working style is not defined");
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-        userEmail
+        partTimerProfile
       );
       return {
         previousEventInfo: { title, date, startTime, endTime },
@@ -273,7 +279,7 @@ const getModificationInfos = (
       const newWorkingStyle = row.newWorkingStyle;
       const newTitle = createTitleFromEventInfo(
         { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-        userEmail
+        partTimerProfile
       );
       return {
         previousEventInfo: { title, date, startTime, endTime },
@@ -315,6 +321,7 @@ export const callModificationAndDeletion = () => {
   const spreadsheetUrl = SpreadsheetApp.getActiveSpreadsheet().getUrl();
   const { SLACK_ACCESS_TOKEN } = getConfig();
   const client = getSlackClient(SLACK_ACCESS_TOKEN);
+  const partTimerProfile = getPartTimerProfile(userEmail);
   const sheetType: SheetType = "modificationAndDeletion";
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const comment = sheet.getRange("A2").getValue();
@@ -323,7 +330,7 @@ export const callModificationAndDeletion = () => {
   const valuesForOperation = sheetValues.filter((row) => row.deletionFlag || row.newDate);
   const modificationSheetValues = valuesForOperation.filter((row) => !row.deletionFlag);
   const deletionSheetValues = valuesForOperation.filter((row) => row.deletionFlag);
-  const modificationInfos = getModificationInfos(modificationSheetValues, userEmail);
+  const modificationInfos = getModificationInfos(modificationSheetValues, partTimerProfile);
   const deletionInfos = getDeletionInfos(deletionSheetValues);
 
   const payload = {
@@ -340,13 +347,13 @@ export const callModificationAndDeletion = () => {
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
 
-  const modificationMessageToNotify = createModificationMessage(modificationSheetValues, comment, userEmail);
+  const modificationMessageToNotify = createModificationMessage(modificationSheetValues, comment, partTimerProfile);
   if (modificationMessageToNotify)
-    postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify, userEmail);
+    postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify, partTimerProfile);
 
-  const deletionMessageToNotify = createDeletionMessage(deletionSheetValues, comment, userEmail);
+  const deletionMessageToNotify = createDeletionMessage(deletionSheetValues, comment, partTimerProfile);
   if (deletionMessageToNotify)
-    postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify, userEmail);
+    postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify, partTimerProfile);
 };
 
 export const callShowEvents = () => {
@@ -426,7 +433,15 @@ const getRegistrationSheetValues = (sheet: GoogleAppsScript.Spreadsheet.Sheet): 
   return sheetValues;
 };
 
-const getRegistrationInfos = (sheetValues: SheetValue[], userEmail: string): EventInfo[] => {
+const getRegistrationInfos = (
+  sheetValues: SheetValue[],
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
+): EventInfo[] => {
   const registrationInfos = sheetValues.map((row) => {
     const date = format(row.date, "yyyy-MM-dd");
     const startTime = format(row.startTime, "HH:mm");
@@ -438,7 +453,7 @@ const getRegistrationInfos = (sheetValues: SheetValue[], userEmail: string): Eve
       const restEndTime = row.restEndTime as string;
       const title = createTitleFromEventInfo(
         { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
-        userEmail
+        partTimerProfile
       );
       return { title, date, startTime, endTime };
     } else {
@@ -446,7 +461,7 @@ const getRegistrationInfos = (sheetValues: SheetValue[], userEmail: string): Eve
       const restEndTime = format(row.restEndTime as Date, "HH:mm");
       const title = createTitleFromEventInfo(
         { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
-        userEmail
+        partTimerProfile
       );
       return { title, date, startTime, endTime };
     }
@@ -460,9 +475,14 @@ const createTitleFromEventInfo = (
     restEndTime: string;
     workingStyle: string;
   },
-  userEmail: string
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
 ): string => {
-  const { job, lastName } = getPartTimerProfile(userEmail);
+  const { job, lastName } = partTimerProfile;
 
   const restStartTime = eventInfo.restStartTime;
   const restEndTime = eventInfo.restEndTime;
@@ -517,9 +537,18 @@ const createMessageFromEventInfo = (sheetValue: SheetValue) => {
   return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
 };
 
-const createRegistrationMessage = (sheetValues: SheetValue[], comment: string, userEmail: string): string => {
+const createRegistrationMessage = (
+  sheetValues: SheetValue[],
+  comment: string,
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
+): string => {
   const messages = sheetValues.map(createMessageFromEventInfo);
-  const { job, lastName } = getPartTimerProfile(userEmail);
+  const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
@@ -541,7 +570,12 @@ const createDeletionMessage = (
     deletionFlag: boolean;
   }[],
   comment: string,
-  userEmail: string
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
 ): string | undefined => {
   const messages = deletionSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
@@ -555,7 +589,7 @@ const createDeletionMessage = (
     });
   });
   if (messages.length == 0) return;
-  const { job, lastName } = getPartTimerProfile(userEmail);
+  const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が削除されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
@@ -577,7 +611,12 @@ const createModificationMessage = (
     deletionFlag: boolean;
   }[],
   comment: string,
-  userEmail: string
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
 ): string | undefined => {
   const modificationSheetInfos = modificationSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
@@ -608,7 +647,7 @@ const createModificationMessage = (
     ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
-  const { job, lastName } = getPartTimerProfile(userEmail);
+  const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が変更されました。`;
   return comment
     ? `${messageTitle}\n${messages.join("\n")}\n\nコメント: ${comment}`
@@ -649,10 +688,15 @@ const postMessageToSlackChannel = (
   client: SlackClient,
   slackChannelToPost: string,
   messageToNotify: string,
-  userEmail: string
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
 ) => {
   const { HR_MANAGER_SLACK_ID } = getConfig();
-  const { managerEmails } = getPartTimerProfile(userEmail);
+  const { managerEmails } = partTimerProfile;
   const managerSlackIds = getManagerSlackIds(managerEmails, client);
   const mentionMessageToManagers = [HR_MANAGER_SLACK_ID, ...managerSlackIds].map(slackIdToMention).join(" ");
   client.chat.postMessage({
