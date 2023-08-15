@@ -5,6 +5,14 @@ import { EventInfo } from "./shift-changer-api";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
+type SheetValue = {
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  restStartTime: Date | string;
+  restEndTime: Date | string;
+  workingStyle: string;
+};
 
 export const onOpen = () => {
   const ui = SpreadsheetApp.getUi();
@@ -389,16 +397,7 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   return sheet;
 };
 
-const getRegistrationSheetValues = (
-  sheet: GoogleAppsScript.Spreadsheet.Sheet
-): {
-  date: Date;
-  startTime: Date;
-  endTime: Date;
-  restStartTime: Date | string;
-  restEndTime: Date | string;
-  workingStyle: string;
-}[] => {
+const getRegistrationSheetValues = (sheet: GoogleAppsScript.Spreadsheet.Sheet): SheetValue[] => {
   const sheetValues = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
     .getValues()
@@ -427,17 +426,7 @@ const getRegistrationSheetValues = (
   return sheetValues;
 };
 
-const getRegistrationInfos = (
-  sheetValues: {
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    restStartTime: Date | string;
-    restEndTime: Date | string;
-    workingStyle: string;
-  }[],
-  userEmail: string
-): EventInfo[] => {
+const getRegistrationInfos = (sheetValues: SheetValue[], userEmail: string): EventInfo[] => {
   const registrationInfos = sheetValues.map((row) => {
     const date = format(row.date, "yyyy-MM-dd");
     const startTime = format(row.startTime, "HH:mm");
@@ -522,31 +511,13 @@ const getPartTimerProfile = (
   return partTimerProfile;
 };
 
-const createMessageFromEventInfo = (sheetValue: {
-  date: Date;
-  startTime: Date;
-  endTime: Date;
-  restStartTime: Date | string;
-  restEndTime: Date | string;
-  workingStyle: string;
-}) => {
+const createMessageFromEventInfo = (sheetValue: SheetValue) => {
   const formattedDate = format(new Date(sheetValue.date), "MM/dd");
   const workingStyle = sheetValue.workingStyle;
   return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
 };
 
-const createRegistrationMessage = (
-  sheetValues: {
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    restStartTime: Date | string;
-    restEndTime: Date | string;
-    workingStyle: string;
-  }[],
-  comment: string,
-  userEmail: string
-): string => {
+const createRegistrationMessage = (sheetValues: SheetValue[], comment: string, userEmail: string): string => {
   const messages = sheetValues.map(createMessageFromEventInfo);
   const { job, lastName } = getPartTimerProfile(userEmail);
   const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
