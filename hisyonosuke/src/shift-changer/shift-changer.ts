@@ -522,16 +522,7 @@ const getPartTimerProfile = (
   return partTimerProfile;
 };
 
-const createMessageFromEventInfo = (eventInfo: EventInfo) => {
-  const formattedDate = format(new Date(eventInfo.date), "MM/dd");
-  const workingStyleRegex = /【(.*?)】/;
-  const matchResult = eventInfo.title.match(workingStyleRegex);
-  if (!matchResult) throw new Error("no workingStyle matching workingStyleRegex found");
-  const workingStyle = matchResult[0];
-  return `${workingStyle} ${formattedDate} ${eventInfo.startTime}~${eventInfo.endTime}`;
-};
-
-const createMessageFromEventInfo2 = (sheetValue: {
+const createMessageFromEventInfo = (sheetValue: {
   date: Date;
   startTime: Date;
   endTime: Date;
@@ -556,7 +547,7 @@ const createRegistrationMessage = (
   comment: string,
   userEmail: string
 ): string => {
-  const messages = sheetValues.map(createMessageFromEventInfo2);
+  const messages = sheetValues.map(createMessageFromEventInfo);
   const { job, lastName } = getPartTimerProfile(userEmail);
   const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
   return comment
@@ -583,7 +574,7 @@ const createDeletionMessage = (
 ): string | undefined => {
   const messages = deletionSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
-    createMessageFromEventInfo2({
+    createMessageFromEventInfo({
       date: sheetValue.date,
       startTime: sheetValue.startTime,
       endTime: sheetValue.endTime,
@@ -641,9 +632,9 @@ const createModificationMessage = (
 
   const messages = modificationSheetInfos.map(({ previousEventInfo, newEventInfo }) => {
     return `---
-    ${createMessageFromEventInfo2(previousEventInfo)}\n
+    ${createMessageFromEventInfo(previousEventInfo)}\n
     ↓\n
-    ${createMessageFromEventInfo2(newEventInfo)}`;
+    ${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
   const { job, lastName } = getPartTimerProfile(userEmail);
