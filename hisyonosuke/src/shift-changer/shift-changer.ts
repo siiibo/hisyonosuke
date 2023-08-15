@@ -336,7 +336,7 @@ export const callModificationAndDeletion = () => {
   if (modificationMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify, userEmail);
 
-  const deletionMessageToNotify = createDeletionMessage(deletionInfos, comment, userEmail);
+  const deletionMessageToNotify = createDeletionMessage(deletionSheetValues, comment, userEmail);
   if (deletionMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify, userEmail);
 };
@@ -564,8 +564,34 @@ const createRegistrationMessage = (
     : `${messageTitle}\n${messages.join("\n")}`;
 };
 
-const createDeletionMessage = (deletionInfos: EventInfo[], comment: string, userEmail: string): string | undefined => {
-  const messages = deletionInfos.map(createMessageFromEventInfo);
+const createDeletionMessage = (
+  deletionSheetValues: {
+    title: string;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    newDate: Date;
+    newStartTime: Date;
+    newEndTime: Date;
+    newRestStartTime: Date | string;
+    newRestEndTime: Date | string;
+    newWorkingStyle: string;
+    deletionFlag: boolean;
+  }[],
+  comment: string,
+  userEmail: string
+): string | undefined => {
+  const messages = deletionSheetValues.map((sheetValue) => {
+    const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
+    createMessageFromEventInfo2({
+      date: sheetValue.date,
+      startTime: sheetValue.startTime,
+      endTime: sheetValue.endTime,
+      restStartTime,
+      restEndTime,
+      workingStyle,
+    });
+  });
   if (messages.length == 0) return;
   const { job, lastName } = getPartTimerProfile(userEmail);
   const messageTitle = `${job}${lastName}さんの以下の予定が削除されました。`;
