@@ -238,43 +238,41 @@ const getModificationInfos = (
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
 }[] => {
-  const modificationInfos = sheetValues
-    .filter((row) => !row.deletionFlag)
-    .map((row) => {
-      const title = row.title;
-      const date = format(row.date, "yyyy-MM-dd");
-      const startTime = format(row.startTime, "HH:mm");
-      const endTime = format(row.endTime, "HH:mm");
-      const newDate = format(row.newDate, "yyyy-MM-dd");
-      const newStartTime = format(row.newStartTime, "HH:mm");
-      const newEndTime = format(row.newEndTime, "HH:mm");
-      if (row.newRestStartTime === "" || row.newRestEndTime === "") {
-        const newRestStartTime = row.newRestStartTime as string;
-        const newRestEndTime = row.newRestEndTime as string;
-        const newWorkingStyle = row.newWorkingStyle;
-        if (newWorkingStyle === "") throw new Error("new working style is not defined");
-        const newTitle = createTitleFromEventInfo(
-          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-          userEmail
-        );
-        return {
-          previousEventInfo: { title, date, startTime, endTime },
-          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
-        };
-      } else {
-        const newRestStartTime = format(row.newRestStartTime as Date, "HH:mm");
-        const newRestEndTime = format(row.newRestEndTime as Date, "HH:mm");
-        const newWorkingStyle = row.newWorkingStyle;
-        const newTitle = createTitleFromEventInfo(
-          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-          userEmail
-        );
-        return {
-          previousEventInfo: { title, date, startTime, endTime },
-          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
-        };
-      }
-    });
+  const modificationInfos = sheetValues.map((row) => {
+    const title = row.title;
+    const date = format(row.date, "yyyy-MM-dd");
+    const startTime = format(row.startTime, "HH:mm");
+    const endTime = format(row.endTime, "HH:mm");
+    const newDate = format(row.newDate, "yyyy-MM-dd");
+    const newStartTime = format(row.newStartTime, "HH:mm");
+    const newEndTime = format(row.newEndTime, "HH:mm");
+    if (row.newRestStartTime === "" || row.newRestEndTime === "") {
+      const newRestStartTime = row.newRestStartTime as string;
+      const newRestEndTime = row.newRestEndTime as string;
+      const newWorkingStyle = row.newWorkingStyle;
+      if (newWorkingStyle === "") throw new Error("new working style is not defined");
+      const newTitle = createTitleFromEventInfo(
+        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+        userEmail
+      );
+      return {
+        previousEventInfo: { title, date, startTime, endTime },
+        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+      };
+    } else {
+      const newRestStartTime = format(row.newRestStartTime as Date, "HH:mm");
+      const newRestEndTime = format(row.newRestEndTime as Date, "HH:mm");
+      const newWorkingStyle = row.newWorkingStyle;
+      const newTitle = createTitleFromEventInfo(
+        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+        userEmail
+      );
+      return {
+        previousEventInfo: { title, date, startTime, endTime },
+        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+      };
+    }
+  });
 
   return modificationInfos;
 };
@@ -294,15 +292,13 @@ const getDeletionInfos = (
     deletionFlag: boolean;
   }[]
 ): EventInfo[] => {
-  const deletionInfos = sheetValues
-    .filter((row) => row.deletionFlag)
-    .map((row) => {
-      const title = row.title;
-      const date = format(row.date, "yyyy-MM-dd");
-      const startTime = format(row.startTime, "HH:mm");
-      const endTime = format(row.endTime, "HH:mm");
-      return { title, date, startTime, endTime };
-    });
+  const deletionInfos = sheetValues.map((row) => {
+    const title = row.title;
+    const date = format(row.date, "yyyy-MM-dd");
+    const startTime = format(row.startTime, "HH:mm");
+    const endTime = format(row.endTime, "HH:mm");
+    return { title, date, startTime, endTime };
+  });
 
   return deletionInfos;
 };
@@ -317,8 +313,10 @@ export const callModificationAndDeletion = () => {
   const operationType: OperationType = "modificationAndDeletion";
   const sheetValues = getModificationAndDeletionSheetValues(sheet);
   const valuesForOperation = sheetValues.filter((row) => row.deletionFlag || row.newDate);
-  const modificationInfos = getModificationInfos(valuesForOperation, userEmail);
-  const deletionInfos = getDeletionInfos(valuesForOperation);
+  const modificationSheetValues = valuesForOperation.filter((row) => !row.deletionFlag);
+  const deletionSheetValues = valuesForOperation.filter((row) => row.deletionFlag);
+  const modificationInfos = getModificationInfos(modificationSheetValues, userEmail);
+  const deletionInfos = getDeletionInfos(deletionSheetValues);
 
   const payload = {
     apiId: "shift-changer",
@@ -334,7 +332,7 @@ export const callModificationAndDeletion = () => {
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
 
-  const modificationMessageToNotify = createModificationMessage(modificationInfos, comment, userEmail);
+  const modificationMessageToNotify = createModificationMessage(modificationSheetValues, comment, userEmail);
   if (modificationMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify, userEmail);
 
@@ -577,18 +575,49 @@ const createDeletionMessage = (deletionInfos: EventInfo[], comment: string, user
 };
 
 const createModificationMessage = (
-  modificationInfos: {
-    previousEventInfo: EventInfo;
-    newEventInfo: EventInfo;
+  modificationSheetValues: {
+    title: string;
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    newDate: Date;
+    newStartTime: Date;
+    newEndTime: Date;
+    newRestStartTime: Date | string;
+    newRestEndTime: Date | string;
+    newWorkingStyle: string;
+    deletionFlag: boolean;
   }[],
   comment: string,
   userEmail: string
 ): string | undefined => {
-  const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
+  const modificationSheetInfos = modificationSheetValues.map((sheetValue) => {
+    const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
+    return {
+      previousEventInfo: {
+        date: sheetValue.date,
+        startTime: sheetValue.startTime,
+        endTime: sheetValue.endTime,
+        restStartTime,
+        restEndTime,
+        workingStyle,
+      },
+      newEventInfo: {
+        date: sheetValue.newDate,
+        startTime: sheetValue.newStartTime,
+        endTime: sheetValue.newEndTime,
+        restStartTime: sheetValue.newRestStartTime,
+        restEndTime: sheetValue.newRestEndTime,
+        workingStyle: sheetValue.newWorkingStyle,
+      },
+    };
+  });
+
+  const messages = modificationSheetInfos.map(({ previousEventInfo, newEventInfo }) => {
     return `---
-    ${createMessageFromEventInfo(previousEventInfo)}\n
+    ${createMessageFromEventInfo2(previousEventInfo)}\n
     ↓\n
-    ${createMessageFromEventInfo(newEventInfo)}`;
+    ${createMessageFromEventInfo2(newEventInfo)}`;
   });
   if (messages.length == 0) return;
   const { job, lastName } = getPartTimerProfile(userEmail);
@@ -614,6 +643,21 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
   return managerSlackIds;
 };
 
+const getInfoFromTitle = (title: string): { workingStyle: string; restStartTime: string; restEndTime: string } => {
+  const workingStyleRegex = /【(.*?)】/;
+  const matchResult = title.match(workingStyleRegex);
+  if (!matchResult) throw new Error("no workingStyle matching workingStyleRegex found");
+  const workingStyle = matchResult[0];
+
+  const restTimeRegex = /\(休憩: (.*?)\)/;
+  const restTimeResult = title.match(restTimeRegex);
+  if (!restTimeResult) throw new Error("no restStartTime matching restStartTimeRegex found");
+  const restTime = restTimeResult[0];
+  const restStartTime = restTime.split("~")[0];
+  const restEndTime = restTime.split("~")[1];
+
+  return { workingStyle, restStartTime, restEndTime };
+};
 const slackIdToMention = (slackId: string) => `<@${slackId}>`;
 
 const postMessageToSlackChannel = (
