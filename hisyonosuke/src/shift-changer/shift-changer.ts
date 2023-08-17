@@ -565,7 +565,7 @@ const createDeletionMessage = (
 ): string | undefined => {
   const messages = deletionSheetValues.map((sheetValue) => {
     const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
-    createMessageFromEventInfo({
+    return createMessageFromEventInfo({
       date: sheetValue.date,
       startTime: sheetValue.startTime,
       endTime: sheetValue.endTime,
