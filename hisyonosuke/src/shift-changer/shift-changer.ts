@@ -524,7 +524,6 @@ const createMessageFromEventInfo = (sheetValue: SheetValue) => {
   const startTime = format(new Date(sheetValue.startTime), "HH:mm");
   const endTime = format(new Date(sheetValue.endTime), "HH:mm");
   const workingStyle = sheetValue.workingStyle;
-  console.log();
   if (sheetValue.restStartTime === "" || sheetValue.restEndTime === "")
     return `【${workingStyle}】 ${date} ${startTime}~${endTime}`;
   else {
