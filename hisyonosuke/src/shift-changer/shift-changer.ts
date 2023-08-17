@@ -520,14 +520,18 @@ const getPartTimerProfile = (
 };
 
 const createMessageFromEventInfo = (sheetValue: SheetValue) => {
-  const formattedDate = format(new Date(sheetValue.date), "MM/dd");
+  const date = format(new Date(sheetValue.date), "MM/dd");
+  const startTime = format(new Date(sheetValue.startTime), "HH:mm");
+  const endTime = format(new Date(sheetValue.endTime), "HH:mm");
   const workingStyle = sheetValue.workingStyle;
-  const restStartTime = sheetValue.restStartTime;
-  const restEndTime = sheetValue.restEndTime;
-  if (restStartTime === "" || restEndTime === "")
-    return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime}`;
-  else
-    return `${workingStyle} ${formattedDate} ${sheetValue.startTime}~${sheetValue.endTime} (休憩: ${restStartTime}~${restEndTime})`;
+  console.log();
+  if (sheetValue.restStartTime === "" || sheetValue.restEndTime === "")
+    return `【${workingStyle}】 ${date} ${startTime}~${endTime}`;
+  else {
+    const restStartTime = format(new Date(sheetValue.restStartTime), "HH:mm");
+    const restEndTime = format(new Date(sheetValue.restEndTime), "HH:mm");
+    return `【${workingStyle}】 ${date} ${startTime}~${endTime} (休憩: ${restStartTime}~${restEndTime})`;
+  }
 };
 
 const createRegistrationMessage = (
@@ -648,16 +652,21 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
   return managerSlackIds;
 };
 
-const getInfoFromTitle = (title: string): { workingStyle: string; restStartTime: string; restEndTime: string } => {
+const getInfoFromTitle = (
+  title: string
+): { workingStyle: string; restStartTime: Date | string; restEndTime: Date | string } => {
   const workingStyleRegex = /【(.*?)】/;
   const matchResult = title.match(workingStyleRegex);
-  const workingStyle = matchResult ? matchResult[0] : "未設定";
+  const workingStyle = matchResult ? matchResult[1] : "未設定";
 
   const restTimeRegex = /\(休憩: (.*?)\)/;
   const restTimeResult = title.match(restTimeRegex);
-  const restStartTime = restTimeResult ? restTimeResult[0].split("~")[0] : "";
-  const restEndTime = restTimeResult ? restTimeResult[1].split("~")[0] : "";
-
+  const restStartTime = restTimeResult
+    ? new Date(`${format(new Date(), "MM/dd")} ${restTimeResult[1].split("~")[0]}`)
+    : "";
+  const restEndTime = restTimeResult
+    ? new Date(`${format(new Date(), "MM/dd")} ${restTimeResult[1].split("~")[1]}`)
+    : "";
   return { workingStyle, restStartTime, restEndTime };
 };
 const slackIdToMention = (slackId: string) => `<@${slackId}>`;
