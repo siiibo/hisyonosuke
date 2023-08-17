@@ -564,7 +564,7 @@ const createDeletionMessage = (
   partTimerProfile: PartTimerProfile
 ): string | undefined => {
   const messages = deletionSheetValues.map((sheetValue) => {
-    const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
+    const { workingStyle, restStartTime, restEndTime } = getEventInfoFromTitle(sheetValue.title);
     return createMessageFromEventInfo({
       date: sheetValue.date,
       startTime: sheetValue.startTime,
@@ -600,7 +600,7 @@ const createModificationMessage = (
   partTimerProfile: PartTimerProfile
 ): string | undefined => {
   const modificationSheetInfos = modificationSheetValues.map((sheetValue) => {
-    const { workingStyle, restStartTime, restEndTime } = getInfoFromTitle(sheetValue.title);
+    const { workingStyle, restStartTime, restEndTime } = getEventInfoFromTitle(sheetValue.title);
     return {
       previousEventInfo: {
         date: sheetValue.date,
@@ -651,7 +651,7 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
   return managerSlackIds;
 };
 
-const getInfoFromTitle = (
+const getEventInfoFromTitle = (
   title: string
 ): { workingStyle: string; restStartTime: Date | string; restEndTime: Date | string } => {
   const workingStyleRegex = /【(.*?)】/;
