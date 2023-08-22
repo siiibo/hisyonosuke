@@ -177,7 +177,7 @@ export const callRegistration = () => {
   };
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
-  const messageToNotify = createRegistrationMessage(sheetValues, comment, partTimerProfile);
+  const messageToNotify = createRegistrationMessage(registrationInfos, comment, partTimerProfile);
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, messageToNotify, partTimerProfile);
 };
 
@@ -348,11 +348,11 @@ export const callModificationAndDeletion = () => {
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
 
-  const modificationMessageToNotify = createModificationMessage(modificationSheetValues, comment, partTimerProfile);
+  const modificationMessageToNotify = createModificationMessage(modificationInfos, comment, partTimerProfile);
   if (modificationMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationMessageToNotify, partTimerProfile);
 
-  const deletionMessageToNotify = createDeletionMessage(deletionSheetValues, comment, partTimerProfile);
+  const deletionMessageToNotify = createDeletionMessage(deletionInfos, comment, partTimerProfile);
   if (deletionMessageToNotify)
     postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, deletionMessageToNotify, partTimerProfile);
 };
@@ -519,26 +519,21 @@ const getPartTimerProfile = (
   return partTimerProfile;
 };
 
-const createMessageFromEventInfo = (sheetValue: SheetValue) => {
-  const date = format(new Date(sheetValue.date), "MM/dd");
-  const startTime = format(new Date(sheetValue.startTime), "HH:mm");
-  const endTime = format(new Date(sheetValue.endTime), "HH:mm");
-  const workingStyle = sheetValue.workingStyle;
-  if (sheetValue.restStartTime === "" || sheetValue.restEndTime === "")
-    return `【${workingStyle}】 ${date} ${startTime}~${endTime}`;
-  else {
-    const restStartTime = format(new Date(sheetValue.restStartTime), "HH:mm");
-    const restEndTime = format(new Date(sheetValue.restEndTime), "HH:mm");
-    return `【${workingStyle}】 ${date} ${startTime}~${endTime} (休憩: ${restStartTime}~${restEndTime})`;
-  }
+const createMessageFromEventInfo = (eventInfo: EventInfo) => {
+  const date = format(new Date(eventInfo.date), "MM/dd");
+  const { workingStyle, restStartTime, restEndTime } = getEventInfoFromTitle(eventInfo.title);
+  if (restStartTime === "" || restEndTime === "")
+    return `【${workingStyle}】 ${date} ${eventInfo.startTime}~${eventInfo.endTime}`;
+  else
+    return `【${workingStyle}】 ${date} ${eventInfo.startTime}~${eventInfo.endTime} (休憩: ${restStartTime}~${restEndTime})`;
 };
 
 const createRegistrationMessage = (
-  sheetValues: SheetValue[],
+  registrationInfos: EventInfo[],
   comment: string,
   partTimerProfile: PartTimerProfile
 ): string => {
-  const messages = sheetValues.map(createMessageFromEventInfo);
+  const messages = registrationInfos.map(createMessageFromEventInfo);
   const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が追加されました。`;
   return comment
@@ -547,33 +542,11 @@ const createRegistrationMessage = (
 };
 
 const createDeletionMessage = (
-  deletionSheetValues: {
-    title: string;
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    newDate: Date;
-    newStartTime: Date;
-    newEndTime: Date;
-    newRestStartTime: Date | string;
-    newRestEndTime: Date | string;
-    newWorkingStyle: string;
-    deletionFlag: boolean;
-  }[],
+  deletionInfos: EventInfo[],
   comment: string,
   partTimerProfile: PartTimerProfile
 ): string | undefined => {
-  const messages = deletionSheetValues.map((sheetValue) => {
-    const { workingStyle, restStartTime, restEndTime } = getEventInfoFromTitle(sheetValue.title);
-    return createMessageFromEventInfo({
-      date: sheetValue.date,
-      startTime: sheetValue.startTime,
-      endTime: sheetValue.endTime,
-      restStartTime,
-      restEndTime,
-      workingStyle,
-    });
-  });
+  const messages = deletionInfos.map(createMessageFromEventInfo);
   if (messages.length == 0) return;
   const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が削除されました。`;
@@ -583,45 +556,14 @@ const createDeletionMessage = (
 };
 
 const createModificationMessage = (
-  modificationSheetValues: {
-    title: string;
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    newDate: Date;
-    newStartTime: Date;
-    newEndTime: Date;
-    newRestStartTime: Date | string;
-    newRestEndTime: Date | string;
-    newWorkingStyle: string;
-    deletionFlag: boolean;
+  modificationInfos: {
+    previousEventInfo: EventInfo;
+    newEventInfo: EventInfo;
   }[],
   comment: string,
   partTimerProfile: PartTimerProfile
 ): string | undefined => {
-  const modificationSheetInfos = modificationSheetValues.map((sheetValue) => {
-    const { workingStyle, restStartTime, restEndTime } = getEventInfoFromTitle(sheetValue.title);
-    return {
-      previousEventInfo: {
-        date: sheetValue.date,
-        startTime: sheetValue.startTime,
-        endTime: sheetValue.endTime,
-        restStartTime,
-        restEndTime,
-        workingStyle,
-      },
-      newEventInfo: {
-        date: sheetValue.newDate,
-        startTime: sheetValue.newStartTime,
-        endTime: sheetValue.newEndTime,
-        restStartTime: sheetValue.newRestStartTime,
-        restEndTime: sheetValue.newRestEndTime,
-        workingStyle: sheetValue.newWorkingStyle,
-      },
-    };
-  });
-
-  const messages = modificationSheetInfos.map(({ previousEventInfo, newEventInfo }) => {
+  const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
     return `---
     ${createMessageFromEventInfo(previousEventInfo)}\n
     ↓\n
@@ -651,21 +593,15 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
   return managerSlackIds;
 };
 
-const getEventInfoFromTitle = (
-  title: string
-): { workingStyle: string; restStartTime: Date | string; restEndTime: Date | string } => {
+const getEventInfoFromTitle = (title: string): { workingStyle: string; restStartTime: string; restEndTime: string } => {
   const workingStyleRegex = /【(.*?)】/;
   const matchResult = title.match(workingStyleRegex);
   const workingStyle = matchResult ? matchResult[1] : "未設定";
 
   const restTimeRegex = /\(休憩: (.*?)\)/;
   const restTimeResult = title.match(restTimeRegex);
-  const restStartTime = restTimeResult
-    ? new Date(`${format(new Date(), "MM/dd")} ${restTimeResult[1].split("~")[0]}`)
-    : "";
-  const restEndTime = restTimeResult
-    ? new Date(`${format(new Date(), "MM/dd")} ${restTimeResult[1].split("~")[1]}`)
-    : "";
+  const restStartTime = restTimeResult ? restTimeResult[1].split("~")[0] : "";
+  const restEndTime = restTimeResult ? restTimeResult[1].split("~")[1] : "";
   return { workingStyle, restStartTime, restEndTime };
 };
 const slackIdToMention = (slackId: string) => `<@${slackId}>`;
