@@ -5,14 +5,6 @@ import { EventInfo } from "./shift-changer-api";
 
 type SheetType = "registration" | "modificationAndDeletion";
 type OperationType = "registration" | "modificationAndDeletion" | "showEvents";
-type SheetValue = {
-  date: Date;
-  startTime: Date;
-  endTime: Date;
-  restStartTime: Date | string;
-  restEndTime: Date | string;
-  workingStyle: string;
-};
 type PartTimerProfile = {
   job: string;
   lastName: string;
@@ -405,7 +397,16 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   return sheet;
 };
 
-const getRegistrationSheetValues = (sheet: GoogleAppsScript.Spreadsheet.Sheet): SheetValue[] => {
+const getRegistrationSheetValues = (
+  sheet: GoogleAppsScript.Spreadsheet.Sheet
+): {
+  date: Date;
+  startTime: Date;
+  endTime: Date;
+  restStartTime: Date | string;
+  restEndTime: Date | string;
+  workingStyle: string;
+}[] => {
   const sheetValues = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
     .getValues()
@@ -434,7 +435,17 @@ const getRegistrationSheetValues = (sheet: GoogleAppsScript.Spreadsheet.Sheet): 
   return sheetValues;
 };
 
-const getRegistrationInfos = (sheetValues: SheetValue[], partTimerProfile: PartTimerProfile): EventInfo[] => {
+const getRegistrationInfos = (
+  sheetValues: {
+    date: Date;
+    startTime: Date;
+    endTime: Date;
+    restStartTime: Date | string;
+    restEndTime: Date | string;
+    workingStyle: string;
+  }[],
+  partTimerProfile: PartTimerProfile
+): EventInfo[] => {
   const registrationInfos = sheetValues.map((row) => {
     const date = format(row.date, "yyyy-MM-dd");
     const startTime = format(row.startTime, "HH:mm");
