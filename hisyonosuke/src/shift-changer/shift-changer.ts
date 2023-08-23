@@ -244,41 +244,43 @@ const getModificationInfos = (
   previousEventInfo: EventInfo;
   newEventInfo: EventInfo;
 }[] => {
-  const modificationInfos = sheetValues.map((row) => {
-    const title = row.title;
-    const date = format(row.date, "yyyy-MM-dd");
-    const startTime = format(row.startTime, "HH:mm");
-    const endTime = format(row.endTime, "HH:mm");
-    const newDate = format(row.newDate, "yyyy-MM-dd");
-    const newStartTime = format(row.newStartTime, "HH:mm");
-    const newEndTime = format(row.newEndTime, "HH:mm");
-    if (row.newRestStartTime === "" || row.newRestEndTime === "") {
-      const newRestStartTime = row.newRestStartTime as string;
-      const newRestEndTime = row.newRestEndTime as string;
-      const newWorkingStyle = row.newWorkingStyle;
-      if (newWorkingStyle === "") throw new Error("new working style is not defined");
-      const newTitle = createTitleFromEventInfo(
-        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-        partTimerProfile
-      );
-      return {
-        previousEventInfo: { title, date, startTime, endTime },
-        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
-      };
-    } else {
-      const newRestStartTime = format(row.newRestStartTime as Date, "HH:mm");
-      const newRestEndTime = format(row.newRestEndTime as Date, "HH:mm");
-      const newWorkingStyle = row.newWorkingStyle;
-      const newTitle = createTitleFromEventInfo(
-        { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
-        partTimerProfile
-      );
-      return {
-        previousEventInfo: { title, date, startTime, endTime },
-        newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
-      };
-    }
-  });
+  const modificationInfos = sheetValues
+    .filter((row) => !row.deletionFlag)
+    .map((row) => {
+      const title = row.title;
+      const date = format(row.date, "yyyy-MM-dd");
+      const startTime = format(row.startTime, "HH:mm");
+      const endTime = format(row.endTime, "HH:mm");
+      const newDate = format(row.newDate, "yyyy-MM-dd");
+      const newStartTime = format(row.newStartTime, "HH:mm");
+      const newEndTime = format(row.newEndTime, "HH:mm");
+      if (row.newRestStartTime === "" || row.newRestEndTime === "") {
+        const newRestStartTime = row.newRestStartTime as string;
+        const newRestEndTime = row.newRestEndTime as string;
+        const newWorkingStyle = row.newWorkingStyle;
+        if (newWorkingStyle === "") throw new Error("new working style is not defined");
+        const newTitle = createTitleFromEventInfo(
+          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+          partTimerProfile
+        );
+        return {
+          previousEventInfo: { title, date, startTime, endTime },
+          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+        };
+      } else {
+        const newRestStartTime = format(row.newRestStartTime as Date, "HH:mm");
+        const newRestEndTime = format(row.newRestEndTime as Date, "HH:mm");
+        const newWorkingStyle = row.newWorkingStyle;
+        const newTitle = createTitleFromEventInfo(
+          { restStartTime: newRestStartTime, restEndTime: newRestEndTime, workingStyle: newWorkingStyle },
+          partTimerProfile
+        );
+        return {
+          previousEventInfo: { title, date, startTime, endTime },
+          newEventInfo: { title: newTitle, date: newDate, startTime: newStartTime, endTime: newEndTime },
+        };
+      }
+    });
 
   return modificationInfos;
 };
@@ -298,13 +300,15 @@ const getDeletionInfos = (
     deletionFlag: boolean;
   }[]
 ): EventInfo[] => {
-  const deletionInfos = sheetValues.map((row) => {
-    const title = row.title;
-    const date = format(row.date, "yyyy-MM-dd");
-    const startTime = format(row.startTime, "HH:mm");
-    const endTime = format(row.endTime, "HH:mm");
-    return { title, date, startTime, endTime };
-  });
+  const deletionInfos = sheetValues
+    .filter((row) => row.deletionFlag)
+    .map((row) => {
+      const title = row.title;
+      const date = format(row.date, "yyyy-MM-dd");
+      const startTime = format(row.startTime, "HH:mm");
+      const endTime = format(row.endTime, "HH:mm");
+      return { title, date, startTime, endTime };
+    });
 
   return deletionInfos;
 };
@@ -320,10 +324,8 @@ export const callModificationAndDeletion = () => {
   const operationType: OperationType = "modificationAndDeletion";
   const sheetValues = getModificationAndDeletionSheetValues(sheet);
   const valuesForOperation = sheetValues.filter((row) => row.deletionFlag || row.newDate);
-  const modificationSheetValues = valuesForOperation.filter((row) => !row.deletionFlag);
-  const deletionSheetValues = valuesForOperation.filter((row) => row.deletionFlag);
-  const modificationInfos = getModificationInfos(modificationSheetValues, partTimerProfile);
-  const deletionInfos = getDeletionInfos(deletionSheetValues);
+  const modificationInfos = getModificationInfos(valuesForOperation, partTimerProfile);
+  const deletionInfos = getDeletionInfos(valuesForOperation);
 
   const payload = {
     apiId: "shift-changer",
