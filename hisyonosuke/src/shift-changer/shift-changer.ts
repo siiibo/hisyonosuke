@@ -154,8 +154,7 @@ export const callRegistration = () => {
   const sheet = getSheet(sheetType, spreadsheetUrl);
   const operationType: OperationType = "registration";
   const comment = sheet.getRange("A2").getValue();
-  const sheetValues = getRegistrationSheetValues(sheet);
-  const registrationInfos = getRegistrationInfos(sheetValues, partTimerProfile);
+  const registrationInfos = getRegistrationInfos(sheet, partTimerProfile);
 
   const payload = {
     apiId: "shift-changer",
@@ -397,79 +396,36 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
   return sheet;
 };
 
-const getRegistrationSheetValues = (
-  sheet: GoogleAppsScript.Spreadsheet.Sheet
-): {
-  date: Date;
-  startTime: Date;
-  endTime: Date;
-  restStartTime: Date | string;
-  restEndTime: Date | string;
-  workingStyle: string;
-}[] => {
-  const sheetValues = sheet
+const getRegistrationInfos = (
+  sheet: GoogleAppsScript.Spreadsheet.Sheet,
+  partTimerProfile: {
+    job: string;
+    lastName: string;
+    email: string;
+    managerEmails: string[];
+  }
+): EventInfo[] => {
+  const registrationInfos = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
     .getValues()
-    .map((row) => {
-      if (row[3] === "" || row[4] === "") {
-        return {
-          date: row[0] as Date,
-          startTime: row[1] as Date,
-          endTime: row[2] as Date,
-          restStartTime: row[3] as string,
-          restEndTime: row[4] as string,
-          workingStyle: row[5] as string,
-        };
+    .map((eventInfo) => {
+      const date = format(eventInfo[0] as Date, "yyyy-MM-dd");
+      const startTime = format(eventInfo[1] as Date, "HH:mm");
+      const endTime = format(eventInfo[2] as Date, "HH:mm");
+      const workingStyle = eventInfo[5] as string;
+      if (workingStyle === "") throw new Error("working style is not defined");
+      if (eventInfo[3] === "" || eventInfo[4] === "") {
+        const restStartTime = eventInfo[3] as string;
+        const restEndTime = eventInfo[4] as string;
+        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, partTimerProfile);
+        return { title, date, startTime, endTime };
       } else {
-        return {
-          date: row[0] as Date,
-          startTime: row[1] as Date,
-          endTime: row[2] as Date,
-          restStartTime: row[3] as Date,
-          restEndTime: row[4] as Date,
-          workingStyle: row[5] as string,
-        };
+        const restStartTime = format(eventInfo[3] as Date, "HH:mm");
+        const restEndTime = format(eventInfo[4] as Date, "HH:mm");
+        const title = createTitleFromEventInfo({ restStartTime, restEndTime, workingStyle }, partTimerProfile);
+        return { title, date, startTime, endTime };
       }
     });
-
-  return sheetValues;
-};
-
-const getRegistrationInfos = (
-  sheetValues: {
-    date: Date;
-    startTime: Date;
-    endTime: Date;
-    restStartTime: Date | string;
-    restEndTime: Date | string;
-    workingStyle: string;
-  }[],
-  partTimerProfile: PartTimerProfile
-): EventInfo[] => {
-  const registrationInfos = sheetValues.map((row) => {
-    const date = format(row.date, "yyyy-MM-dd");
-    const startTime = format(row.startTime, "HH:mm");
-    const endTime = format(row.endTime, "HH:mm");
-    const workingStyle = row.workingStyle;
-    if (workingStyle === "") throw new Error("working style is not defined");
-    if (row.restStartTime === "" || row.restEndTime === "") {
-      const restStartTime = row.restStartTime as string;
-      const restEndTime = row.restEndTime as string;
-      const title = createTitleFromEventInfo(
-        { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
-        partTimerProfile
-      );
-      return { title, date, startTime, endTime };
-    } else {
-      const restStartTime = format(row.restStartTime as Date, "HH:mm");
-      const restEndTime = format(row.restEndTime as Date, "HH:mm");
-      const title = createTitleFromEventInfo(
-        { restStartTime: restStartTime, restEndTime: restEndTime, workingStyle: workingStyle },
-        partTimerProfile
-      );
-      return { title, date, startTime, endTime };
-    }
-  });
   return registrationInfos;
 };
 
