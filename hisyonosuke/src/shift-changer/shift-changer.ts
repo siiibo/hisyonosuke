@@ -400,12 +400,7 @@ const getSheet = (sheetType: SheetType, spreadsheetUrl: string): GoogleAppsScrip
 
 const getRegistrationInfos = (
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
-  partTimerProfile: {
-    job: string;
-    lastName: string;
-    email: string;
-    managerEmails: string[];
-  }
+  partTimerProfile: PartTimerProfile
 ): EventInfo[] => {
   const registrationInfos = sheet
     .getRange(5, 1, sheet.getLastRow() - 4, sheet.getLastColumn())
