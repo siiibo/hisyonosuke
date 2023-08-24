@@ -458,14 +458,7 @@ const getSlackClient = (slackToken: string): SlackClient => {
   return new SlackClient(slackToken);
 };
 
-const getPartTimerProfile = (
-  userEmail: string
-): {
-  job: string;
-  lastName: string;
-  email: string;
-  managerEmails: string[];
-} => {
+const getPartTimerProfile = (userEmail: string): PartTimerProfile => {
   const { JOB_SHEET_URL } = getConfig();
   const sheet = SpreadsheetApp.openByUrl(JOB_SHEET_URL).getSheetByName("シート1");
   if (!sheet) throw new Error("SHEET is not defined");
