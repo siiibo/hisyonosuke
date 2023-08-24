@@ -551,8 +551,8 @@ const getManagerSlackIds = (managerEmails: string[], client: SlackClient): strin
 
 const getEventInfoFromTitle = (title: string): { workingStyle: string; restStartTime: string; restEndTime: string } => {
   const workingStyleRegex = /【(.*?)】/;
-  const matchResult = title.match(workingStyleRegex);
-  const workingStyle = matchResult ? matchResult[1] : "未設定";
+  const matchResult = title.match(workingStyleRegex)?.[1];
+  const workingStyle = matchResult ?? "未設定";
 
   const restTimeRegex = /\d{2}:\d{2}~\d{2}:\d{2}/;
   const restTimeResult = title.match(restTimeRegex)?.[0];
