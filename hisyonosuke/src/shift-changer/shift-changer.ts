@@ -341,10 +341,10 @@ export const callModificationAndDeletion = () => {
   UrlFetchApp.fetch(API_URL, options);
 
   const modificationMessageToNotify = createModificationMessage(modificationInfos, partTimerProfile)
-    ? `${createModificationMessage(modificationInfos, partTimerProfile)}\n\n`
+    ? `${createModificationMessage(modificationInfos, partTimerProfile)}\n---\n`
     : "";
   const deletionMessageToNotify = createDeletionMessage(deletionInfos, partTimerProfile)
-    ? `${createDeletionMessage(deletionInfos, partTimerProfile)}\n\n`
+    ? `${createDeletionMessage(deletionInfos, partTimerProfile)}\n---\n`
     : "";
 
   const modificationAndDeletionMessageToNotify = comment
@@ -518,10 +518,7 @@ const createModificationMessage = (
   partTimerProfile: PartTimerProfile
 ): string | undefined => {
   const messages = modificationInfos.map(({ previousEventInfo, newEventInfo }) => {
-    return `---
-    ${createMessageFromEventInfo(previousEventInfo)}\n
-    ↓\n
-    ${createMessageFromEventInfo(newEventInfo)}`;
+    return `${createMessageFromEventInfo(previousEventInfo)}\n↓\n${createMessageFromEventInfo(newEventInfo)}`;
   });
   if (messages.length == 0) return;
   const { job, lastName } = partTimerProfile;
