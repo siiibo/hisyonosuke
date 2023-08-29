@@ -340,16 +340,13 @@ export const callModificationAndDeletion = () => {
   const { API_URL, SLACK_CHANNEL_TO_POST } = getConfig();
   UrlFetchApp.fetch(API_URL, options);
 
-  const modificationMessageToNotify = createModificationMessage(modificationInfos, partTimerProfile)
-    ? `${createModificationMessage(modificationInfos, partTimerProfile)}\n---\n`
-    : "";
-  const deletionMessageToNotify = createDeletionMessage(deletionInfos, partTimerProfile)
-    ? `${createDeletionMessage(deletionInfos, partTimerProfile)}\n---\n`
-    : "";
-
-  const modificationAndDeletionMessageToNotify = comment
-    ? `${modificationMessageToNotify}${deletionMessageToNotify}コメント: ${comment}`
-    : `${modificationMessageToNotify}${deletionMessageToNotify}`;
+  const modificationAndDeletionMessageToNotify = [
+    createModificationMessage(modificationInfos, partTimerProfile),
+    createDeletionMessage(deletionInfos, partTimerProfile),
+    comment ? `コメント: ${comment}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n---\n");
 
   postMessageToSlackChannel(client, SLACK_CHANNEL_TO_POST, modificationAndDeletionMessageToNotify, partTimerProfile);
 };
