@@ -520,7 +520,7 @@ const createModificationMessage = (
   if (messages.length == 0) return;
   const { job, lastName } = partTimerProfile;
   const messageTitle = `${job}${lastName}さんの以下の予定が変更されました。`;
-  return `${messageTitle}\n${messages.join("\n")}`;
+  return `${messageTitle}\n${messages.join("\n\n")}`;
 };
 
 const getManagerSlackIds = (managerEmails: string[], client: SlackClient): string[] => {
