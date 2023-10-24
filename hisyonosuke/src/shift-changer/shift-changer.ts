@@ -72,7 +72,7 @@ export const insertRegistrationSheet = () => {
 
 export const insertModificationAndDeletionSheet = () => {
   const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  const today = format(new Date(), "yyyy-MM-dd");
+  //const today = format(new Date(), "yyyy-MM-dd");
   const sheet = spreadsheet.insertSheet(`変更・削除`, 0);
   sheet.addDeveloperMetadata(`today-modificationAndDeletion`);
 
@@ -84,7 +84,7 @@ export const insertModificationAndDeletionSheet = () => {
   const description2 = "本日以降の日付を下の色付きセルに記入してください。一週間後までの予定が表示されます。";
   sheet.getRange("A4").setValue(description2).setFontWeight("bold");
   const dateCell = sheet.getRange("A5");
-  dateCell.setValue(today);
+  //dateCell.setValue(today);
   dateCell.setBackground("#f0f8ff");
 
   const description3 = "【予定一覧】";
