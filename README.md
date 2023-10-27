@@ -12,8 +12,6 @@ Google Apps Script で作成している Slack Bot です。
   - Slack Shortcutからの誕生日・記念日の登録
 - workflow-customstep
   - Spreadsheeet自動転記用のCustomStepの提供（新規IR掲載企業追加Workflow用）
-- meeting-notifier
-  - MTGの終了予定時刻の通知
 
 ## ToDo
 
@@ -28,7 +26,7 @@ Google Apps Script で作成している Slack Bot です。
 
 ### yarn workspace
 
-- `hisyonosuke`と`meeting-notifier`をworkspaceで分離
+- `hisyonosuke`と`attendance-aggregation`をworkspaceで分離
   - claspによるdeploy先を分けるため
 - ビルドなど特定のworkspace上でコマンドを実行する方法
   - `yarn workspace <workspaceName> <commandName>`
