@@ -5,7 +5,6 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "meeting-notifier",
     "hisyonosuke",
     "attendance-aggregation"
   ]
