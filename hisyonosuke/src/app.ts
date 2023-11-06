@@ -1,32 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck //FIXME: strict modeの影響を避けている。次本ファイルを修正する際にこのコメントを解消する
 import { ChannelCreatedEvent, SlackEvent } from "@slack/bolt";
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { initAttendanceManager } from "./attendance-manager/attendanceManager";
 import { shiftChanger } from "./shift-changer/shift-changer-api";
 
-const PROPS_SPREADSHEET_ID = "1Kuq2VaGe96zn0G3LG7OxapLZ0aQvYMqOW9IlorwbJoU";
-
-// Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
-const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
-
 export const init = () => {
-  initProperties();
   initAttendanceManager();
-};
-
-const initProperties = () => {
-  const sheet = SpreadsheetApp.openById(PROPS_SPREADSHEET_ID).getSheetByName("CONFIG");
-  const rows = sheet.getDataRange().getValues();
-  const properties = {};
-  for (const row of rows.slice(1)) properties[row[0]] = row[1];
-
-  const scriptProperties = PropertiesService.getScriptProperties();
-
-  // TODO: 削除するpropertyを限定するか、各プロジェクトごとにinit処理を明示し、他プロジェクトに影響されないようにする
-  // scriptProperties.deleteAllProperties();
-
-  scriptProperties.setProperties(properties);
 };
 
 export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Content.TextOutput => {
@@ -48,16 +27,19 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   }
 
   if (e.parameter.apiId === "shift-changer") {
-    const response = shiftChanger(e);
+    const response = shiftChanger(e) ?? "";
     return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
   }
 
-  return ContentService.createTextOutput(response).setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.JSON);
 };
 
 // attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
 const getSlackClient = () => {
   const token = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
+  if (!token) {
+    throw new Error("SLACK_TOKEN is not set");
+  }
   return new SlackClient(token);
 };
 
@@ -81,6 +63,7 @@ const isEvent = (e: GoogleAppsScript.Events.DoPost): boolean => {
 };
 
 const handleChannelCreated = (client: SlackClient, event: ChannelCreatedEvent) => {
+  const CHANNEL_EVENT_POST_CHANNEL = "C011BG29K71"; // #雑談
   client.chat.postMessage({
     channel: CHANNEL_EVENT_POST_CHANNEL,
     text: `<#${event.channel.id}>が追加されました！`,
