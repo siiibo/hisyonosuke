@@ -17,7 +17,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
     return ContentService.createTextOutput(JSON.parse(e.postData.contents)["challenge"]);
   }
 
-  // Shujinosukeから移行 // TODO: いつか全体を整えたらコメント消す
   if (isEvent(e)) {
     const event = JSON.parse(e.postData.contents)["event"] as SlackEvent;
     const client = getSlackClient();
@@ -34,7 +33,6 @@ export const doPost = (e: GoogleAppsScript.Events.DoPost): GoogleAppsScript.Cont
   return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.JSON);
 };
 
-// attendanceManager.ts から移行 // TODO: いつか全体を整えたらコメント消す
 const getSlackClient = () => {
   const token = PropertiesService.getScriptProperties().getProperty("SLACK_TOKEN");
   if (!token) {
