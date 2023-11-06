@@ -1,5 +1,4 @@
 import { doPost, init } from "./app";
-import { notificator } from "./birthday-registrator/notificator";
 import { periodicallyCheckForAttendanceManager } from "./attendance-manager/attendanceManager";
 import {
   onOpen,
@@ -17,7 +16,6 @@ import {
 declare const global: any;
 global.doPost = doPost;
 global.init = init;
-global.notificator = notificator;
 global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
 global.onOpen = onOpen;
 global.callRegistration = callRegistration;
