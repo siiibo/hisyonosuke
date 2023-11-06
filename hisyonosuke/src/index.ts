@@ -1,7 +1,6 @@
 import { doPost, init } from "./app";
 import { notificator } from "./birthday-registrator/notificator";
 import { periodicallyCheckForAttendanceManager } from "./attendance-manager/attendanceManager";
-import { notifyPartTimerShift } from "./part-timer-shift/notify";
 import {
   onOpen,
   callRegistration,
@@ -26,4 +25,3 @@ global.callShowEvents = callShowEvents;
 global.callModificationAndDeletion = callModificationAndDeletion;
 global.insertRegistrationSheet = insertRegistrationSheet;
 global.insertModificationAndDeletionSheet = insertModificationAndDeletionSheet;
-global.notifyPartTimerShift = notifyPartTimerShift;
