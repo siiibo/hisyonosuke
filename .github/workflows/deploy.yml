@@ -1,40 +1,27 @@
 name: Deploy
 
 on:
-    push:
-        branches:
-            - "main"
-        paths:
-            - attendance-manager/**
-            - .github/**
-            - "!**.md"
-    workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - attendance-manager/**
+      - .github/**
+      - "!**.md"
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-            - uses: actions/cache@v3
-              with:
-                  key: v1-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
-                  path: |
-                      node_modules
-            - uses: actions/setup-node@v3
-              with:
-                  node-version: 18
-            - run: yarn
-            - run: yarn workspace attendance-manager build
-            - run: cp attendance-manager/appsscript.json attendance-manager/build/appsscript.json
-            - uses: daikikatsuragawa/clasp-action@v1.1.0
-              with:
-                  accessToken: ${{ secrets.ACCESS_TOKEN }}
-                  idToken: ${{ secrets.ID_TOKEN }}
-                  refreshToken: ${{ secrets.REFRESH_TOKEN }}
-                  clientId: ${{ secrets.CLIENT_ID }}
-                  clientSecret: ${{ secrets.CLIENT_SECRET }}
-                  scriptId: ${{ secrets.SCRIPT_ID }}
-                  command: "deploy"
-                  deployId: ${{ secrets.DEPLOY_ID }}
-                  rootDir: "attendance-manager/build"
-                  description: ${{ github.sha }}
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          key: v1-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
+          path: |
+            node_modules
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: yarn
+      - run: yarn run buildpush:prod
