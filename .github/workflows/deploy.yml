@@ -1,27 +1,27 @@
 name: Deploy
 
 on:
-    push:
-        branches:
-            - "main"
-        paths:
-            - attendance-manager/**
-            - .github/**
-            - "!**.md"
-    workflow_dispatch:
+  push:
+    branches:
+      - "main"
+    paths:
+      - attendance-manager/**
+      - .github/**
+      - "!**.md"
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v3
-            - uses: actions/cache@v3
-              with:
-                  key: v1-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
-                  path: |
-                      node_modules
-            - uses: actions/setup-node@v3
-              with:
-                  node-version: 18
-            - run: yarn
-            - run: yarn run buildpush:prod
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          key: v1-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
+          path: |
+            node_modules
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: yarn
+      - run: yarn run buildpush:prod
