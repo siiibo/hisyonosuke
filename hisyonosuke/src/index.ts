@@ -1,25 +1,10 @@
-import { doPost, init } from "./app";
-import { periodicallyCheckForAttendanceManager } from "./attendance-manager/attendanceManager";
-import {
-  onOpen,
-  callRegistration,
-  callShowEvents,
-  callModificationAndDeletion,
-  insertRegistrationSheet,
-  insertModificationAndDeletionSheet,
-} from "./shift-changer/shift-changer";
 /**
  * @file GASエディタから実行できる関数を定義する
  */
 
+import { periodicallyCheckForAttendanceManager, initAttendanceManager } from "./attendance-manager/attendanceManager";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const global: any;
-global.doPost = doPost;
-global.init = init;
+global.initAttendanceManager = initAttendanceManager;
 global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
-global.onOpen = onOpen;
-global.callRegistration = callRegistration;
-global.callShowEvents = callShowEvents;
-global.callModificationAndDeletion = callModificationAndDeletion;
-global.insertRegistrationSheet = insertRegistrationSheet;
-global.insertModificationAndDeletionSheet = insertModificationAndDeletionSheet;
