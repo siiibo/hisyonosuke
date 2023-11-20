@@ -45,7 +45,7 @@ jobs:
           EOS
       - name: Create .clasp.prod.json
         run: |
-          cat <<-EOS > $clasp_config_project
+          cat <<-EOS > ${{ github.workspace }}/attendance-manager/.clasp.prod.json
           {
             "scriptId": "${{ secrets.SCRIPT_ID }}",
             "rootDir": "build"
