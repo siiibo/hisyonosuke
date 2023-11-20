@@ -1,6 +1,6 @@
-# Hisyonosuke
+# attendance-manager
 
-秘書之介の Slack App を管理
+勤怠管理用のSlack App
 
 ## Requirements
 
