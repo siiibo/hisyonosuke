@@ -8,9 +8,9 @@
     "open:prod": "cross-env clasp_config_project=.clasp.prod.json yarn clasp open",
     "open:dev": "cross-env clasp_config_project=.clasp.dev.json yarn clasp open",
     "test": "jest",
-    "build": "yarn webpack",
-    "buildpush:prod": "yarn webpack && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
-    "buildpush:dev": " yarn webpack && cross-env clasp_config_project=.clasp.dev.json clasp push --force",
+    "build": "yarn webpack && cp appsscript.json build/appsscript.json",
+    "buildpush:prod": "yarn run build && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
+    "buildpush:dev": " yarn run build && cross-env clasp_config_project=.clasp.dev.json clasp push --force",
     "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json"
   },
   "dependencies": {
