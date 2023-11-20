@@ -24,17 +24,4 @@ jobs:
               with:
                   node-version: 18
             - run: yarn
-            - run: yarn workspace attendance-manager build
-            - run: cp attendance-manager/appsscript.json attendance-manager/build/appsscript.json
-            - uses: daikikatsuragawa/clasp-action@v1.1.0
-              with:
-                  accessToken: ${{ secrets.ACCESS_TOKEN }}
-                  idToken: ${{ secrets.ID_TOKEN }}
-                  refreshToken: ${{ secrets.REFRESH_TOKEN }}
-                  clientId: ${{ secrets.CLIENT_ID }}
-                  clientSecret: ${{ secrets.CLIENT_SECRET }}
-                  scriptId: ${{ secrets.SCRIPT_ID }}
-                  command: "deploy"
-                  deployId: ${{ secrets.DEPLOY_ID }}
-                  rootDir: "attendance-manager/build"
-                  description: ${{ github.sha }}
+            - run: yarn run buildpush:prod
