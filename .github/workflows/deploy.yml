@@ -24,4 +24,4 @@ jobs:
         with:
           node-version: 18
       - run: yarn
-      - run: yarn run buildpush:prod
+      - run: yarn workspace attendance-manager run buildpush:prod
