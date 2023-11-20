@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "workspaces": [
-    "hisyonosuke",
+    "attendance-manager",
     "attendance-aggregation"
   ]
 }

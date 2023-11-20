@@ -5,7 +5,7 @@ on:
         branches:
             - "main"
         paths:
-            - hisyonosuke/**
+            - attendance-manager/**
             - .github/**
             - "!**.md"
     workflow_dispatch:
@@ -24,8 +24,8 @@ jobs:
               with:
                   node-version: 18
             - run: yarn
-            - run: yarn workspace hisyonosuke build
-            - run: cp hisyonosuke/appsscript.json hisyonosuke/build/appsscript.json
+            - run: yarn workspace attendance-manager build
+            - run: cp attendance-manager/appsscript.json attendance-manager/build/appsscript.json
             - uses: daikikatsuragawa/clasp-action@v1.1.0
               with:
                   accessToken: ${{ secrets.ACCESS_TOKEN }}
@@ -36,5 +36,5 @@ jobs:
                   scriptId: ${{ secrets.SCRIPT_ID }}
                   command: "deploy"
                   deployId: ${{ secrets.DEPLOY_ID }}
-                  rootDir: "hisyonosuke/build"
+                  rootDir: "attendance-manager/build"
                   description: ${{ github.sha }}
