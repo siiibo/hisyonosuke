@@ -5,7 +5,6 @@ import { getConfig } from "./config";
 import { getCategorizedDailyMessages } from "./message";
 import { getUserWorkStatusesByMessages } from "./userWorkStatus";
 import { getFreeeEmployeeIdFromSlackUserId } from "./attendanceManager";
-import { date } from "zod";
 
 const DATE_START_HOUR = 4;
 

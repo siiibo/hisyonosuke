@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { date, z } from "zod";
+import { z } from "zod";
 import * as R from "remeda";
 import { getDate, subDays, set } from "date-fns";
 import { REACTION, ReactionSchema } from "./reaction";
