@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { z } from "zod";
+import { date, z } from "zod";
 import * as R from "remeda";
 import { getDate, subDays, set } from "date-fns";
 import { REACTION, ReactionSchema } from "./reaction";
@@ -21,9 +21,10 @@ export function getCategorizedDailyMessages(
   client: SlackClient,
   channelId: string,
   botUserId: string,
-  dateStartHour: number
+  dateStartHour: number,
+  daysToShift?: number
 ): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
-  const messages = getDailyMessages(client, channelId, dateStartHour);
+  const messages = getDailyMessages(client, channelId, dateStartHour, daysToShift);
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
 
   // NOTE: エラーリアクションがついているメッセージは返り値に含めない
@@ -53,8 +54,15 @@ function categorizeMessage(
   );
 }
 
-function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
-  const oldest = getDayStartAsDate(new Date(), dateStartHour);
+function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number, daysToShift?: number) {
+  const date = new Date();
+  let oldest: Date;
+  if (daysToShift !== undefined) {
+    date.setDate(date.getDate() - daysToShift);
+    oldest = getDayStartAsDate(date, dateStartHour);
+  } else {
+    oldest = getDayStartAsDate(date, dateStartHour);
+  }
   const _messages =
     client.conversations.history({
       channel: channelId,

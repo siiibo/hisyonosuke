@@ -236,7 +236,12 @@ function getBaseDate(date: Date) {
   return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
-function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, freee: Freee, slackUserId: string, companyId: number) {
+export function getFreeeEmployeeIdFromSlackUserId(
+  client: SlackClient,
+  freee: Freee,
+  slackUserId: string,
+  companyId: number
+) {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({ user: slackUserId }).user?.profile?.email;
   if (!email) return err("email is undefined.");
