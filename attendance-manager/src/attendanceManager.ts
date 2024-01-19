@@ -305,7 +305,7 @@ function getBaseDate(date: Date) {
   return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
-export function getFreeeEmployeeIdFromSlackUserId(
+function getFreeeEmployeeIdFromSlackUserId(
   client: SlackClient,
   freee: Freee,
   slackUserId: string,

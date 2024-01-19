@@ -4,7 +4,6 @@ import { Freee } from "./freee";
 import { getConfig } from "./config";
 import { getCategorizedDailyMessages } from "./message";
 import { getUserWorkStatusesByMessages } from "./userWorkStatus";
-import { getFreeeEmployeeIdFromSlackUserId } from "./attendanceManager";
 
 const DATE_START_HOUR = 4;
 
