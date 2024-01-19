@@ -120,11 +120,13 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
   const freee = new Freee();
   const { FREEE_COMPANY_ID } = getConfig();
-  const slackIDs = Object.keys(userWorkStatuses).filter((slackID) => {
-    const userStatus = userWorkStatuses[slackID];
-    return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
-  }).map((slackID) => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackID, FREEE_COMPANY_ID);
+  const slackIDs = Object.keys(userWorkStatuses)
+    .filter((slackID) => {
+      const userStatus = userWorkStatuses[slackID];
+      return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
+    })
+    .map((slackID) => {
+      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackID, FREEE_COMPANY_ID);
       if (typeof employeeId === "string") throw new Error(employeeId);
       const clockInParams = {
         company_id: FREEE_COMPANY_ID,
@@ -133,7 +135,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
         datetime: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
       };
       freee.setTimeClocks(Number(employeeId), clockInParams);
-  });
+    });
   if (slackIDs.length === 0) return;
   const message = `<@${slackIDs.join(
     ">, <@"
