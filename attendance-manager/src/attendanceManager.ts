@@ -125,7 +125,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
   if (slackIds.length === 0) return;
-  slackIds.map((slackId) => {
+  slackIds.forEach((slackId) => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
     if (typeof employeeId === "string") throw new Error(employeeId);
     const clockInParams = {
