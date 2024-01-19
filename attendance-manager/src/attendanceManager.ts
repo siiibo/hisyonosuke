@@ -64,12 +64,13 @@ export function manageForgottenClockOut() {
  */
 function checkAttendance(client: SlackClient, channelId: string, botUserId: string) {
   const { FREEE_COMPANY_ID } = getConfig();
-
+  const today = new Date();
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
     client,
     channelId,
     botUserId,
-    DATE_START_HOUR
+    DATE_START_HOUR,
+    today
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -104,13 +105,14 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
 }
 
 function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
-  const daysToShift = 1;
+  const yesterday = subDays(new Date(), 1);
+
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
     client,
     channelId,
     botUserId,
     DATE_START_HOUR,
-    daysToShift
+    yesterday
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
