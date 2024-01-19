@@ -1,3 +1,5 @@
+#TODO: マージする際には消去する
+
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
 import { format, set } from "date-fns";
 import { Freee } from "./freee";

@@ -137,7 +137,6 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const message = `<@${slackIDs.join(
     ">, <@"
   )}>\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
-  console.log(message);
   const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
   const response = client.chat.scheduleMessage({
     channel: channelId,
