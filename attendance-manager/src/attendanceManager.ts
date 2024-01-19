@@ -120,24 +120,23 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
   const freee = new Freee();
   const { FREEE_COMPANY_ID } = getConfig();
-  const slackIDs = Object.keys(userWorkStatuses)
-    .filter((slackID) => {
-      const userStatus = userWorkStatuses[slackID];
-      return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
-    })
-    .map((slackID) => {
-      const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackID, FREEE_COMPANY_ID);
-      if (typeof employeeId === "string") throw new Error(employeeId);
-      const clockInParams = {
-        company_id: FREEE_COMPANY_ID,
-        type: "clock_out" as const,
-        base_date: format(new Date(), "yyyy-MM-dd"),
-        datetime: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
-      };
-      freee.setTimeClocks(Number(employeeId), clockInParams);
-    });
-  if (slackIDs.length === 0) return;
-  const message = `<@${slackIDs.join(
+  const slackIds = Object.keys(userWorkStatuses).filter((slackId) => {
+    const userStatus = userWorkStatuses[slackId];
+    return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
+  });
+  slackIds.map((slackId) => {
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
+    if (typeof employeeId === "string") throw new Error(employeeId);
+    const clockInParams = {
+      company_id: FREEE_COMPANY_ID,
+      type: "clock_out" as const,
+      base_date: format(new Date(), "yyyy-MM-dd"),
+      datetime: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+    };
+    freee.setTimeClocks(Number(employeeId), clockInParams);
+  });
+  if (slackIds.length === 0) return;
+  const message = `<@${slackIds.join(
     ">, <@"
   )}>\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
   const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
