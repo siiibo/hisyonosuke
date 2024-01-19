@@ -144,7 +144,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const response = client.chat.scheduleMessage({
     channel: channelId,
     text: message,
-    post_at: Number(getUnixTimeStampString(timeToPost)),
+    post_at: getUnixTimeStampString(timeToPost),
   });
   if (!response.ok) {
     throw new Error(response.error);
