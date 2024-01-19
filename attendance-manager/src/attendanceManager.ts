@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { format, subDays, toDate ,set} from "date-fns";
+import { format, subDays, toDate, set } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
@@ -43,7 +43,7 @@ export function initAutoClockOut() {
       ScriptApp.deleteTrigger(trigger);
     }
   });
-  ScriptApp.newTrigger(targetFunction.name).timeBased().atHour(4).everyDays(1).create();
+  ScriptApp.newTrigger(targetFunction.name).timeBased().atHour(DATE_START_HOUR).nearMinute(15).everyDays(1).create();
 }
 
 export function manageForgottenClockOut() {
@@ -120,7 +120,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const { FREEE_COMPANY_ID } = getConfig();
   Object.keys(userWorkStatuses).forEach((slackID) => {
     const userStatus = userWorkStatuses[slackID];
-    if (userStatus!==undefined && userStatus.workStatus !== "退勤済み") {
+    if (userStatus !== undefined && userStatus.workStatus !== "退勤済み") {
       slackIDs.push(slackID);
       const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackID, FREEE_COMPANY_ID);
       if (typeof employeeId === "string") throw new Error(employeeId);
@@ -304,12 +304,7 @@ function getBaseDate(date: Date) {
   return date.getHours() > DATE_START_HOUR ? toDate(date) : subDays(date, 1);
 }
 
-function getFreeeEmployeeIdFromSlackUserId(
-  client: SlackClient,
-  freee: Freee,
-  slackUserId: string,
-  companyId: number
-) {
+function getFreeeEmployeeIdFromSlackUserId(client: SlackClient, freee: Freee, slackUserId: string, companyId: number) {
   // TODO: PropertiesService等を挟むようにする（毎回APIを投げない）
   const email = client.users.info({ user: slackUserId }).user?.profile?.email;
   if (!email) return err("email is undefined.");
