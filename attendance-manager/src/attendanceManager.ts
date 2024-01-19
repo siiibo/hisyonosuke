@@ -10,6 +10,7 @@ import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus
 import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
+import { getUnixTimeStampString } from "./utilities";
 
 const DATE_START_HOUR = 4;
 
@@ -143,16 +144,13 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const response = client.chat.scheduleMessage({
     channel: channelId,
     text: message,
-    post_at: getUnixTimeStampFromDate(timeToPost),
+    post_at: Number(getUnixTimeStampString(timeToPost)),
   });
   if (!response.ok) {
     throw new Error(response.error);
   }
 }
 
-const getUnixTimeStampFromDate = (date: Date): number => {
-  return Math.floor(date.getTime() / 1000);
-};
 function execAction(
   client: SlackClient,
   freee: Freee,
