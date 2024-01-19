@@ -45,6 +45,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const { FREEE_COMPANY_ID } = getConfig();
   Object.keys(userWorkStatuses).forEach((slackID) => {
     const userStatus = userWorkStatuses[slackID];
+    //TODO: 実験用のログのために残している。本番では削除する
     console.log("slackID:", slackID, "User Status:", userStatus);
     if (userStatus!==undefined && userStatus.workStatus !== "退勤済み") {
       slackIDs.push(slackID);
