@@ -124,6 +124,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     const userStatus = userWorkStatuses[slackId];
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
+  if (slackIds.length === 0) return;
   slackIds.map((slackId) => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
     if (typeof employeeId === "string") throw new Error(employeeId);
@@ -135,7 +136,6 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     };
     freee.setTimeClocks(Number(employeeId), clockInParams);
   });
-  if (slackIds.length === 0) return;
   const message = `<@${slackIds.join(
     ">, <@"
   )}>\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
