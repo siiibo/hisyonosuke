@@ -241,8 +241,8 @@ function handleClockOut(
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
-    base_date: format(clockOutBaseDate, "yyyy-MM-dd"),
-    datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
+    base_date: formatDate(clockOutBaseDate, "date"),
+    datetime: formatDate(clockOutDate, "datetime"),
   };
 
   return freee
