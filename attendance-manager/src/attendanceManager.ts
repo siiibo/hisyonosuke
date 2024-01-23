@@ -137,8 +137,8 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     };
     freee.setTimeClocks(employeeId.value, clockInParams);
   });
-  const mentionId = `<@${unClockedOutSlackIds.join(">, <@")}>`;
-  const message = `\n${mentionId}\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
+  const mentionIds = unClockedOutSlackIds.map(slackId => `<@${slackId}>`).join(', ');
+  const message = `\n${mentionIds}\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
   const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
   const response = client.chat.scheduleMessage({
     channel: channelId,
