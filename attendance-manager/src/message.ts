@@ -21,9 +21,10 @@ export function getCategorizedDailyMessages(
   client: SlackClient,
   channelId: string,
   botUserId: string,
-  dateStartHour: number
+  dateStartHour: number,
+  date: Date
 ): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
-  const messages = getDailyMessages(client, channelId, dateStartHour);
+  const messages = getDailyMessages(client, channelId, dateStartHour, date);
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
 
   // NOTE: エラーリアクションがついているメッセージは返り値に含めない
@@ -53,8 +54,8 @@ function categorizeMessage(
   );
 }
 
-function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number) {
-  const oldest = getDayStartAsDate(new Date(), dateStartHour);
+function getDailyMessages(client: SlackClient, channelId: string, dateStartHour: number, date: Date) {
+  const oldest = getDayStartAsDate(date, dateStartHour);
   const _messages =
     client.conversations.history({
       channel: channelId,

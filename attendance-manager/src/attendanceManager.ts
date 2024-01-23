@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { format, subDays, toDate } from "date-fns";
+import { subDays, toDate, set } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
@@ -10,6 +10,7 @@ import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus
 import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
+import { getUnixTimeStampString } from "./utilities";
 
 const DATE_START_HOUR = 4;
 
@@ -36,6 +37,26 @@ export function periodicallyCheckForAttendanceManager() {
   });
 }
 
+export function initAutoClockOut() {
+  const targetFunction = manageForgottenClockOut;
+  ScriptApp.getProjectTriggers().forEach((trigger) => {
+    if (trigger.getHandlerFunction() === targetFunction.name) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
+  ScriptApp.newTrigger(targetFunction.name).timeBased().atHour(DATE_START_HOUR).nearMinute(15).everyDays(1).create();
+}
+
+export function manageForgottenClockOut() {
+  const client = getSlackClient();
+
+  const { CHANNEL_IDS, BOT_USER_ID } = getConfig();
+
+  // チャンネルごとに関数自体を分けて別プロセス（別のタイムトリガー）で動かすように変更する可能性あり
+  CHANNEL_IDS.forEach((channelId) => {
+    autoCheckAndClockOut(client, channelId, BOT_USER_ID);
+  });
+}
 /*
   NOTE:
   dateStartHour ~ 現在時刻までのメッセージから勤怠情報を取得→freeeへの登録を行う。
@@ -44,12 +65,13 @@ export function periodicallyCheckForAttendanceManager() {
  */
 function checkAttendance(client: SlackClient, channelId: string, botUserId: string) {
   const { FREEE_COMPANY_ID } = getConfig();
-
+  const today = new Date();
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
     client,
     channelId,
     botUserId,
-    DATE_START_HOUR
+    DATE_START_HOUR,
+    today
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -81,6 +103,52 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
         }
       );
   });
+}
+
+function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
+  const yesterday = subDays(new Date(), 1);
+
+  const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
+    client,
+    channelId,
+    botUserId,
+    DATE_START_HOUR,
+    yesterday
+  );
+  if (!unprocessedMessages.length && !processedMessages.length) return;
+
+  const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
+  const freee = new Freee();
+  const { FREEE_COMPANY_ID } = getConfig();
+  const unClockedOutSlackIds = Object.keys(userWorkStatuses).filter((slackId) => {
+    const userStatus = userWorkStatuses[slackId];
+    return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
+  });
+  if (unClockedOutSlackIds.length === 0) return;
+
+  unClockedOutSlackIds.forEach((slackId) => {
+    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
+    if (employeeId.isErr()) throw new Error(employeeId.error);
+    const clockInParams = {
+      company_id: FREEE_COMPANY_ID,
+      type: "clock_out" as const,
+      base_date: formatDate(new Date(), "date"),
+      datetime: formatDate(new Date(), "datetime"),
+    };
+    freee.setTimeClocks(employeeId.value, clockInParams);
+  });
+  const mentionIds = unClockedOutSlackIds.map((slackId) => `<@${slackId}>`).join(", ");
+
+  const message = `${mentionIds}\n前日に未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
+  const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
+  const response = client.chat.scheduleMessage({
+    channel: channelId,
+    text: message,
+    post_at: getUnixTimeStampString(timeToPost),
+  });
+  if (!response.ok) {
+    throw new Error(response.error);
+  }
 }
 
 function execAction(
@@ -126,8 +194,8 @@ function handleClockIn(
   const clockInParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
-    base_date: format(clockInDate, "yyyy-MM-dd"),
-    datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
+    base_date: formatDate(clockInDate, "date"),
+    datetime: formatDate(clockInDate, "datetime"),
   };
 
   return freee
@@ -174,8 +242,8 @@ function handleClockOut(
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
-    base_date: format(clockOutBaseDate, "yyyy-MM-dd"),
-    datetime: format(clockOutDate, "yyyy-MM-dd HH:mm:ss"),
+    base_date: formatDate(clockOutBaseDate, "date"),
+    datetime: formatDate(clockOutDate, "datetime"),
   };
 
   return freee
