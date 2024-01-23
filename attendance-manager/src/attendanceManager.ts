@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { format, subDays, toDate, set } from "date-fns";
+import { subDays, toDate, set } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
@@ -132,12 +132,12 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     const clockInParams = {
       company_id: FREEE_COMPANY_ID,
       type: "clock_out" as const,
-      base_date: format(new Date(), "yyyy-MM-dd"),
-      datetime: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
+      base_date: formatDate(new Date(), "date"),
+      datetime: formatDate(new Date(), "datetime"),
     };
     freee.setTimeClocks(employeeId.value, clockInParams);
   });
-  const mentionIds = unClockedOutSlackIds.map(slackId => `<@${slackId}>`).join(', ');
+  const mentionIds = unClockedOutSlackIds.map((slackId) => `<@${slackId}>`).join(", ");
   const message = `\n${mentionIds}\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
   const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
   const response = client.chat.scheduleMessage({
@@ -193,8 +193,8 @@ function handleClockIn(
   const clockInParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
-    base_date: format(clockInDate, "yyyy-MM-dd"),
-    datetime: format(clockInDate, "yyyy-MM-dd HH:mm:ss"),
+    base_date: formatDate(clockInDate, "date"),
+    datetime: formatDate(clockInDate, "datetime"),
   };
 
   return freee
