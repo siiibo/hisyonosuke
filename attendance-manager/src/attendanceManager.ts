@@ -135,11 +135,10 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
       base_date: format(new Date(), "yyyy-MM-dd"),
       datetime: format(new Date(), "yyyy-MM-dd HH:mm:ss"),
     };
-    freee.setTimeClocks(Number(employeeId), clockInParams);
+    freee.setTimeClocks(employeeId.value, clockInParams);
   });
-  const message = `<@${unClockedOutSlackIds.join(
-    ">, <@"
-  )}>\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
+  const mentionId = `<@${unClockedOutSlackIds.join(">, <@")}>`;
+  const message = `\n${mentionId}\n未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
   const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
   const response = client.chat.scheduleMessage({
     channel: channelId,
