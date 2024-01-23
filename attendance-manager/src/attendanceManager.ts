@@ -11,7 +11,6 @@ import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
 import { getUnixTimeStampString } from "./utilities";
-import { th } from "date-fns/locale";
 
 const DATE_START_HOUR = 4;
 
