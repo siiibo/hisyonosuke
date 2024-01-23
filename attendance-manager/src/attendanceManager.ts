@@ -11,6 +11,7 @@ import { ActionType, getActionType } from "./action";
 import { err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
 import { getUnixTimeStampString } from "./utilities";
+import { th } from "date-fns/locale";
 
 const DATE_START_HOUR = 4;
 
@@ -125,10 +126,10 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
   if (unClockedOutSlackIds.length === 0) return;
-  
+
   unClockedOutSlackIds.forEach((slackId) => {
     const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
-    if (typeof employeeId === "string") throw new Error(employeeId);
+    if (employeeId.isErr()) throw new Error(employeeId.error);
     const clockInParams = {
       company_id: FREEE_COMPANY_ID,
       type: "clock_out" as const,
