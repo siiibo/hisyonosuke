@@ -71,7 +71,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
     channelId,
     botUserId,
     DATE_START_HOUR,
-    today,
+    today
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -88,7 +88,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
         return execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
           message,
           userWorkStatus,
-          actionType,
+          actionType
         });
       })
       .match(
@@ -100,13 +100,13 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
           console.error(JSON.stringify({ userWorkStatus, ...error }, null, 2));
           client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
           client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-        },
+        }
       );
   });
 }
 
 function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
-  const today= new Date();
+  const today = new Date();
   const yesterday = subDays(new Date(), 1);
 
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
@@ -114,7 +114,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     channelId,
     botUserId,
     DATE_START_HOUR,
-    yesterday,
+    yesterday
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -131,20 +131,25 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
     base_date: formatDate(yesterday, "date"),
-    datetime: formatDate(today, "datetime"),
+    datetime: formatDate(today, "datetime")
   };
   unClockedOutSlackIds.forEach((slackId) => {
-    getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID).andThen((employeeId)=>{
-      return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => {
-        console.info(`${slackId}:退勤打刻に成功しました`);
-        return ok("ok");
-      }).orElse(() => {
-        console.error(`${slackId}:退勤打刻に失敗しました`);
-        return err("err");
+    getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
+      .andThen((employeeId) => {
+        return freee
+          .setTimeClocks(employeeId, clockOutParams)
+          .andThen(() => {
+            console.info(`${slackId}:退勤打刻に成功しました`);
+            return ok("ok");
+          })
+          .orElse(() => {
+            console.error(`${slackId}:退勤打刻に失敗しました`);
+            return err("err");
+          });
+      })
+      .orElse(() => {
+        throw new Error("freeeのemployeeIdを取得できませんでした");
       });
-    }).orElse(() => {
-      throw new Error("freeeのemployeeIdを取得できませんでした");
-    });
   });
   const mentionIds = unClockedOutSlackIds.map((slackId) => `<@${slackId}>`).join(", ");
 
@@ -153,7 +158,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const response = client.chat.scheduleMessage({
     channel: channelId,
     text: message,
-    post_at: getUnixTimeStampString(timeToPost),
+    post_at: getUnixTimeStampString(timeToPost)
   });
   if (!response.ok) {
     throw new Error(response.error);
@@ -169,7 +174,7 @@ function execAction(
     message: Message;
     actionType: ActionType;
     userWorkStatus: UserWorkStatus | undefined;
-  },
+  }
 ) {
   const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, freee, message.user, freeCompanyId)
@@ -181,7 +186,7 @@ function execAction(
         .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
         .with("clock_out", () => handleClockOut(client, freee, channelId, freeCompanyId, employeeId, message))
         .with("clock_out_and_add_remote_memo", () =>
-          handleClockOutAndAddRemoteMemo(client, freee, channelId, freeCompanyId, employeeId, message),
+          handleClockOutAndAddRemoteMemo(client, freee, channelId, freeCompanyId, employeeId, message)
         )
         .exhaustive();
       return result
@@ -196,7 +201,7 @@ function handleClockIn(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message,
+  message: Message
 ) {
   const clockInDate = message.date;
 
@@ -204,7 +209,7 @@ function handleClockIn(
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
     base_date: formatDate(clockInDate, "date"),
-    datetime: formatDate(clockInDate, "datetime"),
+    datetime: formatDate(clockInDate, "datetime")
   };
 
   return freee
@@ -217,11 +222,11 @@ function handleClockIn(
       return match(e)
         .with(
           P.when((e) => e.includes("打刻の種類が正しくありません。")),
-          () => err("既に打刻済みです"),
+          () => err("既に打刻済みです")
         )
         .with(
           P.when((e) => e.includes("打刻の日付が不正な値です。")),
-          () => err("前日の退勤を完了してから出勤打刻してください."),
+          () => err("前日の退勤を完了してから出勤打刻してください.")
         )
         .otherwise(() => err(e));
     });
@@ -243,7 +248,7 @@ function handleClockOut(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message,
+  message: Message
 ) {
   const clockOutDate = message.date;
   const clockOutBaseDate = getBaseDate(message.date);
@@ -252,7 +257,7 @@ function handleClockOut(
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
     base_date: formatDate(clockOutBaseDate, "date"),
-    datetime: formatDate(clockOutDate, "datetime"),
+    datetime: formatDate(clockOutDate, "datetime")
   };
 
   return freee
@@ -265,7 +270,7 @@ function handleClockOut(
       return match(e)
         .with(
           P.when((e) => e.includes("打刻の種類が正しくありません。")),
-          () => err("出勤打刻が完了していないか、退勤の上書きができない値です."),
+          () => err("出勤打刻が完了していないか、退勤の上書きができない値です.")
         )
         .otherwise(() => err(e));
     });
@@ -277,7 +282,7 @@ function handleClockOutAndAddRemoteMemo(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message,
+  message: Message
 ) {
   const targetDate = formatDate(getBaseDate(message.date), "date");
 
@@ -297,9 +302,9 @@ function handleClockOutAndAddRemoteMemo(
         break_records: workRecord.break_records.map((record) => {
           return {
             clock_in_at: formatDate(record.clock_in_at, "datetime"),
-            clock_out_at: formatDate(record.clock_out_at, "datetime"),
+            clock_out_at: formatDate(record.clock_out_at, "datetime")
           };
-        }),
+        })
       };
       return freee.updateWorkRecord(employeeId, targetDate, newWorkRecord);
     })
