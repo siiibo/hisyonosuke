@@ -106,6 +106,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
 }
 
 function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
+  const today= new Date();
   const yesterday = subDays(new Date(), 1);
 
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
@@ -125,26 +126,25 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
   if (unClockedOutSlackIds.length === 0) return;
-  const today= new Date();
+
+  const clockOutParams = {
+    company_id: FREEE_COMPANY_ID,
+    type: "clock_out" as const,
+    base_date: formatDate(yesterday, "date"),
+    datetime: formatDate(today, "datetime"),
+  };
   unClockedOutSlackIds.forEach((slackId) => {
-    const employeeId = getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID);
-    if (employeeId.isErr()) throw new Error(employeeId.error);
-    const clockOutParams = {
-      company_id: FREEE_COMPANY_ID,
-      type: "clock_out" as const,
-      base_date: formatDate(today, "date"),
-      datetime: formatDate(today, "datetime"),
-    };
-    freee
-      .setTimeClocks(employeeId.value, clockOutParams)
-      .andThen(() => {
+    getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID).andThen((employeeId)=>{
+      return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => {
         console.info(slackId,":退勤打刻に成功しました");
         return ok("ok");
-      })
-      .orElse(() => {
+      }).orElse(() => {
         console.error(slackId,":退勤打刻に失敗しました");
-        return err("error");
+        return err("err");
       });
+    }).orElse(() => {
+      throw new Error("freeeのemployeeIdを取得できませんでした");
+    });
   });
   const mentionIds = unClockedOutSlackIds.map((slackId) => `<@${slackId}>`).join(", ");
 
