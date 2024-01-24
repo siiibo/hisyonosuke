@@ -88,7 +88,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
         return execAction(client, new Freee(), channelId, FREEE_COMPANY_ID, {
           message,
           userWorkStatus,
-          actionType
+          actionType,
         });
       })
       .match(
@@ -158,7 +158,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const response = client.chat.scheduleMessage({
     channel: channelId,
     text: message,
-    post_at: getUnixTimeStampString(timeToPost)
+    post_at: getUnixTimeStampString(timeToPost),
   });
   if (!response.ok) {
     throw new Error(response.error);
@@ -209,7 +209,7 @@ function handleClockIn(
     company_id: FREEE_COMPANY_ID,
     type: "clock_in" as const,
     base_date: formatDate(clockInDate, "date"),
-    datetime: formatDate(clockInDate, "datetime")
+    datetime: formatDate(clockInDate, "datetime"),
   };
 
   return freee
@@ -257,7 +257,7 @@ function handleClockOut(
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
     base_date: formatDate(clockOutBaseDate, "date"),
-    datetime: formatDate(clockOutDate, "datetime")
+    datetime: formatDate(clockOutDate, "datetime"),
   };
 
   return freee
@@ -302,9 +302,9 @@ function handleClockOutAndAddRemoteMemo(
         break_records: workRecord.break_records.map((record) => {
           return {
             clock_in_at: formatDate(record.clock_in_at, "datetime"),
-            clock_out_at: formatDate(record.clock_out_at, "datetime")
+            clock_out_at: formatDate(record.clock_out_at, "datetime"),
           };
-        })
+        }),
       };
       return freee.updateWorkRecord(employeeId, targetDate, newWorkRecord);
     })
