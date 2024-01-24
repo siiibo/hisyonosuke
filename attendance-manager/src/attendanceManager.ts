@@ -136,10 +136,10 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   unClockedOutSlackIds.forEach((slackId) => {
     getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID).andThen((employeeId)=>{
       return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => {
-        console.info(slackId,":退勤打刻に成功しました");
+        console.info(`${slackId}:退勤打刻に成功しました`);
         return ok("ok");
       }).orElse(() => {
-        console.error(slackId,":退勤打刻に失敗しました");
+        console.error(`${slackId}:退勤打刻に失敗しました`);
         return err("err");
       });
     }).orElse(() => {
