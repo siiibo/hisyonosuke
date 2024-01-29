@@ -8,7 +8,7 @@ import { Message, getCategorizedDailyMessages } from "./message";
 import { getCommandType } from "./command";
 import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
 import { ActionType, getActionType } from "./action";
-import { err, ok } from "neverthrow";
+import { Result, err, ok } from "neverthrow";
 import { match, P } from "ts-pattern";
 import { getUnixTimeStampString } from "./utilities";
 
@@ -130,39 +130,36 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
+    //TODO: 指定する退勤時間を「出勤時間から9時間後」に変更する
     base_date: formatDate(yesterday, "date"),
-    datetime: formatDate(today, "datetime")
+    datetime: formatDate(today, "datetime"),
   };
-  unClockedOutSlackIds.forEach((slackId) => {
-    getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-      .andThen((employeeId) => {
-        return freee
-          .setTimeClocks(employeeId, clockOutParams)
-          .andThen(() => {
-            console.info(`${slackId}:退勤打刻に成功しました`);
-            return ok("ok");
-          })
-          .orElse(() => {
-            console.error(`${slackId}:退勤打刻に失敗しました`);
-            return err("err");
-          });
-      })
-      .orElse(() => {
-        throw new Error("freeeのemployeeIdを取得できませんでした");
+  Result.combineWithAllErrors(
+    unClockedOutSlackIds.map((slackId) => {
+      return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
+        .andThen((employeeId) => {
+          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+        })
+        .orElse((e) => err({ message: e, slackId }));
+    })
+  ).match(
+    (slackIds) => {
+      const mentionIds = slackIds.map((slackId) => `<@${slackId}>`).join(", ");
+      const message = `${mentionIds}\n前日に未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
+      const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
+      const response = client.chat.scheduleMessage({
+        channel: channelId,
+        text: message,
+        post_at: getUnixTimeStampString(timeToPost),
       });
-  });
-  const mentionIds = unClockedOutSlackIds.map((slackId) => `<@${slackId}>`).join(", ");
-
-  const message = `${mentionIds}\n前日に未退勤だったため自動退勤を行いました。freeeにログインして修正してください`;
-  const timeToPost = set(new Date(), { hours: 9, minutes: 0, seconds: 0 });
-  const response = client.chat.scheduleMessage({
-    channel: channelId,
-    text: message,
-    post_at: getUnixTimeStampString(timeToPost),
-  });
-  if (!response.ok) {
-    throw new Error(response.error);
-  }
+      if (!response.ok) {
+        throw new Error(response.error);
+      }
+    },
+    (errors) => {
+      console.error(JSON.stringify(errors, null, 2));
+    }
+  );
 }
 
 function execAction(
