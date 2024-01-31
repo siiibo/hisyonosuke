@@ -130,19 +130,24 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
         .andThen((employeeId) => {
-          const workRecord = freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID);
-          if (workRecord.isErr() || workRecord.value.clock_in_at === null) {
-            return err({ message: workRecord, slackId });
-          }
-          const clockInAt = new Date(workRecord.value.clock_in_at);
-          const clockInPlusNineHours = addHours(clockInAt, 9);
-          const clockOutParams = {
-            company_id: FREEE_COMPANY_ID,
-            type: "clock_out" as const,
-            base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(clockInPlusNineHours, "datetime"),
-          };
-          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          const clockOutParams = freee
+            .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
+            .andThen((workRecord) => {
+              if (workRecord.clock_in_at === null) {
+                return err("clock_in_at is null.");
+              }
+              const clockInAt = new Date(workRecord.clock_in_at);
+              const clockInPlusNineHours = addHours(clockInAt, 9);
+              const clockOutParams = {
+                company_id: FREEE_COMPANY_ID,
+                type: "clock_out" as const,
+                base_date: formatDate(yesterday, "date"),
+                datetime: formatDate(clockInPlusNineHours, "datetime"),
+              };
+              return ok(clockOutParams);
+            });
+          if(clockOutParams.isErr()) return err(clockOutParams.error);
+          return freee.setTimeClocks(employeeId, clockOutParams.value).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
     })
