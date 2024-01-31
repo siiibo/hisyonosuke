@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { subDays, toDate, set, subHours, addHours } from "date-fns";
+import { subDays, toDate, set, addHours } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
