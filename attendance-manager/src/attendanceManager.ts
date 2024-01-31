@@ -133,9 +133,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
           const clockOutParams = freee
             .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
             .andThen((workRecord) => {
-              if (workRecord.clock_in_at === null) {
-                return err("clock_in_at is null.");
-              }
+              if (workRecord.clock_in_at === null) return err("clock_in_at is null.");
               const clockInAt = new Date(workRecord.clock_in_at);
               const clockInPlusNineHours = addHours(clockInAt, 9);
               const clockOutParams = {
@@ -146,7 +144,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
               };
               return ok(clockOutParams);
             });
-          if(clockOutParams.isErr()) return err(clockOutParams.error);
+          if (clockOutParams.isErr()) return err(clockOutParams.error);
           return freee.setTimeClocks(employeeId, clockOutParams.value).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
