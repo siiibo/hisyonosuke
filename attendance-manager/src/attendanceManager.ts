@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { subDays, toDate, set } from "date-fns";
+import { subDays, toDate, set, addHours } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
@@ -106,7 +106,6 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
 }
 
 function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
-  const today = new Date();
   const yesterday = subDays(new Date(), 1);
 
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
@@ -127,17 +126,24 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   });
   if (unClockedOutSlackIds.length === 0) return;
 
-  const clockOutParams = {
-    company_id: FREEE_COMPANY_ID,
-    type: "clock_out" as const,
-    //TODO: 指定する退勤時間を「出勤時間から9時間後」に変更する
-    base_date: formatDate(yesterday, "date"),
-    datetime: formatDate(today, "datetime"),
-  };
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-        .andThen((employeeId) => {
+        .andThen((employeeId) =>
+          freee
+            .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
+            .andThen((workRecord) => ok({ workRecord, employeeId }))
+        )
+        .andThen(({ workRecord, employeeId }) => {
+          if (workRecord.clock_in_at === null) return err("clock_in_at is null.");
+          const clockInAt = new Date(workRecord.clock_in_at);
+          const clockInPlusNineHours = addHours(clockInAt, 9);
+          const clockOutParams = {
+            company_id: FREEE_COMPANY_ID,
+            type: "clock_out" as const,
+            base_date: formatDate(yesterday, "date"),
+            datetime: formatDate(clockInPlusNineHours, "datetime"),
+          };
           return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
