@@ -13,13 +13,7 @@ import { match, P } from "ts-pattern";
 import { getUnixTimeStampString } from "./utilities";
 
 const DATE_START_HOUR = 4;
-type ClockOutParams = {
-  company_id: number;
-  type: "clock_out";
-  base_date: string;
-  datetime: string;
-  note?: string;
-};
+
 export function initAttendanceManager() {
   const targetFunction = periodicallyCheckForAttendanceManager;
 
@@ -130,7 +124,13 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
   if (unClockedOutSlackIds.length === 0) return;
-
+  type ClockOutParams = {
+    company_id: number;
+    type: "clock_out";
+    base_date: string;
+    datetime: string;
+    note?: string;
+  };
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
@@ -265,7 +265,7 @@ function handleClockOut(
   const clockOutDate = message.date;
   const clockOutBaseDate = getBaseDate(message.date);
 
-  const clockOutParams:ClockOutParams = {
+  const clockOutParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
     base_date: formatDate(clockOutBaseDate, "date"),
