@@ -13,7 +13,13 @@ import { match, P } from "ts-pattern";
 import { getUnixTimeStampString } from "./utilities";
 
 const DATE_START_HOUR = 4;
-
+type ClockOutParams = {
+  company_id: number;
+  type: "clock_out";
+  base_date: string;
+  datetime: string;
+  note?: string;
+};
 export function initAttendanceManager() {
   const targetFunction = periodicallyCheckForAttendanceManager;
 
@@ -138,26 +144,16 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
           const clockInAt = new Date(workRecord.clock_in_at);
           const clockInPlusNineHours = addHours(clockInAt, 9);
           const userStatus = userWorkStatuses[slackId];
-          if(userStatus!==undefined && userStatus.workStatus==="勤務中（リモート）"){
-            const clockOutParams = {
-              company_id: FREEE_COMPANY_ID,
-              type: "clock_out" as const,
-              base_date: formatDate(yesterday, "date"),
-              datetime: formatDate(clockInPlusNineHours, "datetime"),
-              note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-            };
-            return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
-          }else{
-            const clockOutParams = {
-              company_id: FREEE_COMPANY_ID,
-              type: "clock_out" as const,
-              base_date: formatDate(yesterday, "date"),
-              datetime: formatDate(clockInPlusNineHours, "datetime"),
-            };
-            return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          const clockOutParams: ClockOutParams = {
+            company_id: FREEE_COMPANY_ID,
+            type: "clock_out",
+            base_date: formatDate(yesterday, "date"),
+            datetime: formatDate(clockInPlusNineHours, "datetime"),
+          };
+          if (userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）") {
+            clockOutParams.note = workRecord.note ? `${workRecord.note} リモート` : "リモート";
           }
-
-          
+          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
     }),
@@ -269,7 +265,7 @@ function handleClockOut(
   const clockOutDate = message.date;
   const clockOutBaseDate = getBaseDate(message.date);
 
-  const clockOutParams = {
+  const clockOutParams:ClockOutParams = {
     company_id: FREEE_COMPANY_ID,
     type: "clock_out" as const,
     base_date: formatDate(clockOutBaseDate, "date"),
