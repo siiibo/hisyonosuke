@@ -50,7 +50,6 @@ const EmployeesWorkRecordSerializerSchema = z.object({
   normal_work_clock_in_at: z.string().nullable(),
   normal_work_clock_out_at: z.string().nullable(),
   normal_work_mins: z.number().int(),
-  normal_work_mins_by_paid_holiday: z.number().int(),
   note: z.string().max(255),
   paid_holiday: z.number(),
   use_attendance_deduction: z.boolean(),
@@ -143,7 +142,6 @@ const EmployeesWorkRecordsControllerSchema_update_body = z.object({
     .regex(/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}(:[0-9]{2})?$/)
     .optional(),
   normal_work_mins: z.number().int().lte(1440).optional(),
-  normal_work_mins_by_paid_holiday: z.number().int().lte(1440).optional(),
   note: z.string().max(255).optional(),
   paid_holiday: z.number().lte(1).optional(),
   use_attendance_deduction: z.boolean().optional(),
