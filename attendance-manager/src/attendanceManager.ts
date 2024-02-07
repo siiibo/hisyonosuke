@@ -116,7 +116,6 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     yesterday,
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
-
   const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
   const freee = new Freee();
   const { FREEE_COMPANY_ID } = getConfig();
@@ -138,14 +137,27 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
           if (workRecord.clock_in_at === null) return err("clock_in_at is null.");
           const clockInAt = new Date(workRecord.clock_in_at);
           const clockInPlusNineHours = addHours(clockInAt, 9);
-          const clockOutParams = {
-            company_id: FREEE_COMPANY_ID,
-            type: "clock_out" as const,
-            base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(clockInPlusNineHours, "datetime"),
-            note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-          };
-          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          const userStatus = userWorkStatuses[slackId];
+          if(userStatus!==undefined && userStatus.workStatus==="勤務中（リモート）"){
+            const clockOutParams = {
+              company_id: FREEE_COMPANY_ID,
+              type: "clock_out" as const,
+              base_date: formatDate(yesterday, "date"),
+              datetime: formatDate(clockInPlusNineHours, "datetime"),
+              note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+            };
+            return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          }else{
+            const clockOutParams = {
+              company_id: FREEE_COMPANY_ID,
+              type: "clock_out" as const,
+              base_date: formatDate(yesterday, "date"),
+              datetime: formatDate(clockInPlusNineHours, "datetime"),
+            };
+            return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          }
+
+          
         })
         .orElse((e) => err({ message: e, slackId }));
     }),
