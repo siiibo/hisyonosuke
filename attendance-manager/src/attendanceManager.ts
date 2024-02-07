@@ -71,7 +71,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
     channelId,
     botUserId,
     DATE_START_HOUR,
-    today
+    today,
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -100,7 +100,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
           console.error(JSON.stringify({ userWorkStatus, ...error }, null, 2));
           client.chat.postMessage({ channel: channelId, text: error.message, thread_ts: message.ts });
           client.reactions.add({ channel: channelId, name: REACTION.ERROR, timestamp: message.ts });
-        }
+        },
       );
   });
 }
@@ -113,7 +113,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     channelId,
     botUserId,
     DATE_START_HOUR,
-    yesterday
+    yesterday,
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
@@ -132,7 +132,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
         .andThen((employeeId) =>
           freee
             .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
-            .andThen((workRecord) => ok({ workRecord, employeeId }))
+            .andThen((workRecord) => ok({ workRecord, employeeId })),
         )
         .andThen(({ workRecord, employeeId }) => {
           if (workRecord.clock_in_at === null) return err("clock_in_at is null.");
@@ -143,11 +143,12 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             type: "clock_out" as const,
             base_date: formatDate(yesterday, "date"),
             datetime: formatDate(clockInPlusNineHours, "datetime"),
+            note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
           };
           return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
-    })
+    }),
   ).match(
     (slackIds) => {
       const mentionIds = slackIds.map((slackId) => `<@${slackId}>`).join(", ");
@@ -164,7 +165,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     },
     (errors) => {
       console.error(JSON.stringify(errors, null, 2));
-    }
+    },
   );
 }
 
@@ -177,7 +178,7 @@ function execAction(
     message: Message;
     actionType: ActionType;
     userWorkStatus: UserWorkStatus | undefined;
-  }
+  },
 ) {
   const { message, actionType } = action;
   return getFreeeEmployeeIdFromSlackUserId(client, freee, message.user, freeCompanyId)
@@ -189,7 +190,7 @@ function execAction(
         .with("switch_work_status_to_remote", () => handleSwitchWorkStatusToRemote(client, channelId, message))
         .with("clock_out", () => handleClockOut(client, freee, channelId, freeCompanyId, employeeId, message))
         .with("clock_out_and_add_remote_memo", () =>
-          handleClockOutAndAddRemoteMemo(client, freee, channelId, freeCompanyId, employeeId, message)
+          handleClockOutAndAddRemoteMemo(client, freee, channelId, freeCompanyId, employeeId, message),
         )
         .exhaustive();
       return result
@@ -204,7 +205,7 @@ function handleClockIn(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message
+  message: Message,
 ) {
   const clockInDate = message.date;
 
@@ -225,11 +226,11 @@ function handleClockIn(
       return match(e)
         .with(
           P.when((e) => e.includes("打刻の種類が正しくありません。")),
-          () => err("既に打刻済みです")
+          () => err("既に打刻済みです"),
         )
         .with(
           P.when((e) => e.includes("打刻の日付が不正な値です。")),
-          () => err("前日の退勤を完了してから出勤打刻してください.")
+          () => err("前日の退勤を完了してから出勤打刻してください."),
         )
         .otherwise(() => err(e));
     });
@@ -251,7 +252,7 @@ function handleClockOut(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message
+  message: Message,
 ) {
   const clockOutDate = message.date;
   const clockOutBaseDate = getBaseDate(message.date);
@@ -273,7 +274,7 @@ function handleClockOut(
       return match(e)
         .with(
           P.when((e) => e.includes("打刻の種類が正しくありません。")),
-          () => err("出勤打刻が完了していないか、退勤の上書きができない値です.")
+          () => err("出勤打刻が完了していないか、退勤の上書きができない値です."),
         )
         .otherwise(() => err(e));
     });
@@ -285,7 +286,7 @@ function handleClockOutAndAddRemoteMemo(
   channelId: string,
   FREEE_COMPANY_ID: number,
   employeeId: number,
-  message: Message
+  message: Message,
 ) {
   const targetDate = formatDate(getBaseDate(message.date), "date");
 
