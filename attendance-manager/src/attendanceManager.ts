@@ -125,35 +125,38 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     return userStatus !== undefined && userStatus.workStatus !== "退勤済み";
   });
   if (unClockedOutSlackIds.length === 0) return;
-  type ClockOutParams = {
-    company_id: number;
-    type: "clock_out";
-    base_date: string;
-    datetime: string;
-    note?: string;
-   const clockOutParams = {
-    company_id: FREEE_COMPANY_ID,
-    type: "clock_out" as const,
-    //TODO: 指定する退勤時間を「出勤時間から9時間後」に変更する
-    base_date: formatDate(yesterday, "date"),
-    datetime: formatDate(today, "datetime"),
-
-  };
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-        .andThen((employeeId) => {
-          const userStatus = userWorkStatuses[slackId];
-          const clockOutParams: ClockOutParams = {
-            company_id: FREEE_COMPANY_ID,
-            type: "clock_out" as const,
-            base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(clockInPlusNineHours, "datetime"),
-          };
-          if (userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）") {
-            clockOutParams.note = workRecord.note ? `${workRecord.note} リモート` : "リモート";
+        .andThen((employeeId) =>
+          freee
+            .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
+            .andThen((workRecord) => ok({ workRecord, employeeId })),
+        )
+        .andThen(({ workRecord, employeeId }) => {
+          {
+            const userStatus = userWorkStatuses[slackId];
+            if (userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）") {
+              const clockOutParams = {
+                company_id: FREEE_COMPANY_ID,
+                type: "clock_out" as const,
+                base_date: formatDate(yesterday, "date"),
+                datetime: formatDate(today, "datetime"),
+                note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+              };
+              return freee
+                .updateWorkRecord(employeeId, formatDate(yesterday, "date"), clockOutParams)
+                .andThen(() => ok(slackId));
+            } else {
+              const newWorkRecord = {
+                company_id: FREEE_COMPANY_ID,
+                type: "clock_out" as const,
+                base_date: formatDate(yesterday, "date"),
+                datetime: formatDate(today, "datetime"),
+              };
+              return freee.setTimeClocks(employeeId, newWorkRecord).andThen(() => ok(slackId));
+            }
           }
-          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
         })
         .orElse((e) => err({ message: e, slackId }));
     }),
