@@ -142,8 +142,8 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
               base_date: formatDate(yesterday, "date"),
               datetime: formatDate(today, "datetime"),
             };
-            freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
             if (userStatus !== undefined && userStatus.workStatus) {
+              freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
               const newWorkRecord: EmployeesWorkRecordsController_update_body = {
                 company_id: FREEE_COMPANY_ID,
                 clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
@@ -160,7 +160,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                 .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
                 .andThen(() => ok(slackId));
             } else {
-              return ok(slackId);
+              return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
             }
           })
           .orElse((e) => err({ message: e, slackId })),
