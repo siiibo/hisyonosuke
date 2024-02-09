@@ -128,33 +128,22 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-        .andThen((employeeId) =>
-          freee
-            .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
-            .andThen((workRecord) => ok({ workRecord, employeeId })),
-        )
-        .andThen(({ workRecord, employeeId }) => {
+        .andThen((employeeId) => {
           {
             const userStatus = userWorkStatuses[slackId];
-            if (userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）") {
-              const newWorkRecord = {
-                company_id: FREEE_COMPANY_ID,
-                type: "clock_out" as const,
-                base_date: formatDate(yesterday, "date"),
-                datetime: formatDate(today, "datetime"),
-                note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-              };
-              return freee
-                .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
-                .andThen(() => ok(slackId));
-            } else {
-              const clockOutParams = {
-                company_id: FREEE_COMPANY_ID,
-                type: "clock_out" as const,
-                base_date: formatDate(yesterday, "date"),
-                datetime: formatDate(today, "datetime"),
-              };
+            const clockOutParams = {
+              company_id: FREEE_COMPANY_ID,
+              type: "clock_out" as const,
+              base_date: formatDate(yesterday, "date"),
+              datetime: formatDate(today, "datetime"),
+              ...(userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）" && { note: "リモート" }),
+            };
+            if (`note` in clockOutParams) {
               return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+            } else {
+              return freee
+                .updateWorkRecord(employeeId, formatDate(yesterday, "date"), clockOutParams)
+                .andThen(() => ok(slackId));
             }
           }
         })
