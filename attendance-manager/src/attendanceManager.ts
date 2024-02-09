@@ -127,45 +127,44 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   if (unClockedOutSlackIds.length === 0) return;
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
-      return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-        .andThen((employeeId) => 
-          freee
-            .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
-            .andThen((workRecord) => ok({ workRecord, employeeId })
-        )
-        .andThen(({ workRecord, employeeId }) => {
-          if (workRecord.clock_in_at === null) {
-            return err(`出勤時間が不正な値です.`);
-          }
-          const userStatus = userWorkStatuses[slackId];
-          const clockOutParams = {
-            company_id: FREEE_COMPANY_ID,
-            type: "clock_out" as const,
-            base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(today, "datetime"),
-          };
-          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
-          if (userStatus !== undefined && userStatus.workStatus) {
-            const newWorkRecord: EmployeesWorkRecordsController_update_body = {
+      return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID).andThen((employeeId) =>
+        freee
+          .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
+          .andThen((workRecord) => ok({ workRecord, employeeId }))
+          .andThen(({ workRecord, employeeId }) => {
+            if (workRecord.clock_in_at === null) {
+              return err(`出勤時間が不正な値です.`);
+            }
+            const userStatus = userWorkStatuses[slackId];
+            const clockOutParams = {
               company_id: FREEE_COMPANY_ID,
-              clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
-              clock_out_at: formatDate(yesterday, "datetime"),
-              note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-              break_records: workRecord.break_records.map((record) => {
-                return {
-                  clock_in_at: formatDate(record.clock_in_at, "datetime"),
-                  clock_out_at: formatDate(record.clock_out_at, "datetime"),
-                };
-              }),
+              type: "clock_out" as const,
+              base_date: formatDate(yesterday, "date"),
+              datetime: formatDate(today, "datetime"),
             };
-            return freee
-              .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
-              .andThen(() => ok(slackId));
-          }else{
-            return ok(slackId);
-          }
-        })
-        .orElse((e) => err({ message: e, slackId })));
+            freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+            if (userStatus !== undefined && userStatus.workStatus) {
+              const newWorkRecord: EmployeesWorkRecordsController_update_body = {
+                company_id: FREEE_COMPANY_ID,
+                clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+                clock_out_at: formatDate(yesterday, "datetime"),
+                note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+                break_records: workRecord.break_records.map((record) => {
+                  return {
+                    clock_in_at: formatDate(record.clock_in_at, "datetime"),
+                    clock_out_at: formatDate(record.clock_out_at, "datetime"),
+                  };
+                }),
+              };
+              return freee
+                .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
+                .andThen(() => ok(slackId));
+            } else {
+              return ok(slackId);
+            }
+          })
+          .orElse((e) => err({ message: e, slackId })),
+      );
     }),
   ).match(
     (slackIds) => {
