@@ -139,11 +139,11 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
               ...(userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）" && { note: "リモート" }),
             };
             if (`note` in clockOutParams) {
-              return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
-            } else {
               return freee
                 .updateWorkRecord(employeeId, formatDate(yesterday, "date"), clockOutParams)
                 .andThen(() => ok(slackId));
+            } else {
+              return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
             }
           }
         })
