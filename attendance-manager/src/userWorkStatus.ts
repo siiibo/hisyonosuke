@@ -12,6 +12,7 @@ export const WORK_STATUS = {
 } as const;
 
 export type UserWorkStatus = {
+  clockInTime: Date;
   workStatus: valueOf<typeof WORK_STATUS>;
   needTrafficExpense: boolean;
   processedCommands: CommandType[];
