@@ -135,8 +135,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             base_date: formatDate(yesterday, "date"),
             datetime: formatDate(today, "datetime"),
           };
-          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(employeeId));
-          return ok(employeeId);
+          return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(employeeId));
         })
         .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
