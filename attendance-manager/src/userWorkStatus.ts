@@ -30,7 +30,7 @@ export function getUpdatedUserWorkStatus(
   const clockInTime = userWorkStatus?.clockInTime;
   if (clockInTime === undefined) throw new Error("clockInTime is undefined");
   return {
-    clockInTime: clockInTime,
+    clockInTime,
     needTrafficExpense,
     workStatus,
     processedCommands: userCommands,
@@ -61,7 +61,7 @@ export function getUserWorkStatusesByMessages(
     });
     const clockInTime = slackClockInResult[0].date;
     const userWorkStatus: UserWorkStatus = {
-      clockInTime: clockInTime,
+      clockInTime,
       workStatus,
       needTrafficExpense,
       processedCommands: userCommands,
