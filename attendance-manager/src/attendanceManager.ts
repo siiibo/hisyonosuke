@@ -160,6 +160,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                 .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
                 .andThen(() => ok(slackId));
             });
+            return ok(slackId);
           }
           return ok(slackId);
         })
