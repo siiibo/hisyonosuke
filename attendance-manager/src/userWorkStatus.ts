@@ -54,7 +54,8 @@ export function getUserWorkStatusesByMessages(
     const needTrafficExpense = checkTrafficExpense(userCommands);
     const slackClockInResult = unprocessedMessages.filter((message) => {
       const commandType = getCommandType(message);
-      if (commandType && userSlackId === message.user && commandType === "CLOCK_IN" && commandType) {
+      if (!commandType) return false;
+      if (userSlackId === message.user && commandType === "CLOCK_IN" && commandType) {
         return true;
       }
     });
