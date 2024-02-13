@@ -153,7 +153,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                 const newWorkRecord: EmployeesWorkRecordsController_update_body = {
                   company_id: FREEE_COMPANY_ID,
                   clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
-                  clock_out_at: formatDate(yesterday, "datetime"),
+                  clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
                   note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
                   break_records: workRecord.break_records.map((record) => {
                     return {
