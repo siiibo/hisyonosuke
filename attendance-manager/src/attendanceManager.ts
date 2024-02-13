@@ -140,7 +140,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
         .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
           if (userStatus?.workStatus === "勤務中（リモート）") {
-            freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID).andThen((workRecord) => {
+            return freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID).andThen((workRecord) => {
               if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
                 return err(`出勤時間か退勤時間が不正な値です`);
               }
@@ -160,7 +160,6 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                 .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
                 .andThen(() => ok(slackId));
             });
-            return ok(slackId);
           }
           return ok(slackId);
         })
