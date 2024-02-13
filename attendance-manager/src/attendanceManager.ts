@@ -144,9 +144,9 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                 if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
                   return err(`出勤時間が不正な値です.`);
                 }
-                return ok({ workRecord });
+                return ok(workRecord);
               })
-              .andThen(({ workRecord }) => {
+              .andThen((workRecord) => {
                 if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
                   return err(`出勤時間または退勤時間がnullです.`);
                 }
