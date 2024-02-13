@@ -1,7 +1,7 @@
 import { match } from "ts-pattern";
 import * as R from "remeda";
 import { CommandType, getCommandType } from "./command";
-import { ProcessedMessage } from "./message";
+import { UnprocessedMessage, ProcessedMessage } from "./message";
 import { valueOf } from "./utilities";
 
 // 未出勤は現状利用していない
@@ -37,7 +37,10 @@ export function getUpdatedUserWorkStatus(
   };
 }
 
-export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
+export function getUserWorkStatusesByMessages(
+  unprocessedMessages: UnprocessedMessage[],
+  processedMessages: ProcessedMessage[],
+): {
   [userSlackId: string]: UserWorkStatus | undefined;
 } {
   // TODO: ↓ 「今誰いる？」の機能に流用する
@@ -49,8 +52,15 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
       .filter((command): command is CommandType => command !== undefined);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
-
+    const slackClockInResult = unprocessedMessages.filter((message) => {
+      const commandType = getCommandType(message);
+      if (commandType && userSlackId === message.user && commandType === "CLOCK_IN" && commandType) {
+        return true;
+      }
+    });
+    const clockInTime = slackClockInResult[0].date;
     const userWorkStatus: UserWorkStatus = {
+      clockInTime: clockInTime,
       workStatus,
       needTrafficExpense,
       processedCommands: userCommands,
