@@ -20,15 +20,17 @@ export type UserWorkStatus = {
 
 export function getUpdatedUserWorkStatus(
   userWorkStatus: UserWorkStatus | undefined,
-  newCommand: CommandType
+  newCommand: CommandType,
 ): UserWorkStatus {
   const userCommands = userWorkStatus ? [...userWorkStatus.processedCommands, newCommand] : [newCommand];
   const workStatus = getUserWorkStatusByCommands(userCommands);
   const needTrafficExpense = userWorkStatus?.needTrafficExpense
     ? userWorkStatus.needTrafficExpense
     : checkTrafficExpense(userCommands);
-
+  const clockInTime = userWorkStatus?.clockInTime;
+  if (clockInTime === undefined) throw new Error("clockInTime is undefined");
   return {
+    clockInTime: clockInTime,
     needTrafficExpense,
     workStatus,
     processedCommands: userCommands,
