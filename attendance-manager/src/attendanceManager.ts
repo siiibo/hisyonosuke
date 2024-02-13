@@ -128,7 +128,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
   Result.combineWithAllErrors(
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
-        .andThen(( employeeId ) => {
+        .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
@@ -136,7 +136,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             base_date: formatDate(yesterday, "date"),
             datetime: formatDate(today, "datetime"),
           };
-          if (userStatus !== undefined && userStatus.workStatus) {
+          if (userStatus !== undefined && userStatus.workStatus === "勤務中（リモート）") {
             freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
             freee
               .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
@@ -167,6 +167,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                   .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
                   .andThen(() => ok(slackId));
               });
+            return ok(slackId);
           } else {
             return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
           }
