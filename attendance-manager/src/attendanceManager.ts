@@ -140,8 +140,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
             freee
               .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
-              .andThen((workRecord) => ok({ workRecord, employeeId }))
-              .andThen(({ workRecord }) => {
+              .andThen((workRecord) => {
                 if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
                   return err(`出勤時間が不正な値です.`);
                 }
