@@ -135,7 +135,10 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             base_date: formatDate(yesterday, "date"),
             datetime: formatDate(today, "datetime"),
           };
-          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(employeeId));
+          return ok(employeeId);
+        })
+        .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
           if (userStatus?.workStatus === "勤務中（リモート）") {
             freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID).andThen((workRecord) => {
