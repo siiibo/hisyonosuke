@@ -129,38 +129,36 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
         .andThen((employeeId) => {
-          const userStatus = userWorkStatuses[slackId];
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
             type: "clock_out" as const,
             base_date: formatDate(yesterday, "date"),
             datetime: formatDate(today, "datetime"),
           };
-          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => {
-            if (userStatus?.workStatus === "勤務中（リモート）") {
-              freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID).andThen((workRecord) => {
-                if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
-                  return err(`出勤時間か退勤時間が不正な値です`);
-                }
-                const newWorkRecord: EmployeesWorkRecordsController_update_body = {
-                  company_id: FREEE_COMPANY_ID,
-                  clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
-                  clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
-                  note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-                  break_records: workRecord.break_records.map((record) => {
-                    return {
-                      clock_in_at: formatDate(record.clock_in_at, "datetime"),
-                      clock_out_at: formatDate(record.clock_out_at, "datetime"),
-                    };
-                  }),
-                };
-                return freee
-                  .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
-                  .andThen(() => ok(slackId));
-              });
-            }
-            return ok(slackId);
-          });
+          freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(slackId));
+          const userStatus = userWorkStatuses[slackId];
+          if (userStatus?.workStatus === "勤務中（リモート）") {
+            freee.getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID).andThen((workRecord) => {
+              if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
+                return err(`出勤時間か退勤時間が不正な値です`);
+              }
+              const newWorkRecord: EmployeesWorkRecordsController_update_body = {
+                company_id: FREEE_COMPANY_ID,
+                clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
+                clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
+                note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+                break_records: workRecord.break_records.map((record) => {
+                  return {
+                    clock_in_at: formatDate(record.clock_in_at, "datetime"),
+                    clock_out_at: formatDate(record.clock_out_at, "datetime"),
+                  };
+                }),
+              };
+              return freee
+                .updateWorkRecord(employeeId, formatDate(yesterday, "date"), newWorkRecord)
+                .andThen(() => ok(slackId));
+            });
+          }
           return ok(slackId);
         })
         .orElse((e) => err({ message: e, slackId }));
