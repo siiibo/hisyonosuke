@@ -1,5 +1,5 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { subDays, toDate, set } from "date-fns";
+import { subDays, toDate, set, addHours } from "date-fns";
 import { formatDate, Freee } from "./freee";
 import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
 import { getConfig } from "./config";
@@ -106,7 +106,6 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
 }
 
 function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId: string) {
-  const today = new Date();
   const yesterday = subDays(new Date(), 1);
 
   const { processedMessages, unprocessedMessages } = getCategorizedDailyMessages(
@@ -129,11 +128,14 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     unClockedOutSlackIds.map((slackId) => {
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
         .andThen((employeeId) => {
+          const userStatus = userWorkStatuses[slackId];
+          if (!userStatus) return err(`userStatus is undefined`);
+          const clockInPlusNineHours = addHours(userStatus.clockInTime, 9);
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
             type: "clock_out" as const,
             base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(today, "datetime"),
+            datetime: formatDate(clockInPlusNineHours, "datetime"),
           };
           return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(employeeId));
         })
