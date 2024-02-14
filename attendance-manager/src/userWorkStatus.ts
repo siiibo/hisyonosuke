@@ -12,7 +12,7 @@ export const WORK_STATUS = {
 } as const;
 
 export type UserWorkStatus = {
-  clockInTime: Date;
+  clockInTime?: Date;
   workStatus: valueOf<typeof WORK_STATUS>;
   needTrafficExpense: boolean;
   processedCommands: CommandType[];
@@ -28,7 +28,6 @@ export function getUpdatedUserWorkStatus(
     ? userWorkStatus.needTrafficExpense
     : checkTrafficExpense(userCommands);
   const clockInTime = userWorkStatus?.clockInTime;
-  if (clockInTime === undefined) throw new Error("clockInTime is undefined");
   return {
     clockInTime,
     needTrafficExpense,
@@ -60,9 +59,6 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
     const clockInTime = getClockInDateForUser(processedMessages, userSlackId);
-    if (clockInTime === undefined) {
-      return [userSlackId, undefined];
-    }
     const userWorkStatus: UserWorkStatus = {
       clockInTime,
       workStatus,
