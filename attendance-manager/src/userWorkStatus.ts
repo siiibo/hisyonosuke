@@ -36,6 +36,16 @@ export function getUpdatedUserWorkStatus(
     processedCommands: userCommands,
   };
 }
+function getClockInDateForUser(processedMessages: ProcessedMessage[], userSlackId: string): Date | undefined {
+  const slackClockInResult = processedMessages.filter((message) => {
+    const commandType = getCommandType(message);
+    if (!commandType) return false;
+    if (userSlackId === message.user && commandType === "CLOCK_IN" && commandType) {
+      return true;
+    }
+  });
+  return slackClockInResult.length ? slackClockInResult[0].date : undefined;
+}
 
 export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
   [userSlackId: string]: UserWorkStatus | undefined;
@@ -49,14 +59,10 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
       .filter((command): command is CommandType => command !== undefined);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
-    const slackClockInResult = processedMessages.filter((message) => {
-      const commandType = getCommandType(message);
-      if (!commandType) return false;
-      if (userSlackId === message.user && commandType === "CLOCK_IN" && commandType) {
-        return true;
-      }
-    });
-    const clockInTime = slackClockInResult[0].date;
+    const clockInTime = getClockInDateForUser(processedMessages, userSlackId);
+    if (clockInTime === undefined) {
+      return [userSlackId, undefined];
+    }
     const userWorkStatus: UserWorkStatus = {
       clockInTime,
       workStatus,
