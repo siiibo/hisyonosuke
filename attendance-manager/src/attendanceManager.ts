@@ -75,7 +75,7 @@ function checkAttendance(client: SlackClient, channelId: string, botUserId: stri
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
 
-  const userWorkStatuses = getUserWorkStatusesByMessages(unprocessedMessages, processedMessages);
+  const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
 
   unprocessedMessages.forEach((message) => {
     const commandType = getCommandType(message);
@@ -116,7 +116,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
     yesterday,
   );
   if (!unprocessedMessages.length && !processedMessages.length) return;
-  const userWorkStatuses = getUserWorkStatusesByMessages(unprocessedMessages, processedMessages);
+  const userWorkStatuses = getUserWorkStatusesByMessages(processedMessages);
   const freee = new Freee();
   const { FREEE_COMPANY_ID } = getConfig();
   const unClockedOutSlackIds = Object.keys(userWorkStatuses).filter((slackId) => {
