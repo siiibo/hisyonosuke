@@ -39,9 +39,8 @@ function getClockInTimeByUserSlackId(processedMessages: ProcessedMessage[], user
   const slackClockInResult = processedMessages.filter((message) => {
     const commandType = getCommandType(message);
     if (!commandType) return false;
-    if (userSlackId === message.user && commandType === "CLOCK_IN") {
-      return true;
-    }
+    if (userSlackId === message.user && commandType === "CLOCK_IN") return true;
+    return false;
   });
   return slackClockInResult.length ? slackClockInResult[0].date : undefined;
 }
