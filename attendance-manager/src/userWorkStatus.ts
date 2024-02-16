@@ -12,6 +12,7 @@ export const WORK_STATUS = {
 } as const;
 
 export type UserWorkStatus = {
+  clockInTime?: Date;
   workStatus: valueOf<typeof WORK_STATUS>;
   needTrafficExpense: boolean;
   processedCommands: CommandType[];
@@ -19,19 +20,31 @@ export type UserWorkStatus = {
 
 export function getUpdatedUserWorkStatus(
   userWorkStatus: UserWorkStatus | undefined,
-  newCommand: CommandType
+  newCommand: CommandType,
 ): UserWorkStatus {
   const userCommands = userWorkStatus ? [...userWorkStatus.processedCommands, newCommand] : [newCommand];
   const workStatus = getUserWorkStatusByCommands(userCommands);
   const needTrafficExpense = userWorkStatus?.needTrafficExpense
     ? userWorkStatus.needTrafficExpense
     : checkTrafficExpense(userCommands);
-
+  const clockInTime = userWorkStatus?.clockInTime;
   return {
+    clockInTime,
     needTrafficExpense,
     workStatus,
     processedCommands: userCommands,
   };
+}
+function getClockInTimeByUserSlackId(processedMessages: ProcessedMessage[], userSlackId: string): Date | undefined {
+  const slackClockInResult = processedMessages.filter((message) => {
+    const commandType = getCommandType(message);
+    if (!commandType) return false;
+    if (userSlackId === message.user && commandType === "CLOCK_IN") {
+      return true;
+    }
+    return false;
+  });
+  return slackClockInResult.length ? slackClockInResult[0].date : undefined;
 }
 
 export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
@@ -46,8 +59,9 @@ export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessag
       .filter((command): command is CommandType => command !== undefined);
     const workStatus = getUserWorkStatusByCommands(userCommands);
     const needTrafficExpense = checkTrafficExpense(userCommands);
-
+    const clockInTime = getClockInTimeByUserSlackId(processedMessages, userSlackId);
     const userWorkStatus: UserWorkStatus = {
+      clockInTime,
       workStatus,
       needTrafficExpense,
       processedCommands: userCommands,
