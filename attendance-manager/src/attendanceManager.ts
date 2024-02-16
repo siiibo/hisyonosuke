@@ -135,7 +135,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
             company_id: FREEE_COMPANY_ID,
             type: "clock_out" as const,
             base_date: formatDate(yesterday, "date"),
-            datetime: formatDate(clockInPlusNineHours, "datetime"),
+            datetime: formatDate(clockInTimePlusNineHours, "datetime"),
           };
           return freee.setTimeClocks(employeeId, clockOutParams).andThen(() => ok(employeeId));
         })
