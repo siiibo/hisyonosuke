@@ -130,7 +130,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
         .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
           if (!userStatus?.clockInTime) return err(`userStatus or userStatus.clockInTime is undefined`);
-          const clockInPlusNineHours = addHours(userStatus.clockInTime, 9);
+          const clockInTimePlusNineHours = addHours(userStatus.clockInTime, 9);
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
             type: "clock_out" as const,
