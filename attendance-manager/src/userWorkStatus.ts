@@ -39,13 +39,10 @@ function getClockInTimeByUserSlackId(processedMessages: ProcessedMessage[], user
   const slackClockInResult = processedMessages.filter((message) => {
     const commandType = getCommandType(message);
     if (!commandType) return false;
-    if (
-      userSlackId === message.user &&
-      (commandType === "CLOCK_IN" ||
-        commandType === "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE" ||
-        commandType === "CLOCK_IN_OR_SWITCH_TO_OFFICE")
-    ) {
-      return true;
+    if (userSlackId === message.user) {
+      if (commandType === "CLOCK_IN" || commandType === "CLOCK_IN_OR_SWITCH_TO_OFFICE"){
+        return true;
+      }
     }
     return false;
   });
