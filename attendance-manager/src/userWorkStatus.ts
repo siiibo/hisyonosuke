@@ -36,15 +36,17 @@ export function getUpdatedUserWorkStatus(
   };
 }
 function getClockInTimeByUserSlackId(processedMessages: ProcessedMessage[], userSlackId: string): Date | undefined {
-  const slackClockInResult = processedMessages.filter((message) => {
-    const commandType = getCommandType(message);
-    if (!commandType) return false;
-    if (userSlackId === message.user && commandType === "CLOCK_IN") {
-      return true;
-    }
-    return false;
-  });
-  return slackClockInResult.length ? slackClockInResult[0].date : undefined;
+  const userClockInMessages = processedMessages
+    .filter((message) => message.user === userSlackId)
+    .filter((message) => {
+      const commandType = getCommandType(message);
+      return (
+        commandType === "CLOCK_IN" ||
+        commandType === "CLOCK_IN_OR_SWITCH_TO_OFFICE" ||
+        commandType === "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE"
+      );
+    });
+  return userClockInMessages.length ? userClockInMessages[0].date : undefined;
 }
 
 export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
