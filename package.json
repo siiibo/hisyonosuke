@@ -8,23 +8,7 @@
     "attendance-manager",
     "attendance-aggregation"
   ],
-  "devDependencies": {
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
-    "prettier": "3.2.5"
-  },
-  "dependencies": {
-    "eslint": "^8.56.0",
-    "husky": "^9.0.10",
-    "lint-staged": "^15.2.2"
-  },
   "scripts": {
-    "postinstall": "husky"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "postinstall": "husky attendance-manager/.husky && husky attendance-aggregation/.husky"
   }
 }
