@@ -7,8 +7,5 @@
   "workspaces": [
     "attendance-manager",
     "attendance-aggregation"
-  ],
-  "scripts": {
-    "postinstall": "husky attendance-manager/.husky && husky attendance-aggregation/.husky"
-  }
+  ]
 }
