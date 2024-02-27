@@ -19,7 +19,6 @@
   "dependencies": {
     "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893",
     "date-fns": "^3.3.1",
-    "eslint": "^8.56.0",
     "radash": "^11.0.0",
     "zod": "^3.22.4"
   },
