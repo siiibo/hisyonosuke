@@ -153,9 +153,9 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                   clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
                   clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
                   note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-                  special_holiday_setting_id: workRecord.special_holiday_setting_id,
-                  half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
-                  half_special_holiday_mins: workRecord.half_special_holiday_mins,
+                  special_holiday_setting_id: workRecord.special_holiday_setting_id ? workRecord.special_holiday_setting_id:undefined,
+                  half_paid_holiday_mins: workRecord.half_paid_holiday_mins ? workRecord.half_paid_holiday_mins:undefined,
+                  half_special_holiday_mins: workRecord.half_special_holiday_mins ? workRecord.half_special_holiday_mins:undefined,
                   break_records: workRecord.break_records.map((record) => {
                     return {
                       clock_in_at: formatDate(record.clock_in_at, "datetime"),
@@ -326,9 +326,9 @@ function handleClockOutAndAddRemoteMemo(
         clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
         clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
-        half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
-        special_holiday_setting_id: workRecord.special_holiday_setting_id,
-        half_special_holiday_mins: workRecord.half_special_holiday_mins,
+        half_paid_holiday_mins: workRecord.half_paid_holiday_mins ? workRecord.half_paid_holiday_mins:undefined,
+        special_holiday_setting_id: workRecord.special_holiday_setting_id ? workRecord.special_holiday_setting_id:undefined,
+        half_special_holiday_mins: workRecord.half_special_holiday_mins ? workRecord.half_special_holiday_mins:undefined,
         break_records: workRecord.break_records.map((record) => {
           return {
             clock_in_at: formatDate(record.clock_in_at, "datetime"),
