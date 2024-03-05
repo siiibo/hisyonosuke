@@ -9,6 +9,6 @@
     "attendance-aggregation"
   ],
   "scripts": {
-    "postinstall": "husky attendance-manager/.husky && husky attendance-aggregation/.husky"
+    "postinstall": "husky"
   }
 }
