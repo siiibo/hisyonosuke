@@ -155,6 +155,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                   note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
                   half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
                   special_holiday_setting_id: workRecord.special_holiday_setting_id,
+                  hourly_special_holiday_mins: workRecord.hourly_special_holiday_mins,
                   half_special_holiday_mins: workRecord.half_special_holiday_mins,
                   break_records: workRecord.break_records.map((record) => {
                     return {
@@ -328,6 +329,7 @@ function handleClockOutAndAddRemoteMemo(
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
         half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
         special_holiday_setting_id: workRecord.special_holiday_setting_id,
+        hourly_special_holiday_mins: workRecord.hourly_special_holiday_mins,
         half_special_holiday_mins: workRecord.half_special_holiday_mins,
         break_records: workRecord.break_records.map((record) => {
           return {
