@@ -162,7 +162,6 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                   }),
                   ...(workRecord.special_holiday_setting_id && {
                     special_holiday_setting_id: workRecord.special_holiday_setting_id,
-                    hourly_special_holiday_mins: workRecord.hourly_special_holiday_mins,
                     half_special_holiday_mins: workRecord.half_special_holiday_mins,
                   }),
                 };
@@ -338,7 +337,6 @@ function handleClockOutAndAddRemoteMemo(
         }),
         ...(workRecord.special_holiday_setting_id && {
           special_holiday_setting_id: workRecord.special_holiday_setting_id,
-          hourly_special_holiday_mins: workRecord.hourly_special_holiday_mins,
           half_special_holiday_mins: workRecord.half_special_holiday_mins,
         }),
       };
