@@ -153,11 +153,18 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
                   clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
                   clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
                   note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+                  ...(workRecord.half_paid_holiday_mins && {
+                    half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
+                  }),
                   break_records: workRecord.break_records.map((record) => {
                     return {
                       clock_in_at: formatDate(record.clock_in_at, "datetime"),
                       clock_out_at: formatDate(record.clock_out_at, "datetime"),
                     };
+                  }),
+                  ...(workRecord.special_holiday_setting_id && {
+                    special_holiday_setting_id: workRecord.special_holiday_setting_id,
+                    half_special_holiday_mins: workRecord.half_special_holiday_mins,
                   }),
                 };
                 return freee
@@ -323,11 +330,16 @@ function handleClockOutAndAddRemoteMemo(
         clock_in_at: formatDate(workRecord.clock_in_at, "datetime"),
         clock_out_at: formatDate(workRecord.clock_out_at, "datetime"),
         note: workRecord.note ? `${workRecord.note} リモート` : "リモート",
+        half_paid_holiday_mins: workRecord.half_paid_holiday_mins,
         break_records: workRecord.break_records.map((record) => {
           return {
             clock_in_at: formatDate(record.clock_in_at, "datetime"),
             clock_out_at: formatDate(record.clock_out_at, "datetime"),
           };
+        }),
+        ...(workRecord.special_holiday_setting_id && {
+          special_holiday_setting_id: workRecord.special_holiday_setting_id,
+          half_special_holiday_mins: workRecord.half_special_holiday_mins,
         }),
       };
       return freee.updateWorkRecord(employeeId, targetDate, newWorkRecord);

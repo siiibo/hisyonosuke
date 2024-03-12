@@ -62,6 +62,10 @@ const EmployeesWorkRecordSerializerSchema = z.object({
   total_latenight_excess_statutory_work_mins: z.number().int(),
   total_overtime_except_normal_work_mins: z.number().int(),
   total_latenight_overtime_except_normal_work_mins: z.number().int(),
+  half_paid_holiday_mins: z.number().int(),
+  half_special_holiday_mins: z.number().int(),
+  hourly_special_holiday_mins: z.number().int(),
+  special_holiday_setting_id: z.number().int().nullable(),
 });
 
 const EmployeesWorkRecordSummarySerializerSchema = z.object({
@@ -146,6 +150,10 @@ const EmployeesWorkRecordsControllerSchema_update_body = z.object({
   paid_holiday: z.number().lte(1).optional(),
   use_attendance_deduction: z.boolean().optional(),
   use_default_work_pattern: z.boolean().optional(),
+  half_paid_holiday_mins: z.number().int().optional(),
+  half_special_holiday_mins: z.number().int().optional(),
+  hourly_special_holiday_mins: z.number().int().optional(),
+  special_holiday_setting_id: z.number().int().optional(),
 });
 
 export const schemas = {
