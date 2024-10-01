@@ -8,6 +8,7 @@ describe("getDayStartAsDate", () => {
       { date: "2023-03-05T00:00:00+09:00", expected: "2023-03-04T04:00:00+09:00" },
       { date: "2023-03-04T00:05:00+09:00", expected: "2023-03-03T04:00:00+09:00" },
       { date: "2023-03-03T03:59:00+09:00", expected: "2023-03-02T04:00:00+09:00" },
+      { date: "2024-10-01T00:20:00+09:00", expected: "2024-09-30T04:00:00+09:00" },
     ];
     testCases.forEach((testCase) => {
       const date = new Date(testCase.date);
