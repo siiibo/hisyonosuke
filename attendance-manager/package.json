@@ -5,17 +5,18 @@
   "main": "build",
   "private": true,
   "scripts": {
-    "open:prod": "cross-env clasp_config_project=.clasp.prod.json yarn clasp open",
-    "open:dev": "cross-env clasp_config_project=.clasp.dev.json yarn clasp open",
+    "open:prod": "cross-env clasp_config_project=.clasp.prod.json clasp open",
+    "open:dev": "cross-env clasp_config_project=.clasp.dev.json clasp open",
     "test": "jest",
-    "build": "yarn webpack && cp appsscript.json build/appsscript.json",
-    "buildpush:prod": "yarn run build && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
-    "buildpush:dev": " yarn run build && cross-env clasp_config_project=.clasp.dev.json clasp push --force",
-    "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json"
+    "build": "pnpm webpack && cp appsscript.json build/appsscript.json",
+    "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
+    "buildpush:prod": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
+    "buildpush:dev": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.dev.json clasp push --force"
   },
   "dependencies": {
     "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893",
     "@slack/bolt": "^3.17.1",
+    "clasp": "^1.0.0",
     "date-fns": "^3.3.1",
     "moment": "^2.30.1",
     "neverthrow": "^6.1.0",
