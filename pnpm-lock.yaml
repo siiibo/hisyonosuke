@@ -74,15 +74,15 @@ importers:
 
   attendance-manager:
     dependencies:
+      '@google/clasp':
+        specifier: ^2.4.2
+        version: 2.4.2
       '@hi-se/web-api':
         specifier: https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893
         version: https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893
       '@slack/bolt':
         specifier: ^3.17.1
         version: 3.17.1
-      clasp:
-        specifier: ^1.0.0
-        version: 1.0.0
       date-fns:
         specifier: ^3.3.1
         version: 3.3.1
@@ -1178,9 +1178,6 @@ packages:
 
   cjs-module-lexer@1.2.3:
     resolution: {integrity: sha512-0TNiGstbQmCFwt4akjjBg5pLRTSyj/PkWQ1ZoO2zntmg9yLqSRxwEa4iCfQLGjqhiqBfOJa7W/E8wfGrTDmlZQ==}
-
-  clasp@1.0.0:
-    resolution: {integrity: sha512-JkgxdZvYBtqIlGPvC5oRZ548eHpfx+81z5GXckpXcMkRTZDddkQfwK60w1YE32n8ovGoSW88pbsIvCPOKM6hyA==}
 
   clean-stack@2.2.0:
     resolution: {integrity: sha512-4diC9HaTE+KRAMWhDhrGOECgWZxoevMc5TlkObMqNSsVU62PYzXZ/SMTjzyGAFF1YusgxGcSWTEXBhp0CPwQ1A==}
@@ -5140,8 +5137,6 @@ snapshots:
   ci-info@3.9.0: {}
 
   cjs-module-lexer@1.2.3: {}
-
-  clasp@1.0.0: {}
 
   clean-stack@2.2.0: {}
 
