@@ -5,7 +5,7 @@
 ## Requirements
 
 - `SCRIPT_ID`を Repository Secret として登録
-- デプロイユーザが`yarn clasp login`し、以下の情報を`~/.clasprc.json`から取得して Repository Secret として登録
+- デプロイユーザが`pnpm clasp login`し、以下の情報を`~/.clasprc.json`から取得して Repository Secret として登録
   - `ACCESS_TOKEN`
   - `CLIENT_ID`
   - `CLIENT_SECRET`
