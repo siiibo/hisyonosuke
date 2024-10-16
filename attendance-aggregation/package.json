@@ -5,8 +5,7 @@
   "main": "build/backend.js",
   "private": true,
   "engines": {
-    "node": ">=14",
-    "yarn": ">=1.22"
+    "node": ">=14"
   },
   "scripts": {
     "open": "clasp open",
