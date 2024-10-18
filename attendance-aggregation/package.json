@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "open": "clasp open",
-    "build": "pnpm webpack && cp appsscript.json build/appsscript.json",
+    "build": "pnpm webpack",
     "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
     "buildpush": "pnpm build && pnpm prepush && clasp push --force",
     "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json",

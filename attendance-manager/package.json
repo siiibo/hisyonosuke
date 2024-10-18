@@ -8,7 +8,7 @@
     "open:prod": "cross-env clasp_config_project=.clasp.prod.json clasp open",
     "open:dev": "cross-env clasp_config_project=.clasp.dev.json clasp open",
     "test": "jest",
-    "build": "pnpm webpack && cp appsscript.json build/appsscript.json",
+    "build": "pnpm webpack",
     "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
     "buildpush:prod": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
     "buildpush:dev": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.dev.json clasp push --force"
