@@ -4,9 +4,6 @@
   "description": "",
   "main": "build/backend.js",
   "private": true,
-  "engines": {
-    "node": ">=14"
-  },
   "scripts": {
     "open": "clasp open",
     "build": "pnpm webpack && cp appsscript.json build/appsscript.json",
