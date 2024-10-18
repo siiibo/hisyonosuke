@@ -14,7 +14,6 @@
     "buildpush:dev": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.dev.json clasp push --force"
   },
   "dependencies": {
-    "@google/clasp": "^2.4.2",
     "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893",
     "@slack/bolt": "^3.17.1",
     "date-fns": "^3.3.1",
