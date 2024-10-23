@@ -74,9 +74,6 @@ importers:
 
   attendance-manager:
     dependencies:
-      '@google/clasp':
-        specifier: ^2.4.2
-        version: 2.4.2
       '@hi-se/web-api':
         specifier: https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893
         version: https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893
@@ -102,6 +99,9 @@ importers:
         specifier: ^3.22.4
         version: 3.22.4
     devDependencies:
+      '@google/clasp':
+        specifier: ^2.4.2
+        version: 2.4.2
       '@types/google-apps-script':
         specifier: ^1.0.79
         version: 1.0.79
