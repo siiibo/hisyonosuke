@@ -5,7 +5,17 @@
 ## Requirements
 
 - `SCRIPT_ID`を Repository Secret として登録
-- デプロイユーザが`pnpm clasp login`し、以下の情報を`~/.clasprc.json`から取得して Repository Secret として登録
+- デプロイユーザが`clasp login`を行う
+  - `attendance-manager`フォルダーに移動:
+    ```sh
+    cd attendance-manager
+    ```
+  - 次に、`clasp login`を実行:
+    ```sh
+    pnpm clasp login
+    ```
+- 以下の情報を`~/.clasprc.json`から取得して Repository Secret として登録
+
   - `ACCESS_TOKEN`
   - `CLIENT_ID`
   - `CLIENT_SECRET`
