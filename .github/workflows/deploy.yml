@@ -49,4 +49,4 @@ jobs:
             "rootDir": "build"
           }
           EOS
-      - run: pnpm workspace attendance-manager run buildpush:prod
+      - run: pnpm attendance-manager run buildpush:prod
