@@ -14,16 +14,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          key: v1-${{ hashFiles('yarn.lock') }}-${{ github.sha }}
-          path: |
-            node_modules
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - run: yarn
+          node-version: 20
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
       - name: Create ~/.clasprc.json
         run: |
           cat <<-EOS > ~/.clasprc.json
@@ -51,4 +49,4 @@ jobs:
             "rootDir": "build"
           }
           EOS
-      - run: yarn workspace attendance-manager run buildpush:prod
+      - run: pnpm attendance-manager run buildpush:prod

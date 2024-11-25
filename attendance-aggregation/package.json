@@ -4,14 +4,11 @@
   "description": "",
   "main": "build/backend.js",
   "private": true,
-  "engines": {
-    "node": ">=14",
-    "yarn": ">=1.22"
-  },
   "scripts": {
     "open": "clasp open",
-    "build": "npx webpack",
-    "buildpush": "cp appsscript.json build/appsscript.json && npx webpack && clasp push --force",
+    "build": "webpack",
+    "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
+    "buildpush": "pnpm build && pnpm prepush && clasp push --force",
     "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json",
     "create": "pwd | awk -F'/' '{print $NF}' | xargs -I {} clasp create --rootDir build --title {} --type standalone && mv build/.clasp.json ./"
   },
@@ -30,8 +27,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "gas-webpack-plugin": "^2.5.0",
-    "husky": "^9.0.11",
-    "lint-staged": "^15.2.2",
     "prettier": "3.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
@@ -40,11 +35,5 @@
     "webpack": "5.90.1",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "4.15.1"
-  },  
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
   }
 }

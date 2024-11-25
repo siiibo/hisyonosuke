@@ -2,7 +2,7 @@ export const CHANNEL_IDS = {
   ATTENDANCE: 'CL0V50APP',
 }
 
-// TODO: 打刻機能のyarn worksapceと共有したい
+// TODO: 打刻機能のworkspaceと共有したい
 export const COMMAND_LABEL = {
   ":shukkin:": "出勤",
   ':sagyoukaishi:': "作業開始",

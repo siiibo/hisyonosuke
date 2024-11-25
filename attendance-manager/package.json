@@ -5,13 +5,13 @@
   "main": "build",
   "private": true,
   "scripts": {
-    "open:prod": "cross-env clasp_config_project=.clasp.prod.json yarn clasp open",
-    "open:dev": "cross-env clasp_config_project=.clasp.dev.json yarn clasp open",
+    "open:prod": "cross-env clasp_config_project=.clasp.prod.json clasp open",
+    "open:dev": "cross-env clasp_config_project=.clasp.dev.json clasp open",
     "test": "jest",
-    "build": "yarn webpack && cp appsscript.json build/appsscript.json",
-    "buildpush:prod": "yarn run build && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
-    "buildpush:dev": " yarn run build && cross-env clasp_config_project=.clasp.dev.json clasp push --force",
-    "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json"
+    "build": "webpack",
+    "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
+    "buildpush:prod": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.prod.json clasp push --force",
+    "buildpush:dev": "pnpm build && pnpm prepush && cross-env clasp_config_project=.clasp.dev.json clasp push --force"
   },
   "dependencies": {
     "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893",
@@ -24,6 +24,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@google/clasp": "^2.4.2",
     "@types/google-apps-script": "^1.0.79",
     "@types/google-apps-script-oauth2": ">=38.0.4",
     "@types/jest": "^29.5.12",
@@ -42,14 +43,6 @@
     "typescript": "^5.3.3",
     "webpack": "^5.90.1",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "4.15.1",
-    "lint-staged": "^15.2.2",
-    "husky": "^9.0.11"
-  },  
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
+    "webpack-dev-server": "4.15.1"
   }
 }

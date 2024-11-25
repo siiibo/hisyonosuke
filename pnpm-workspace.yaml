@@ -1,0 +1,3 @@
+packages:
+  - "attendance-aggregation"
+  - "attendance-manager"
