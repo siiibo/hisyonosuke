@@ -30,7 +30,7 @@ export const getConversationHistory = (
 
   return channelMessages.map((message) => {
     return {
-      user: message.user ? userIdList[message.user] : "",
+      user: message.user ? (userIdList[message.user] ?? "") : "",
       dateString: message.ts ? format(getDateFromUnixTimeStampString(message.ts), "yyyy/MM/dd HH:mm:ss") : "",
       message: message.text ?? "",
       reactions: message.reactions

@@ -46,7 +46,7 @@ function getClockInTimeByUserSlackId(processedMessages: ProcessedMessage[], user
         commandType === "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE"
       );
     });
-  return userClockInMessages.length ? userClockInMessages[0].date : undefined;
+  return userClockInMessages.length ? userClockInMessages[0]?.date : undefined;
 }
 
 export function getUserWorkStatusesByMessages(processedMessages: ProcessedMessage[]): {
