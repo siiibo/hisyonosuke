@@ -1,31 +1,46 @@
-import { GasWebClient as SlackClient } from '@hi-se/web-api'
-import { Message } from '@hi-se/web-api/src/response/ConversationsHistoryResponse';
-import { format } from 'date-fns';
-import { objectify } from 'radash';
-import { getDateFromUnixTimeStampString, getUnixTimeStampString } from './utils';
+import { GasWebClient as SlackClient } from "@hi-se/web-api";
+import type { Message } from "@hi-se/web-api/src/response/ConversationsHistoryResponse";
+import { format } from "date-fns";
+import { objectify } from "radash";
+import { getDateFromUnixTimeStampString, getUnixTimeStampString } from "./utils";
 
 //TOOD: zodに置き換え
 export interface MessageHistory {
-  user: string,
-  dateString: string,
-  message: string,
-  reactions: string[],
+  user: string;
+  dateString: string;
+  message: string;
+  reactions: string[];
 }
 
-const HISYONOSUKE_USER_ID = 'U01AY3RHR42'
+const HISYONOSUKE_USER_ID = "U01AY3RHR42";
 
-export const getConversationHistory = (client: SlackClient, channelId: string, oldest: Date, latest: Date, userIdList: Record<string, string>): MessageHistory[] => {
-  const channelMessages = _getConversationsHistoryAll(client, channelId, getUnixTimeStampString(oldest), getUnixTimeStampString(latest));
+export const getConversationHistory = (
+  client: SlackClient,
+  channelId: string,
+  oldest: Date,
+  latest: Date,
+  userIdList: Record<string, string>,
+): MessageHistory[] => {
+  const channelMessages = _getConversationsHistoryAll(
+    client,
+    channelId,
+    getUnixTimeStampString(oldest),
+    getUnixTimeStampString(latest),
+  );
 
-  return channelMessages.map(message => {
+  return channelMessages.map((message) => {
     return {
       user: message.user ? userIdList[message.user] : "",
-      dateString: message.ts ? format(getDateFromUnixTimeStampString(message.ts), 'yyyy/MM/dd HH:mm:ss') : "",
+      dateString: message.ts ? format(getDateFromUnixTimeStampString(message.ts), "yyyy/MM/dd HH:mm:ss") : "",
       message: message.text ?? "",
-      reactions: message.reactions ? message.reactions.filter(reaction => reaction.users?.includes(HISYONOSUKE_USER_ID)).map(reaction => reaction.name ? reaction.name : '') : []
-    }
-  })
-}
+      reactions: message.reactions
+        ? message.reactions
+            .filter((reaction) => reaction.users?.includes(HISYONOSUKE_USER_ID))
+            .map((reaction) => (reaction.name ? reaction.name : ""))
+        : [],
+    };
+  });
+};
 
 const _getConversationsHistoryAll = (client: SlackClient, channelId: string, oldest: string, latest: string) => {
   let _messages: Message[] = [];
@@ -42,7 +57,7 @@ const _getConversationsHistoryAll = (client: SlackClient, channelId: string, old
       cursor: cursor,
     });
     if (!messages) {
-      break
+      break;
     }
     _messages = [..._messages, ...messages];
 
@@ -53,22 +68,28 @@ const _getConversationsHistoryAll = (client: SlackClient, channelId: string, old
   }
 
   return _messages;
-}
+};
 
 export const getUserIdList = (client: SlackClient) => {
   const members = client.users.list({}).members; // TODO: pagination
-  if (!members) { return {} }
+  if (!members) {
+    return {};
+  }
 
-  const userIdAndEmail = members.map(member => {
+  const userIdAndEmail = members.map((member) => {
     return {
-      userId: member.id ? member.id : '',
-      userEmail: member.profile && member.profile.email ? member.profile.email : '',
-    }
+      userId: member.id ? member.id : "",
+      userEmail: member.profile && member.profile.email ? member.profile.email : "",
+    };
   });
 
-  return objectify(userIdAndEmail, f => f.userId, f => f.userEmail) //TODO: define type
-}
+  return objectify(
+    userIdAndEmail,
+    (f) => f.userId,
+    (f) => f.userEmail,
+  ); //TODO: define type
+};
 
 export const getSlackClient = (token: string) => {
   return new SlackClient(token);
-}
+};
