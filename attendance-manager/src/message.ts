@@ -39,10 +39,12 @@ function categorizeMessage(
     (acc, message) => {
       return isProcessedMessage(message, botUserId)
         ? {
+            // biome-ignore lint/performance/noAccumulatingSpread: パフォーマンスを重視していないので一旦許容
             ...acc,
             processedMessages: [...acc.processedMessages, { ...message, isProcessed: true }],
           }
         : {
+            // biome-ignore lint/performance/noAccumulatingSpread: パフォーマンスを重視していないので一旦許容
             ...acc,
             unprocessedMessages: [...acc.unprocessedMessages, { ...message, isProcessed: false }],
           };
