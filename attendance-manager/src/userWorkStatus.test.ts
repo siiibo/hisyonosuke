@@ -1,4 +1,4 @@
-import assert from "assert";
+import assert from "node:assert";
 import type { CommandType } from "./command";
 import { WORK_STATUS, getUserWorkStatusByCommands } from "./userWorkStatus";
 
