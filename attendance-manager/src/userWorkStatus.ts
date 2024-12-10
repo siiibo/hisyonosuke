@@ -1,8 +1,8 @@
-import { match } from "ts-pattern";
 import * as R from "remeda";
-import { CommandType, getCommandType } from "./command";
-import { ProcessedMessage } from "./message";
-import { valueOf } from "./utilities";
+import { match } from "ts-pattern";
+import { type CommandType, getCommandType } from "./command";
+import type { ProcessedMessage } from "./message";
+import type { valueOf } from "./utilities";
 
 // 未出勤は現状利用していない
 export const WORK_STATUS = {

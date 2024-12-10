@@ -1,14 +1,14 @@
-import { z } from "zod";
-import { ok, err, Result } from "neverthrow";
+import { format } from "date-fns";
+import { type Result, err, ok } from "neverthrow";
 import { match } from "ts-pattern";
+import type { z } from "zod";
+import { getService } from "./auth";
 import { schemas } from "./freee.schema";
 import type {
-  EmployeesWorkRecordsController_update_body,
   EmployeesTimeClocksController_create_body,
+  EmployeesWorkRecordsController_update_body,
 } from "./freee.schema";
-import { getService } from "./auth";
 import { buildUrl } from "./utilities";
-import { format } from "date-fns";
 
 export class Freee {
   private fetch;
@@ -24,7 +24,7 @@ export class Freee {
         method: "get" | "post" | "put" | "delete";
         body?: unknown;
         schema?: z.ZodType<Schema>;
-      }
+      },
     ): Result<Schema, string> => {
       const wrappedFetch = () => {
         const response = UrlFetchApp.fetch(url, {
@@ -61,7 +61,7 @@ export class Freee {
           backoff: (count) => count * 1000,
           shouldRetry: (error) => error === "Error: Internal Server Error",
         },
-        wrappedFetch
+        wrappedFetch,
       );
     };
   }
@@ -106,7 +106,7 @@ function withRetry<TReturn>(
     backoff?: (count: number) => number;
     shouldRetry?: (error: string) => boolean;
   },
-  func: () => Result<TReturn, string>
+  func: () => Result<TReturn, string>,
 ): Result<TReturn, string> {
   const times = options.times ?? 3;
   const delay = options.delay;

@@ -1,4 +1,4 @@
-import { Message } from "./message";
+import type { Message } from "./message";
 
 export type CommandType = keyof typeof COMMAND_TYPE;
 export type Commands = (typeof COMMAND_TYPE)[CommandType];

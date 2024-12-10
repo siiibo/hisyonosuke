@@ -1,8 +1,8 @@
-import { err, ok, Result } from "neverthrow";
-import { CommandType } from "./command";
-import { UserWorkStatus } from "./userWorkStatus";
+import { type Result, err, ok } from "neverthrow";
 import { match } from "ts-pattern";
-import { valueOf } from "./utilities";
+import type { CommandType } from "./command";
+import type { UserWorkStatus } from "./userWorkStatus";
+import type { valueOf } from "./utilities";
 
 const Actions = {
   CLOCK_IN: "clock_in",
@@ -16,7 +16,7 @@ export type ActionType = valueOf<typeof Actions>;
 
 export function getActionType(
   commandType: CommandType,
-  userWorkStatus: UserWorkStatus | undefined
+  userWorkStatus: UserWorkStatus | undefined,
 ): Result<ActionType, { message: string }> {
   return match(userWorkStatus)
     .with(undefined, () => {
@@ -43,7 +43,7 @@ export function getActionType(
         .with("CLOCK_IN", () => err({ message: "すでに出勤しています" }))
         .with(
           "CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE",
-          () => ok(Actions.SWITCH_TO_REMOTE) // 通勤費なしに切り替える
+          () => ok(Actions.SWITCH_TO_REMOTE), // 通勤費なしに切り替える
         )
         .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => ok(Actions.SWITCH_TO_OFFICE))
         .with("SWITCH_TO_REMOTE", () => err({ message: "すでにリモート状態です" }))
@@ -54,7 +54,7 @@ export function getActionType(
       return match(commandType)
         .with("CLOCK_IN", () => err({ message: "すでに出勤しています" }))
         .with("CLOCK_IN_AND_ALL_DAY_REMOTE_OR_SWITCH_TO_ALL_DAY_REMOTE", () =>
-          err({ message: "すでにリモート状態です" })
+          err({ message: "すでにリモート状態です" }),
         )
         .with("CLOCK_IN_OR_SWITCH_TO_OFFICE", () => ok(Actions.SWITCH_TO_OFFICE))
         .with("SWITCH_TO_REMOTE", () => err({ message: "すでにリモート状態です" }))

@@ -1,7 +1,7 @@
-import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { z } from "zod";
+import type { GasWebClient as SlackClient } from "@hi-se/web-api";
+import { getDate, set, subDays } from "date-fns";
 import * as R from "remeda";
-import { getDate, subDays, set } from "date-fns";
+import { z } from "zod";
 import { REACTION, ReactionSchema } from "./reaction";
 import { getUnixTimeStampString } from "./utilities";
 
@@ -12,7 +12,7 @@ export const MessageSchema = z
     ts: z.string(),
     reactions: ReactionSchema.array().optional(),
   })
-  .transform((message) => ({ ...message, date: new Date(parseInt(message.ts) * 1000) }));
+  .transform((message) => ({ ...message, date: new Date(Number.parseInt(message.ts) * 1000) }));
 export type Message = z.infer<typeof MessageSchema>;
 export type ProcessedMessage = Message & { isProcessed: true };
 export type UnprocessedMessage = Message & { isProcessed: false };
@@ -22,7 +22,7 @@ export function getCategorizedDailyMessages(
   channelId: string,
   botUserId: string,
   dateStartHour: number,
-  date: Date
+  date: Date,
 ): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
   const messages = getDailyMessages(client, channelId, dateStartHour, date);
   const messagesWithoutError = messages.filter((message) => !isErrorMessage(message, botUserId));
@@ -33,7 +33,7 @@ export function getCategorizedDailyMessages(
 
 function categorizeMessage(
   messages: Message[],
-  botUserId: string
+  botUserId: string,
 ): { processedMessages: ProcessedMessage[]; unprocessedMessages: UnprocessedMessage[] } {
   return messages.reduce(
     (acc, message) => {
@@ -50,7 +50,7 @@ function categorizeMessage(
     {
       processedMessages: [] as ProcessedMessage[],
       unprocessedMessages: [] as UnprocessedMessage[],
-    }
+    },
   );
 }
 
@@ -70,7 +70,7 @@ function getDailyMessages(client: SlackClient, channelId: string, dateStartHour:
       return parsed.success ? parsed.data : undefined;
     }),
     R.filter((m): m is Message => !!m),
-    R.sortBy((m) => m.date)
+    R.sortBy((m) => m.date),
   );
 }
 
@@ -104,7 +104,7 @@ function isProcessedMessage(message: Message, botUserId: string): boolean {
     return (
       reaction.users.includes(botUserId) &&
       [REACTION.DONE_FOR_TIME_RECORD, REACTION.DONE_FOR_REMOTE_MEMO, REACTION.DONE_FOR_LOCATION_SWITCH].includes(
-        reaction.name
+        reaction.name,
       )
     );
   });

@@ -1,4 +1,4 @@
-import { getDayStartAsDate, isErrorMessage, Message } from "./message";
+import { type Message, getDayStartAsDate, isErrorMessage } from "./message";
 import { REACTION } from "./reaction";
 
 describe("getDayStartAsDate", () => {
