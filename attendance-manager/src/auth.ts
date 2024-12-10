@@ -16,7 +16,7 @@ export function getService() {
     .setPropertyStore(PropertiesService.getScriptProperties());
 }
 
-export function authCallback(request: any) {
+export function authCallback(request: object) {
   const service = getService();
   const isAuthorized = service.handleCallback(request);
   console.log(`Effective User: ${Session.getEffectiveUser().getEmail()}`);
