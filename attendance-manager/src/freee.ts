@@ -29,7 +29,7 @@ export class Freee {
       const wrappedFetch = () => {
         const response = UrlFetchApp.fetch(url, {
           headers: {
-            Authorization: "Bearer " + accessToken,
+            Authorization: `Bearer ${accessToken}`,
             "FREEE-VERSION": "2022-02-01",
           },
           method: options.method,

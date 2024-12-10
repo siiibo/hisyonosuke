@@ -7,7 +7,7 @@ type URIEncodable = {
 export function buildUrl(url: string, params: URIEncodable) {
   const paramString = Object.entries(params)
     .map(([key, value]) => {
-      return encodeURIComponent(key) + "=" + encodeURIComponent(value);
+      return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     })
     .join("&");
   return url + (url.includes("?") ? "&" : "?") + paramString;

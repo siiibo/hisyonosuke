@@ -129,7 +129,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
         .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
-          if (!userStatus?.clockInTime) return err(`userStatus or userStatus.clockInTime is undefined`);
+          if (!userStatus?.clockInTime) return err("userStatus or userStatus.clockInTime is undefined");
           const clockInTimePlusNineHours = addHours(userStatus.clockInTime, 9);
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
@@ -146,7 +146,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
               .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
               .andThen((workRecord) => {
                 if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
-                  return err(`出勤時間か退勤時間が不正な値です`);
+                  return err("出勤時間か退勤時間が不正な値です");
                 }
                 const newWorkRecord: EmployeesWorkRecordsController_update_body = {
                   company_id: FREEE_COMPANY_ID,
@@ -323,7 +323,7 @@ function handleClockOutAndAddRemoteMemo(
     })
     .andThen((workRecord) => {
       if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
-        return err(`出勤時間か退勤時間が不正な値です.`);
+        return err("出勤時間か退勤時間が不正な値です.");
       }
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,
