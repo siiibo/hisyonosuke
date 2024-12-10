@@ -9,6 +9,7 @@ import {
   periodicallyCheckForAttendanceManager,
 } from "./attendanceManager";
 
+// biome-ignore lint/suspicious/noExplicitAny: any is used to declare global
 declare const global: any;
 global.initAttendanceManager = initAttendanceManager;
 global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;
