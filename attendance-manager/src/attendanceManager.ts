@@ -1,15 +1,15 @@
 import { GasWebClient as SlackClient } from "@hi-se/web-api";
-import { subDays, toDate, set, addHours } from "date-fns";
-import { formatDate, Freee } from "./freee";
-import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
-import { getConfig } from "./config";
-import { REACTION } from "./reaction";
-import { Message, getCategorizedDailyMessages } from "./message";
-import { getCommandType } from "./command";
-import { getUpdatedUserWorkStatus, getUserWorkStatusesByMessages, UserWorkStatus } from "./userWorkStatus";
-import { ActionType, getActionType } from "./action";
+import { addHours, set, subDays, toDate } from "date-fns";
 import { Result, err, ok } from "neverthrow";
-import { match, P } from "ts-pattern";
+import { P, match } from "ts-pattern";
+import { type ActionType, getActionType } from "./action";
+import { getCommandType } from "./command";
+import { getConfig } from "./config";
+import { Freee, formatDate } from "./freee";
+import type { EmployeesWorkRecordsController_update_body } from "./freee.schema";
+import { type Message, getCategorizedDailyMessages } from "./message";
+import { REACTION } from "./reaction";
+import { type UserWorkStatus, getUpdatedUserWorkStatus, getUserWorkStatusesByMessages } from "./userWorkStatus";
 import { getUnixTimeStampString } from "./utilities";
 
 const DATE_START_HOUR = 4;
@@ -129,7 +129,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
       return getFreeeEmployeeIdFromSlackUserId(client, freee, slackId, FREEE_COMPANY_ID)
         .andThen((employeeId) => {
           const userStatus = userWorkStatuses[slackId];
-          if (!userStatus?.clockInTime) return err(`userStatus or userStatus.clockInTime is undefined`);
+          if (!userStatus?.clockInTime) return err("userStatus or userStatus.clockInTime is undefined");
           const clockInTimePlusNineHours = addHours(userStatus.clockInTime, 9);
           const clockOutParams = {
             company_id: FREEE_COMPANY_ID,
@@ -146,7 +146,7 @@ function autoCheckAndClockOut(client: SlackClient, channelId: string, botUserId:
               .getWorkRecord(employeeId, formatDate(yesterday, "date"), FREEE_COMPANY_ID)
               .andThen((workRecord) => {
                 if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
-                  return err(`出勤時間か退勤時間が不正な値です`);
+                  return err("出勤時間か退勤時間が不正な値です");
                 }
                 const newWorkRecord: EmployeesWorkRecordsController_update_body = {
                   company_id: FREEE_COMPANY_ID,
@@ -323,7 +323,7 @@ function handleClockOutAndAddRemoteMemo(
     })
     .andThen((workRecord) => {
       if (workRecord.clock_in_at === null || workRecord.clock_out_at === null) {
-        return err(`出勤時間か退勤時間が不正な値です.`);
+        return err("出勤時間か退勤時間が不正な値です.");
       }
       const newWorkRecord: EmployeesWorkRecordsController_update_body = {
         company_id: FREEE_COMPANY_ID,

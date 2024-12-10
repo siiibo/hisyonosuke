@@ -9,8 +9,8 @@
     "build": "webpack",
     "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
     "buildpush": "pnpm build && pnpm prepush && clasp push --force",
-    "lint": "eslint src/**/*",
-    "lint-fix": "pnpm lint --fix",
+    "lint": "biome check",
+    "lint-fix": "pnpm lint --write",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -20,15 +20,10 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@google/clasp": "^2.4.2",
     "@types/google-apps-script": "^1.0.79",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.56.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-import": "^2.29.1",
     "gas-webpack-plugin": "^2.5.0",
-    "prettier": "3.2.5",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tslib": "^2.6.2",

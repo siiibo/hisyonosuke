@@ -1,8 +1,8 @@
-import { getUserWorkStatusByCommands, WORK_STATUS } from "./userWorkStatus";
-import { CommandType } from "./command";
-import assert from "assert";
+import assert from "node:assert";
+import type { CommandType } from "./command";
+import { WORK_STATUS, getUserWorkStatusByCommands } from "./userWorkStatus";
 
-describe("getUserWorkStatusByCommands", function () {
+describe("getUserWorkStatusByCommands", () => {
   it('should return WORK_STATUS.WORKING_AT_OFFICE when given ["CLOCK_IN"]', () => {
     const commands: CommandType[] = ["CLOCK_IN"];
     assert.equal(getUserWorkStatusByCommands(commands), WORK_STATUS.WORKING_AT_OFFICE);
@@ -29,6 +29,7 @@ describe("getUserWorkStatusByCommands", function () {
   });
 
   it("should throw an error when given an unexpected command", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: テストのためanyを許容
     const commands = ["UNEXPECTED_COMMAND"] as any;
     assert.throws(() => getUserWorkStatusByCommands(commands), /Unexpected command/);
   });

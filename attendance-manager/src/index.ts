@@ -3,13 +3,13 @@
  */
 
 import {
-  periodicallyCheckForAttendanceManager,
   initAttendanceManager,
   initAutoClockOut,
   manageForgottenClockOut,
+  periodicallyCheckForAttendanceManager,
 } from "./attendanceManager";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: any is used to declare global
 declare const global: any;
 global.initAttendanceManager = initAttendanceManager;
 global.periodicallyCheckForAttendanceManager = periodicallyCheckForAttendanceManager;

@@ -16,15 +16,14 @@ export function getService() {
     .setPropertyStore(PropertiesService.getScriptProperties());
 }
 
-export function authCallback(request: any) {
+export function authCallback(request: object) {
   const service = getService();
   const isAuthorized = service.handleCallback(request);
   console.log(`Effective User: ${Session.getEffectiveUser().getEmail()}`);
   if (isAuthorized) {
     return HtmlService.createHtmlOutput("認証に成功しました。タブを閉じてください。");
-  } else {
-    return HtmlService.createHtmlOutput("認証に失敗しました。");
   }
+  return HtmlService.createHtmlOutput("認証に失敗しました。");
 }
 
 export function printAuth() {
