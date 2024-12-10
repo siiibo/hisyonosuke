@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "lib": [
-      "esNext",
-      "DOM"
-    ],
-    "moduleResolution": "Node",
-    "strict": true,
-    "importHelpers": true,
+    /* Base Options: */
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "target": "es2019",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    /* Strictness */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    /* Transpiling with other tools */
+    "module": "preserve",
+    "noEmit": true,
+    /* lib */
+    "lib": ["es2022"]
   }
 }
