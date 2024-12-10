@@ -18,7 +18,7 @@ export interface ColorConfig {
 
 export const setColors = (sheet: GoogleAppsScript.Spreadsheet.Sheet, colorConfigs: ColorConfig[]) => {
   colorConfigs.forEach((config) => {
-    const targetTextRegExp = config.text.map((s) => "^" + s + ".{0,4}$").join("|"); // IEYASUユーザーはコマンドの後に任意の文字列を置くので、それを拾えるようにしてある
+    const targetTextRegExp = config.text.map((s) => `^${s}.{0,4}$`).join("|"); // IEYASUユーザーはコマンドの後に任意の文字列を置くので、それを拾えるようにしてある
     sheet
       .createTextFinder(targetTextRegExp)
       .useRegularExpression(true)

@@ -79,7 +79,7 @@ export const getUserIdList = (client: SlackClient) => {
   const userIdAndEmail = members.map((member) => {
     return {
       userId: member.id ? member.id : "",
-      userEmail: member.profile && member.profile.email ? member.profile.email : "",
+      userEmail: member.profile?.email ? member.profile.email : "",
     };
   });
 
