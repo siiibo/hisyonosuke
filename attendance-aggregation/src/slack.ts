@@ -31,7 +31,6 @@ const _getConversationsHistoryAll = (client: SlackClient, channelId: string, old
   let _messages: Message[] = [];
   let cursor: string | undefined = undefined;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const { has_more, response_metadata, messages } = client.conversations.history({
       channel: channelId,
