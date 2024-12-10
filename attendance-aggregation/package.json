@@ -9,8 +9,9 @@
     "build": "webpack",
     "prepush": "mkdir -p build && cp appsscript.json build/appsscript.json",
     "buildpush": "pnpm build && pnpm prepush && clasp push --force",
-    "postinstall": "mkdir -p build && cp appsscript.json build/appsscript.json",
-    "create": "pwd | awk -F'/' '{print $NF}' | xargs -I {} clasp create --rootDir build --title {} --type standalone && mv build/.clasp.json ./"
+    "lint": "eslint src/**/*",
+    "lint-fix": "pnpm lint --fix",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@hi-se/web-api": "https://gitpkg.now.sh/hi-se/node-slack-sdk/packages/web-api?ab078b145617d511327a8f74fe34f1d4695ff893",
