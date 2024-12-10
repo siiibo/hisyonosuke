@@ -1,4 +1,4 @@
-import assert from "node:assert";
+import assert from "assert";
 import type { CommandType } from "./command";
 import { WORK_STATUS, getUserWorkStatusByCommands } from "./userWorkStatus";
 
@@ -29,6 +29,7 @@ describe("getUserWorkStatusByCommands", () => {
   });
 
   it("should throw an error when given an unexpected command", () => {
+    // biome-ignore lint/suspicious/noExplicitAny: テストのためanyを許容
     const commands = ["UNEXPECTED_COMMAND"] as any;
     assert.throws(() => getUserWorkStatusByCommands(commands), /Unexpected command/);
   });
